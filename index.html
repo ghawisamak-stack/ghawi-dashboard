@@ -173,6 +173,7 @@ const SUPABASE_KEY = "sb_publishable_TIwmDPRK-MXnii2qHcpIMA_n1nzqlGt";
 const DAY_START_HOUR = 4; // يوم العمل يبدأ الساعة 4 فجراً (مثل إعداد برنامج الكاشير)
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+Chart.defaults.locale = "en-US"; // أرقام الرسوم 0123456789
 const $ = id => document.getElementById(id);
 const fmt = n => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtQ = n => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 });
