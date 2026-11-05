@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة غاوي سمك</title>
+<meta name="theme-color" content="#1c5596">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="غاوي سمك">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1c5596; --navy-dark: #143e70; --bg: #eef2f7; --card: #ffffff; --text: #23324a; --muted: #6e7d8c;
+    --green: #27ae60; --red: #e74c3c; --amber: #f39c12; --blue: #2980b9; --purple: #8e44ad; --line: #e3e9f0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0f1722; --card: #182334; --text: #e6edf5; --muted: #93a4b8; --line: #263449; }
+  }
+  :root[data-theme="dark"] { --bg: #0f1722; --card: #182334; --text: #e6edf5; --muted: #93a4b8; --line: #263449; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Tajawal", "Segoe UI", sans-serif; }
+  body { min-height: 100vh; }
+  button, input, select { font-family: inherit; font-size: 1rem; }
+  .hidden { display: none !important; }
+
+  /* ----- الدخول ----- */
+  #login { min-height: 100vh; display: grid; place-items: center; padding: 16px;
+           background: linear-gradient(135deg, var(--navy-dark), #2a74c4); }
+  .login-card { background: var(--card); width: 100%; max-width: 380px; border-radius: 18px; padding: 28px 24px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  .login-card h1 { margin: 0 0 4px; color: var(--navy); font-size: 1.5rem; text-align: center; }
+  .login-card p { margin: 0 0 20px; color: var(--muted); text-align: center; }
+  .login-card label { display: block; font-weight: 700; margin: 12px 0 6px; }
+  .login-card input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); direction: ltr; text-align: left; }
+  .btn { border: 0; border-radius: 10px; padding: 12px 16px; font-weight: 700; cursor: pointer; color: #fff; background: var(--navy); }
+  .btn.full { width: 100%; margin-top: 18px; }
+  .btn.ghost { background: transparent; color: var(--navy); border: 1px solid var(--line); }
+  .msg { min-height: 22px; margin-top: 10px; text-align: center; font-weight: 700; color: var(--red); }
+
+  /* ----- الرأس ----- */
+  header { position: sticky; top: 0; z-index: 10; background: linear-gradient(90deg, var(--navy-dark), var(--navy)); color: #fff;
+           padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  header .title { font-weight: 800; font-size: 1.15rem; }
+  header .who { font-size: .9rem; opacity: .9; }
+  header .spacer { flex: 1; }
+  header .sync { font-size: .82rem; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,.15); }
+  header .sync.warn { background: var(--amber); color: #222; }
+  header button { background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+
+  .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 16px 0; max-width: 1280px; margin: 0 auto; }
+  .chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 20px; padding: 7px 14px; cursor: pointer; font-weight: 700; font-size: .9rem; }
+  .chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .bar input[type=date] { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 6px 8px; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 12px 16px 40px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .kpi { background: var(--card); border-radius: 14px; padding: 12px 14px; border: 1px solid var(--line); }
+  .kpi .l { color: var(--muted); font-size: .85rem; font-weight: 700; }
+  .kpi .v { font-size: 1.35rem; font-weight: 800; margin-top: 4px; direction: ltr; text-align: right; }
+  .kpi.main { background: linear-gradient(135deg, var(--green), #1e8e4f); color: #fff; border: 0; }
+  .kpi.main .l { color: rgba(255,255,255,.85); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 12px; margin-top: 12px; }
+  .card { background: var(--card); border-radius: 14px; border: 1px solid var(--line); padding: 14px; min-width: 0; }
+  .card h2 { margin: 0 0 10px; font-size: 1.02rem; color: var(--navy); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  :root[data-theme="dark"] .card h2 { color: #8ab8ee; }
+  .card .chart { position: relative; height: 240px; }
+  table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  th { text-align: right; color: var(--muted); font-weight: 700; padding: 6px 4px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--card); }
+  td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
+  td.n { direction: ltr; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .scroll { max-height: 360px; overflow: auto; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; background: var(--bg); }
+  .tag.red { background: #fde3e0; color: #b03a2e; } .tag.green { background: #dff6e9; color: #1e8449; } .tag.amber { background: #fef1d6; color: #9a6206; }
+  tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
+  .empty { color: var(--muted); text-align: center; padding: 18px 0; }
+  .loading { position: fixed; bottom: 16px; left: 16px; background: var(--navy); color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: 700; }
+
+  dialog { border: 0; border-radius: 14px; padding: 0; width: min(560px, 94vw); background: var(--card); color: var(--text); }
+  dialog::backdrop { background: rgba(0,0,0,.45); }
+  dialog .head { background: var(--navy); color: #fff; padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
+  dialog .body { padding: 14px 16px; max-height: 70vh; overflow: auto; }
+  dialog button.x { background: transparent; border: 0; color: #fff; font-size: 1.3rem; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- ================= الدخول ================= -->
+<section id="login" class="hidden">
+  <form class="login-card" id="loginForm">
+    <h1>🐟 غاوي سمك</h1>
+    <p>لوحة المدراء — المبيعات والتقارير</p>
+    <label for="email">البريد الإلكتروني</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">كلمة المرور</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button class="btn full" type="submit">دخول</button>
+    <button class="btn ghost full" type="button" id="forgot">نسيت كلمة المرور</button>
+    <div class="msg" id="loginMsg"></div>
+  </form>
+</section>
+
+<!-- ================= اللوحة ================= -->
+<section id="app" class="hidden">
+  <header>
+    <span class="title">🐟 غاوي سمك</span>
+    <span class="who" id="who"></span>
+    <span class="spacer"></span>
+    <span class="sync" id="sync">…</span>
+    <button id="refresh" title="تحديث">⟳</button>
+    <button id="theme" title="الوضع الليلي">◐</button>
+    <button id="changePwd" title="تغيير كلمة المرور">🔑</button>
+    <button id="logout">خروج</button>
+  </header>
+
+  <div class="bar" id="periods">
+    <button class="chip on" data-p="today">اليوم</button>
+    <button class="chip" data-p="yesterday">أمس</button>
+    <button class="chip" data-p="week">آخر 7 أيام</button>
+    <button class="chip" data-p="month">هذا الشهر</button>
+    <button class="chip" data-p="lastmonth">الشهر الماضي</button>
+    <button class="chip" data-p="custom">فترة</button>
+    <span id="customBox" class="hidden">
+      <input type="date" id="from"> ← <input type="date" id="to">
+    </span>
+  </div>
+
+  <main>
+    <div class="kpis" id="kpis"></div>
+
+    <div class="grid">
+      <div class="card"><h2>المبيعات حسب اليوم</h2><div class="chart"><canvas id="chDays"></canvas></div></div>
+      <div class="card"><h2>ساعات الذروة</h2><div class="chart"><canvas id="chHours"></canvas></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>الأصناف الأكثر مبيعاً <span class="tag" id="itemsCount"></span></h2><div class="scroll" id="tblItems"></div></div>
+      <div class="card"><h2>المجموعات</h2><div class="scroll" id="tblCats"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>طرق الدفع وأنواع الطلبات</h2><div class="chart"><canvas id="chPay"></canvas></div><div id="tblTypes" style="margin-top:10px"></div></div>
+      <div class="card"><h2>آخر الطلبات</h2><div class="scroll" id="tblOrders"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>الورديات</h2><div class="scroll" id="tblShifts"></div></div>
+      <div class="card"><h2>المرتجعات</h2><div class="scroll" id="tblReturns"></div></div>
+      <div class="card"><h2>المصروفات</h2><div class="scroll" id="tblExpenses"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>المخزون (السمك والمواد)</h2><div class="scroll" id="tblStock"></div></div>
+      <div class="card"><h2>أرصدة الموردين</h2><div class="scroll" id="tblSuppliers"></div></div>
+    </div>
+  </main>
+</section>
+
+<dialog id="dlg"><div class="head"><span id="dlgTitle"></span><button class="x" onclick="document.getElementById('dlg').close()">×</button></div><div class="body" id="dlgBody"></div></dialog>
+<div class="loading hidden" id="loading">جاري التحميل…</div>
+
+<script>
+// =====================================================================
+//  الإعدادات: رابط المشروع والمفتاح العام (آمن للنشر — الحماية في قاعدة البيانات)
+// =====================================================================
+const SUPABASE_URL = "https://lstoqvehywpgmguiztoh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_TIwmDPRK-MXnii2qHcpIMA_n1nzqlGt";
+const DAY_START_HOUR = 4; // يوم العمل يبدأ الساعة 4 فجراً (مثل إعداد برنامج الكاشير)
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtQ = n => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 });
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let period = "today", charts = {}, refreshTimer = null;
+
+// ----- الوضع الليلي -----
+try { const t = localStorage.getItem("gs-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$("theme").onclick = () => {
+  const dark = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() === "#0f1722";
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  try { localStorage.setItem("gs-theme", document.documentElement.dataset.theme); } catch (e) {}
+  load();
+};
+
+// ----- التواريخ (توقيت الرياض) -----
+function riyadhNow() { return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Riyadh" })); }
+function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function businessToday() { const n = riyadhNow(); if (n.getHours() < DAY_START_HOUR) n.setDate(n.getDate() - 1); return n; }
+function range() {
+  const t = businessToday(), d = new Date(t);
+  switch (period) {
+    case "yesterday": d.setDate(d.getDate() - 1); return [iso(d), iso(d)];
+    case "week": d.setDate(d.getDate() - 6); return [iso(d), iso(t)];
+    case "month": return [iso(new Date(t.getFullYear(), t.getMonth(), 1)), iso(t)];
+    case "lastmonth": return [iso(new Date(t.getFullYear(), t.getMonth() - 1, 1)), iso(new Date(t.getFullYear(), t.getMonth(), 0))];
+    case "custom": { let f = $("from").value || iso(t), to = $("to").value || f; if (f > to) [f, to] = [to, f]; return [f, to]; }
+    default: return [iso(t), iso(t)];
+  }
+}
+
+// ----- جلب كل الصفوف (Supabase يرجع 1000 صف كحد أقصى في الطلب الواحد) -----
+async function all(build) {
+  let out = [], from = 0;
+  for (;;) {
+    const { data, error } = await build().range(from, from + 999);
+    if (error) throw error;
+    out = out.concat(data || []);
+    if (!data || data.length < 1000) return out;
+    from += 1000;
+  }
+}
+
+// =====================================================================
+//  الدخول
+// =====================================================================
+$("loginForm").onsubmit = async e => {
+  e.preventDefault();
+  $("loginMsg").textContent = "";
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  if (error) { $("loginMsg").textContent = "البريد أو كلمة المرور غير صحيحة"; return; }
+  start();
+};
+$("forgot").onclick = async () => {
+  const email = $("email").value.trim();
+  if (!email) { $("loginMsg").textContent = "اكتب بريدك أولاً"; return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+  $("loginMsg").style.color = error ? "var(--red)" : "var(--green)";
+  $("loginMsg").textContent = error ? "تعذر الإرسال: " + error.message : "أُرسل رابط تعيين كلمة المرور إلى بريدك";
+};
+$("logout").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+$("changePwd").onclick = () => setNewPassword(false);
+
+async function setNewPassword(required) {
+  const p1 = prompt(required ? "اختر كلمة مرور جديدة (8 أحرف على الأقل):" : "كلمة المرور الجديدة (8 أحرف على الأقل):");
+  if (!p1) return;
+  if (p1.length < 8) { alert("كلمة المرور قصيرة"); return; }
+  const p2 = prompt("أعد كتابة كلمة المرور:");
+  if (p1 !== p2) { alert("كلمتا المرور غير متطابقتين"); return; }
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  alert(error ? "تعذر التغيير: " + error.message : "✔ تم تغيير كلمة المرور");
+}
+
+sb.auth.onAuthStateChange((event) => { if (event === "PASSWORD_RECOVERY") setTimeout(() => setNewPassword(true), 300); });
+
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $("login").classList.remove("hidden"); $("app").classList.add("hidden"); return; }
+  const { data: me } = await sb.from("managers").select("full_name").eq("email", session.user.email).maybeSingle();
+  if (!me) {
+    $("login").classList.remove("hidden"); $("app").classList.add("hidden");
+    $("loginMsg").textContent = "هذا الحساب غير مسجل كمدير. تواصل مع الإدارة.";
+    await sb.auth.signOut();
+    return;
+  }
+  $("who").textContent = "• " + me.full_name;
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  load();
+  clearInterval(refreshTimer);
+  refreshTimer = setInterval(load, 60000);
+}
+
+// ----- الفترات -----
+document.querySelectorAll("#periods .chip").forEach(b => b.onclick = () => {
+  document.querySelectorAll("#periods .chip").forEach(x => x.classList.toggle("on", x === b));
+  period = b.dataset.p;
+  $("customBox").classList.toggle("hidden", period !== "custom");
+  if (period === "custom" && !$("from").value) { $("from").value = $("to").value = iso(businessToday()); }
+  load();
+});
+$("from").onchange = $("to").onchange = () => load();
+$("refresh").onclick = () => load();
+
+// =====================================================================
+//  التحميل والعرض
+// =====================================================================
+let loadingNow = false;
+async function load() {
+  if (loadingNow) return;
+  loadingNow = true;
+  $("loading").classList.remove("hidden");
+  const [f, t] = range();
+  try {
+    const [days, items, hours, types, rets, exps, shifts, stock, sups, recent, sync] = await Promise.all([
+      all(() => sb.from("v_daily_summary").select("*").gte("business_date", f).lte("business_date", t).order("business_date")),
+      all(() => sb.from("v_item_sales").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("v_hourly_sales").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("v_order_types").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("returns").select("*").gte("business_date", f).lte("business_date", t).order("return_id", { ascending: false })),
+      all(() => sb.from("expenses").select("*").gte("expense_date", f).lt("expense_date", nextDay(t)).order("expense_id", { ascending: false })),
+      all(() => sb.from("v_shifts").select("*").gte("opened_at", f).lt("opened_at", nextDay(t)).order("shift_id", { ascending: false })),
+      all(() => sb.from("stock_snapshot").select("*").order("item_type").order("item_name")),
+      all(() => sb.from("v_supplier_balances").select("*").order("balance", { ascending: false })),
+      sb.from("orders").select("order_id,daily_no,business_date,order_date,customer_name,order_type,payment_type,total,cashier,edited_at").gte("business_date", f).lte("business_date", t).order("order_id", { ascending: false }).limit(60),
+      sb.from("sync_status").select("*").order("last_sync", { ascending: false }).limit(1)
+    ]);
+    renderSync(sync.data && sync.data[0]);
+    renderKpis(days, rets, exps);
+    renderDays(days);
+    renderHours(hours);
+    renderItems(items);
+    renderPay(days, types);
+    renderOrders(recent.data || []);
+    renderShifts(shifts);
+    renderReturns(rets);
+    renderExpenses(exps);
+    renderStock(stock);
+    renderSuppliers(sups);
+  } catch (e) {
+    console.error(e);
+    $("sync").textContent = "⚠ تعذر التحميل";
+    $("sync").classList.add("warn");
+  } finally {
+    loadingNow = false;
+    $("loading").classList.add("hidden");
+  }
+}
+function nextDay(d) { const x = new Date(d + "T00:00:00"); x.setDate(x.getDate() + 1); return iso(x); }
+const sum = (arr, k) => arr.reduce((s, r) => s + Number(r[k] || 0), 0);
+
+function renderSync(s) {
+  const el = $("sync");
+  if (!s) { el.textContent = "لم تصل بيانات من المطعم بعد"; el.classList.add("warn"); return; }
+  const mins = Math.round((Date.now() - new Date(s.last_sync).getTime()) / 60000);
+  el.textContent = mins <= 2 ? "● متصل الآن" : "آخر تحديث من المطعم قبل " + (mins < 60 ? mins + " دقيقة" : Math.round(mins / 60) + " ساعة");
+  el.classList.toggle("warn", mins > 10);
+}
+
+function renderKpis(days, rets, exps) {
+  const total = sum(days, "total"), orders = sum(days, "orders_count"), ret = sum(rets, "amount"), exp = sum(exps, "amount");
+  const k = [
+    ["إجمالي المبيعات", fmt(total), "main"],
+    ["عدد الطلبات", orders.toLocaleString("en-US")],
+    ["متوسط الطلب", fmt(orders ? total / orders : 0)],
+    ["💵 نقدي", fmt(sum(days, "cash"))],
+    ["💳 شبكة", fmt(sum(days, "network"))],
+    ["الخصومات", fmt(sum(days, "discounts"))],
+    ["↩ المرتجعات", fmt(ret)],
+    ["المصروفات", fmt(exp)],
+    ["الصافي", fmt(total - ret - exp)]
+  ];
+  $("kpis").innerHTML = k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+}
+
+function chartColors() {
+  const cs = getComputedStyle(document.documentElement);
+  return { text: cs.getPropertyValue("--muted").trim(), line: cs.getPropertyValue("--line").trim() };
+}
+function draw(id, cfg) {
+  if (charts[id]) charts[id].destroy();
+  const c = chartColors();
+  cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: c.text, font: { family: "Tajawal" } } } },
+    scales: cfg.type === "doughnut" ? {} : { x: { ticks: { color: c.text }, grid: { color: c.line } }, y: { ticks: { color: c.text }, grid: { color: c.line }, beginAtZero: true } } }, cfg.options || {});
+  charts[id] = new Chart($(id), cfg);
+}
+function renderDays(days) {
+  draw("chDays", { type: "bar", data: { labels: days.map(d => d.business_date.slice(5)), datasets: [
+    { label: "المبيعات", data: days.map(d => d.total), backgroundColor: "#2980b9", borderRadius: 6 }] },
+    options: { plugins: { legend: { display: false } } } });
+}
+function renderHours(rows) {
+  const h = Array(24).fill(0);
+  rows.forEach(r => h[r.hour] += Number(r.total || 0));
+  const first = h.findIndex(v => v > 0), last = 23 - [...h].reverse().findIndex(v => v > 0);
+  const from = first < 0 ? 10 : first, to = first < 0 ? 23 : last;
+  const labels = [], data = [];
+  for (let i = from; i <= to; i++) { labels.push(i + ":00"); data.push(h[i]); }
+  draw("chHours", { type: "line", data: { labels, datasets: [{ label: "المبيعات", data, borderColor: "#e67e22", backgroundColor: "rgba(230,126,34,.15)", fill: true, tension: .35 }] },
+    options: { plugins: { legend: { display: false } } } });
+}
+function renderItems(items) {
+  const byItem = {}, byCat = {};
+  items.forEach(r => {
+    const a = byItem[r.product_name] ||= { q: 0, t: 0 }; a.q += Number(r.quantity); a.t += Number(r.total);
+    const c = byCat[r.category || "غير مصنف"] ||= { q: 0, t: 0 }; c.q += Number(r.quantity); c.t += Number(r.total);
+  });
+  const list = Object.entries(byItem).sort((a, b) => b[1].t - a[1].t);
+  $("itemsCount").textContent = list.length + " صنف";
+  $("tblItems").innerHTML = table(["الصنف", "الكمية", "المبلغ"], list.map(([n, v]) => [esc(n), fmtQ(v.q), fmt(v.t)]), [1, 2]);
+  const cats = Object.entries(byCat).sort((a, b) => b[1].t - a[1].t), tot = cats.reduce((s, c) => s + c[1].t, 0) || 1;
+  $("tblCats").innerHTML = table(["المجموعة", "المبلغ", "النسبة"], cats.map(([n, v]) => [esc(n), fmt(v.t), (v.t * 100 / tot).toFixed(1) + "%"]), [1, 2]);
+}
+function renderPay(days, types) {
+  const cash = sum(days, "cash"), net = sum(days, "network"), other = sum(days, "other");
+  draw("chPay", { type: "doughnut", data: { labels: ["نقدي", "شبكة", "أخرى"], datasets: [{ data: [cash, net, other], backgroundColor: ["#27ae60", "#2980b9", "#f39c12"] }] } });
+  const t = {};
+  types.forEach(r => { const a = t[r.order_type] ||= { c: 0, s: 0 }; a.c += Number(r.orders_count); a.s += Number(r.total); });
+  $("tblTypes").innerHTML = table(["نوع الطلب", "العدد", "المبلغ"], Object.entries(t).map(([n, v]) => [esc(n), v.c, fmt(v.s)]), [1, 2]);
+}
+function renderOrders(rows) {
+  if (!rows.length) { $("tblOrders").innerHTML = '<div class="empty">لا توجد طلبات في هذه الفترة</div>'; return; }
+  $("tblOrders").innerHTML = `<table><tr><th>#</th><th>الوقت</th><th>العميل</th><th>الدفع</th><th>المبلغ</th></tr>` +
+    rows.map(o => `<tr class="click" data-id="${o.order_id}"><td>${o.daily_no}${o.edited_at ? ' <span class="tag amber">معدّل</span>' : ""}</td>
+      <td class="n">${esc((o.order_date || "").slice(5, 16))}</td><td>${esc(o.customer_name)}</td><td>${esc(o.payment_type)}</td><td class="n">${fmt(o.total)}</td></tr>`).join("") + "</table>";
+  $("tblOrders").querySelectorAll("tr.click").forEach(tr => tr.onclick = () => showOrder(tr.dataset.id, rows.find(o => o.order_id == tr.dataset.id)));
+}
+async function showOrder(id, o) {
+  const { data } = await sb.from("order_items").select("*").eq("order_id", id).order("line_no");
+  $("dlgTitle").textContent = `طلب #${o.daily_no} • ${o.business_date}`;
+  $("dlgBody").innerHTML = `<p>${esc(o.customer_name)} • ${esc(o.order_type || "")} • ${esc(o.payment_type)} • الكاشير: ${esc(o.cashier)}</p>` +
+    table(["الصنف", "الكمية", "الطهي", "المبلغ"], (data || []).map(i => [esc(i.product_name), fmtQ(i.quantity), esc(i.notes), fmt(i.total)]), [1, 3]) +
+    `<p style="font-weight:800;font-size:1.1rem">الإجمالي: ${fmt(o.total)} ر.س</p>`;
+  $("dlg").showModal();
+}
+function renderShifts(rows) {
+  $("tblShifts").innerHTML = table(["#", "الكاشير", "البداية", "المبيعات", "الفرق"], rows.map(s => {
+    const d = s.difference == null ? (s.closed_at ? "—" : '<span class="tag green">مفتوحة</span>')
+      : Number(s.difference) === 0 ? '<span class="tag green">مطابق</span>'
+      : `<span class="tag ${s.difference < 0 ? "red" : "amber"}">${s.difference < 0 ? "عجز" : "زيادة"} ${fmt(Math.abs(s.difference))}</span>`;
+    return [s.shift_id, esc(s.cashier), esc((s.opened_at || "").replace("T", " ").slice(5, 16)), fmt(s.sales), d];
+  }), [3]);
+}
+function renderReturns(rows) {
+  $("tblReturns").innerHTML = table(["الطلب", "السبب", "الرد", "المبلغ"], rows.map(r => ["#" + esc(r.order_no), esc(r.reason), esc(r.refund_method), fmt(r.amount)]), [3]);
+}
+function renderExpenses(rows) {
+  $("tblExpenses").innerHTML = table(["البيان", "التاريخ", "المبلغ"], rows.map(e => [esc(e.description), esc((e.expense_date || "").slice(5, 16)), fmt(e.amount)]), [1, 2]);
+}
+function renderStock(rows) {
+  rows.sort((a, b) => low(b) - low(a));
+  $("tblStock").innerHTML = table(["الصنف", "النوع", "الرصيد", "الحالة"], rows.map(s => [esc(s.item_name), esc(s.item_type), fmtQ(s.balance) + " " + esc(s.unit),
+    low(s) ? '<span class="tag red">⚠ منخفض</span>' : '<span class="tag green">✔</span>']), [2]);
+}
+function low(s) { return Number(s.balance) < 0 || (Number(s.min_stock) > 0 && Number(s.balance) <= Number(s.min_stock)) ? 1 : 0; }
+function renderSuppliers(rows) {
+  $("tblSuppliers").innerHTML = table(["المورد", "الجوال", "المستحق له"], rows.map(s => [esc(s.name), esc(s.phone), fmt(s.balance)]), [1, 2]);
+}
+function table(head, rows, numCols) {
+  if (!rows.length) return '<div class="empty">لا توجد بيانات</div>';
+  return "<table><tr>" + head.map(h => `<th>${h}</th>`).join("") + "</tr>" +
+    rows.map(r => "<tr>" + r.map((c, i) => `<td${numCols.includes(i) ? ' class="n"' : ""}>${c}</td>`).join("") + "</tr>").join("") + "</table>";
+}
+
+start();
+</script>
+</body>
+</html>
