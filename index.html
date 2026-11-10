@@ -81,6 +81,35 @@
   .empty { color: var(--muted); text-align: center; padding: 18px 0; }
   .loading { position: fixed; bottom: 16px; left: 16px; background: var(--navy); color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: 700; }
 
+  /* ----- الأقسام ----- */
+  nav.tabs { position: sticky; top: 52px; z-index: 9; background: var(--card); border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; padding: 6px 12px; }
+  nav.tabs button { flex: none; border: 0; background: transparent; color: var(--muted); font-weight: 800; padding: 9px 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+  nav.tabs button.on { background: var(--navy); color: #fff; }
+  nav.tabs button .badge { background: var(--red); color: #fff; border-radius: 10px; padding: 0 7px; font-size: .75rem; margin-inline-start: 4px; }
+  .view { display: none; } .view.on { display: block; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .toolbar input[type=search], .toolbar select, .fld { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 8px 10px; }
+  .btn.sm { padding: 8px 12px; font-size: .9rem; }
+  .btn.green { background: var(--green); } .btn.red { background: var(--red); } .btn.amber { background: var(--amber); color: #222; } .btn.gray { background: #95a5a6; }
+  input.price { width: 96px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px; direction: ltr; text-align: left; font-weight: 700; }
+  input.price.changed, input.txt.changed { border-color: var(--amber); background: #fff7e6; color: #222; }
+  input.txt { width: 100%; min-width: 120px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px; }
+  tr.size td:first-child { padding-inline-start: 26px; color: var(--muted); }
+  tr.off td { opacity: .55; }
+  .switch { position: relative; width: 44px; height: 24px; display: inline-block; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch span { position: absolute; inset: 0; background: #c3ccd6; border-radius: 24px; cursor: pointer; transition: .2s; }
+  .switch span:before { content: ""; position: absolute; width: 18px; height: 18px; right: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  .switch input:checked + span { background: var(--green); }
+  .switch input:checked + span:before { transform: translateX(-20px); }
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .form label { display: block; font-weight: 700; font-size: .9rem; margin-bottom: 4px; }
+  .form .full { grid-column: 1 / -1; }
+  .form input, .form select { width: 100%; }
+  .toast { position: fixed; bottom: 18px; right: 50%; transform: translateX(50%); background: #1f2d3d; color: #fff; padding: 10px 18px; border-radius: 12px; font-weight: 700; z-index: 50; max-width: 92vw; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+  .status-card { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .note { color: var(--muted); font-size: .88rem; line-height: 1.7; }
+  @media (max-width: 640px) { .form { grid-template-columns: 1fr; } nav.tabs { top: 0; position: relative; } .hm { display: none; } input.txt { min-width: 0; } }
   dialog { border: 0; border-radius: 14px; padding: 0; width: min(560px, 94vw); background: var(--card); color: var(--text); }
   dialog::backdrop { background: rgba(0,0,0,.45); }
   dialog .head { background: var(--navy); color: #fff; padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
@@ -118,6 +147,16 @@
     <button id="logout">خروج</button>
   </header>
 
+  <nav class="tabs" id="tabs">
+    <button data-v="reports" class="on">📊 التقارير</button>
+    <button data-v="products">🍽 الأصناف والأسعار</button>
+    <button data-v="offers">🎁 العروض والكوبونات</button>
+    <button data-v="expense">💸 مصروف</button>
+    <button data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
+    <button data-v="log">📨 سجل التعديلات <span class="badge hidden" id="pendingBadge"></span></button>
+  </nav>
+
+  <section class="view on" id="v-reports">
   <div class="bar" id="periods">
     <button class="chip on" data-p="today">اليوم</button>
     <button class="chip" data-p="yesterday">أمس</button>
@@ -159,10 +198,80 @@
       <div class="card"><h2>أرصدة الموردين</h2><div class="scroll" id="tblSuppliers"></div></div>
     </div>
   </main>
+  </section>
+
+  <!-- ================= الأصناف والأسعار ================= -->
+  <section class="view" id="v-products"><main>
+    <div class="card">
+      <h2>🍽 الأصناف والأسعار <span class="tag" id="prodCount"></span></h2>
+      <p class="note">عدّل السعر أو الاسم أو أوقف الصنف ثم اضغط <b>حفظ التغييرات</b> — يصل التعديل لبرنامج الكاشير خلال ثوانٍ (وإن كان الإنترنت مقطوعاً في المطعم يُطبق عند عودته).</p>
+      <div class="toolbar">
+        <select id="pCat"></select>
+        <input type="search" id="pSearch" placeholder="🔍 بحث عن صنف">
+        <button class="btn sm green" id="pSave">💾 حفظ التغييرات <span id="pChanged"></span></button>
+        <button class="btn sm" id="pBulk">٪ تغيير جماعي للأسعار</button>
+        <button class="btn sm ghost" id="pNew">➕ صنف جديد</button>
+      </div>
+      <div class="scroll" style="max-height:none" id="tblProducts"></div>
+    </div>
+  </main></section>
+
+  <!-- ================= العروض والكوبونات ================= -->
+  <section class="view" id="v-offers"><main>
+    <div class="grid">
+      <div class="card"><h2>🎁 العروض</h2><p class="note">غيّر سعر العرض أو أوقفه/فعّله.</p><div class="scroll" id="tblOffers"></div></div>
+      <div class="card"><h2>🎟 الكوبونات <button class="btn sm" id="cNew">➕ كوبون</button></h2><div class="scroll" id="tblCoupons"></div></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>⚙ تشغيل الميزات التسويقية</h2>
+      <div class="toolbar" id="featureToggles"></div>
+      <p class="note">التغيير يصل لبرنامج الكاشير خلال ثوانٍ.</p>
+    </div>
+  </main></section>
+
+  <!-- ================= مصروف ================= -->
+  <section class="view" id="v-expense"><main>
+    <div class="card" style="max-width:640px">
+      <h2>💸 تسجيل مصروف</h2>
+      <div class="form">
+        <div class="full"><label>البيان</label><input class="fld" id="eDesc" placeholder="مثال: غاز، صيانة، إعلان..."></div>
+        <div><label>المبلغ (ر.س)</label><input class="fld" id="eAmt" type="number" step="0.01" min="0" inputmode="decimal"></div>
+        <div><label>&nbsp;</label><label style="font-weight:600"><input type="checkbox" id="eVat"> شامل ضريبة (فاتورة ضريبية)</label></div>
+        <div class="full"><button class="btn green" id="eSave">💾 حفظ المصروف</button></div>
+      </div>
+      <p class="note">يُسجل المصروف في برنامج الكاشير باسمك، ويُوجّه للحساب المناسب في الحسابات حسب البيان (لا يُخصم من درج الكاشير، بل يظهر في الحسابات).</p>
+    </div>
+  </main></section>
+
+  <!-- ================= متجر زد ================= -->
+  <section class="view" id="v-zid"><main>
+    <div class="card">
+      <h2>🛒 متجر زد — ghawisamak.com</h2>
+      <div class="status-card" id="zidStatus"></div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="btn" id="zConnect">🔗 ربط / إعادة ربط المتجر</button>
+        <button class="btn green" id="zPushAll">📤 إرسال كل الأسعار للمتجر</button>
+        <button class="btn ghost" id="zReload">⟳ تحديث</button>
+      </div>
+      <p class="note" id="zidNote"></p>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>طلبات المتجر</h2><div class="scroll" id="tblZidOrders"></div></div>
+      <div class="card"><h2>ربط منتجات المتجر بأصناف البرنامج <span class="tag red hidden" id="unmappedTag"></span></h2>
+        <p class="note">كل منتج في المتجر يجب ربطه بصنفه في البرنامج حتى يظهر باسمه في المطبخ وتُرسل أسعاره. المنتجات الجديدة تظهر هنا تلقائياً مع أول طلب.</p>
+        <div class="scroll" id="tblZidMap"></div></div>
+    </div>
+  </main></section>
+
+  <!-- ================= سجل التعديلات ================= -->
+  <section class="view" id="v-log"><main>
+    <div class="card"><h2>📨 التعديلات المرسلة لبرنامج الكاشير</h2><div class="scroll" style="max-height:none" id="tblLog"></div></div>
+  </main></section>
 </section>
 
 <dialog id="dlg"><div class="head"><span id="dlgTitle"></span><button class="x" onclick="document.getElementById('dlg').close()">×</button></div><div class="body" id="dlgBody"></div></dialog>
 <div class="loading hidden" id="loading">جاري التحميل…</div>
+<div class="toast hidden" id="toast"></div>
 
 <script>
 // =====================================================================
@@ -262,9 +371,13 @@ async function start() {
   $("who").textContent = "• " + me.full_name;
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
-  load();
+  myEmail = session.user.email;
+  let v = "reports";
+  try { v = localStorage.getItem("gs-view") || "reports"; } catch (e) {}
+  showView(v);
+  updatePendingBadge();
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(load, 60000);
+  refreshTimer = setInterval(() => { if (view === "reports") load(); else if (view === "zid") loadZid(); updatePendingBadge(); }, 60000);
 }
 
 // ----- الفترات -----
@@ -437,6 +550,322 @@ function table(head, rows, numCols) {
   return "<table><tr>" + head.map(h => `<th>${h}</th>`).join("") + "</tr>" +
     rows.map(r => "<tr>" + r.map((c, i) => `<td${numCols.includes(i) ? ' class="n"' : ""}>${c}</td>`).join("") + "</tr>").join("") + "</table>";
 }
+
+// =====================================================================
+//  الأقسام والتعديل من الموقع
+// =====================================================================
+let view = "reports", catalog = null, sessionToken = "", myEmail = "";
+function toast(msg, ms = 3500) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add("hidden"), ms); }
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showView(b.dataset.v));
+function showView(v) {
+  view = v;
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x.dataset.v === v));
+  document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + v));
+  if (v === "reports") load();
+  if (v === "products") loadProducts();
+  if (v === "offers") loadOffers();
+  if (v === "zid") loadZid();
+  if (v === "log") loadLog();
+  try { localStorage.setItem("gs-view", v); } catch (e) {}
+}
+
+// ----- إرسال أمر للبرنامج ومتابعة تطبيقه -----
+const watching = new Map();
+async function send(list) {
+  const rows = (Array.isArray(list) ? list : [list]).map(c => ({ kind: c.kind, payload: c.payload }));
+  const { data, error } = await sb.from("pos_commands").insert(rows).select("id");
+  if (error) { toast("⚠ تعذر الإرسال: " + error.message, 6000); return false; }
+  data.forEach(d => watching.set(d.id, true));
+  toast(`⏳ أُرسل ${rows.length > 1 ? rows.length + " تعديلات" : "التعديل"} لبرنامج الكاشير… يُطبق خلال ثوانٍ`);
+  watchCommands();
+  return true;
+}
+let watchTimer = null;
+function watchCommands() {
+  clearTimeout(watchTimer);
+  if (!watching.size) { updatePendingBadge(); return; }
+  watchTimer = setTimeout(async () => {
+    const ids = [...watching.keys()];
+    const { data } = await sb.from("pos_commands").select("id,status,result").in("id", ids);
+    let doneAny = false;
+    (data || []).forEach(c => {
+      if (c.status === "pending") return;
+      watching.delete(c.id);
+      doneAny = true;
+      toast((c.status === "done" ? "✔ طُبّق في البرنامج: " : "⚠ لم يُطبق: ") + (c.result || ""), 5000);
+    });
+    if (doneAny) { if (view === "products") loadProducts(); if (view === "offers") loadOffers(); if (view === "log") loadLog(); }
+    updatePendingBadge();
+    watchCommands();
+  }, 4000);
+}
+async function updatePendingBadge() {
+  const { count } = await sb.from("pos_commands").select("id", { count: "exact", head: true }).eq("status", "pending");
+  $("pendingBadge").textContent = count || "";
+  $("pendingBadge").classList.toggle("hidden", !count);
+}
+
+// =====================================================================
+//  الأصناف والأسعار
+// =====================================================================
+async function loadCatalog() {
+  const [cats, prods, sizes] = await Promise.all([
+    all(() => sb.from("categories").select("*").order("sort_order")),
+    all(() => sb.from("products").select("*").order("sort_order")),
+    all(() => sb.from("product_sizes").select("*").order("sort_order"))
+  ]);
+  catalog = { cats, prods, sizes };
+  return catalog;
+}
+async function loadProducts() {
+  $("tblProducts").innerHTML = '<div class="empty">جاري التحميل…</div>';
+  try { await loadCatalog(); } catch (e) { $("tblProducts").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 03 في Supabase ثم انتظر مزامنة البرنامج</div>'; return; }
+  const sel = $("pCat"), keep = sel.value;
+  sel.innerHTML = '<option value="">كل المجموعات</option>' + catalog.cats.map(c => `<option value="${c.category_id}">${esc(c.name)}</option>`).join("");
+  sel.value = keep;
+  renderProducts();
+}
+function renderProducts() {
+  if (!catalog) return;
+  const cat = $("pCat").value, q = $("pSearch").value.trim().toLowerCase();
+  const list = catalog.prods.filter(p => (!cat || String(p.category_id) === cat) && (!q || (p.name_ar || "").toLowerCase().includes(q) || (p.name_en || "").toLowerCase().includes(q)));
+  $("prodCount").textContent = list.length + " صنف";
+  if (!list.length) { $("tblProducts").innerHTML = '<div class="empty">لا توجد أصناف (تظهر بعد أول مزامنة من البرنامج)</div>'; return; }
+  const catName = id => (catalog.cats.find(c => c.category_id === id) || {}).name || "";
+  let h = '<table><tr><th>الصنف</th><th class="hm">بالإنجليزية</th><th class="hm">المجموعة</th><th>السعر</th><th>متاح</th></tr>';
+  for (const p of list) {
+    h += `<tr class="${p.is_active ? "" : "off"}" data-p="${p.product_id}">
+      <td><input class="txt" data-f="name_ar" value="${esc(p.name_ar)}" data-o="${esc(p.name_ar)}"></td>
+      <td class="hm"><input class="txt" data-f="name_en" value="${esc(p.name_en || "")}" data-o="${esc(p.name_en || "")}" dir="ltr"></td>
+      <td class="hm">${esc(catName(p.category_id))}${p.is_weighted ? ' <span class="tag">⚖ بالكيلو</span>' : ""}</td>
+      <td><input class="price" data-f="price" type="number" step="0.5" min="0" value="${Number(p.price)}" data-o="${Number(p.price)}"></td>
+      <td><label class="switch"><input type="checkbox" data-f="is_active" ${p.is_active ? "checked" : ""} data-o="${p.is_active ? 1 : 0}"><span></span></label></td></tr>`;
+    for (const s of catalog.sizes.filter(s => s.product_id === p.product_id))
+      h += `<tr class="size" data-s="${p.product_id}" data-n="${esc(s.size_name)}"><td>↳ ${esc(s.size_name)}</td><td class="hm"></td><td class="hm"></td>
+        <td><input class="price" data-f="price" type="number" step="0.5" min="0" value="${Number(s.price)}" data-o="${Number(s.price)}"></td><td></td></tr>`;
+  }
+  $("tblProducts").innerHTML = h + "</table>";
+  $("tblProducts").querySelectorAll("input").forEach(i => i.oninput = i.onchange = () => { markChanged(i); countChanges(); });
+  countChanges();
+}
+function valOf(i) { return i.type === "checkbox" ? (i.checked ? "1" : "0") : i.value.trim(); }
+function markChanged(i) { const ch = valOf(i) !== String(i.dataset.o); i.classList.toggle("changed", ch); return ch; }
+function countChanges() {
+  const n = [...$("tblProducts").querySelectorAll("input")].filter(i => valOf(i) !== String(i.dataset.o)).length;
+  $("pChanged").textContent = n ? `(${n})` : "";
+}
+$("pCat").onchange = renderProducts;
+$("pSearch").oninput = renderProducts;
+$("pSave").onclick = async () => {
+  const cmds = [];
+  $("tblProducts").querySelectorAll("tr[data-p]").forEach(tr => {
+    const payload = { product_id: Number(tr.dataset.p) };
+    let any = false;
+    tr.querySelectorAll("input").forEach(i => {
+      if (valOf(i) === String(i.dataset.o)) return;
+      any = true;
+      payload[i.dataset.f] = i.dataset.f === "price" ? Number(i.value) : i.dataset.f === "is_active" ? i.checked : i.value.trim();
+    });
+    if (any) cmds.push({ kind: "product.update", payload });
+  });
+  $("tblProducts").querySelectorAll("tr[data-s]").forEach(tr => {
+    const i = tr.querySelector("input");
+    if (valOf(i) !== String(i.dataset.o)) cmds.push({ kind: "size.update", payload: { product_id: Number(tr.dataset.s), size_name: tr.dataset.n, price: Number(i.value) } });
+  });
+  if (!cmds.length) { toast("لا توجد تغييرات"); return; }
+  if (cmds.some(c => c.payload.price !== undefined && (isNaN(c.payload.price) || c.payload.price < 0))) { toast("⚠ يوجد سعر غير صحيح"); return; }
+  if (await send(cmds)) $("tblProducts").querySelectorAll("input.changed").forEach(i => { i.dataset.o = valOf(i); i.classList.remove("changed"); countChanges(); });
+};
+$("pBulk").onclick = () => {
+  if (!catalog) return;
+  openDlg("٪ تغيير جماعي للأسعار", `<div class="form">
+    <div class="full"><label>المجموعة</label><select class="fld" id="bCat"><option value="0">كل الأصناف</option>${catalog.cats.map(c => `<option value="${c.category_id}">${esc(c.name)}</option>`).join("")}</select></div>
+    <div><label>نوع التغيير</label><select class="fld" id="bMode"><option value="pct">نسبة %</option><option value="amount">مبلغ ثابت ر.س</option></select></div>
+    <div><label>القيمة (سالبة للتخفيض)</label><input class="fld" id="bVal" type="number" step="0.5" value="5"></div>
+    <div><label>التقريب</label><select class="fld" id="bRound"><option value="0">بدون</option><option value="0.5">لأقرب نصف ريال</option><option value="1" selected>لأقرب ريال</option><option value="5">لأقرب 5 ريال</option></select></div>
+    <div><label>&nbsp;</label><label style="font-weight:600"><input type="checkbox" id="bSizes" checked> يشمل أسعار الأحجام</label></div>
+    <div class="full"><button class="btn green" id="bOk">✔ تطبيق</button></div></div>`);
+  $("bOk").onclick = async () => {
+    const v = Number($("bVal").value);
+    if (!v) { toast("أدخل القيمة"); return; }
+    const scope = $("bCat").selectedOptions[0].text;
+    if (!confirm(`تغيير أسعار (${scope}) بـ ${v}${$("bMode").value === "pct" ? "%" : " ر.س"}؟`)) return;
+    if (await send({ kind: "price.bulk", payload: { category_id: Number($("bCat").value), mode: $("bMode").value, value: v, round: Number($("bRound").value), include_sizes: $("bSizes").checked } })) $("dlg").close();
+  };
+};
+$("pNew").onclick = () => {
+  if (!catalog) return;
+  openDlg("➕ صنف جديد", `<div class="form">
+    <div class="full"><label>اسم الصنف</label><input class="fld" id="nName"></div>
+    <div><label>بالإنجليزية</label><input class="fld" id="nEn" dir="ltr"></div>
+    <div><label>المجموعة</label><select class="fld" id="nCat">${catalog.cats.map(c => `<option value="${c.category_id}">${esc(c.name)}</option>`).join("")}</select></div>
+    <div><label>السعر (شامل الضريبة)</label><input class="fld" id="nPrice" type="number" step="0.5" min="0"></div>
+    <div><label>&nbsp;</label><label style="font-weight:600"><input type="checkbox" id="nW"> يباع بالكيلو (السعر لكل كجم)</label></div>
+    <div class="full"><button class="btn green" id="nOk">✔ إضافة</button></div></div>`);
+  $("nOk").onclick = async () => {
+    const name = $("nName").value.trim(), price = Number($("nPrice").value);
+    if (!name || !(price >= 0)) { toast("أدخل الاسم والسعر"); return; }
+    if (await send({ kind: "product.create", payload: { name_ar: name, name_en: $("nEn").value.trim(), category_id: Number($("nCat").value), price, is_weighted: $("nW").checked } })) $("dlg").close();
+  };
+};
+
+// =====================================================================
+//  العروض والكوبونات والميزات
+// =====================================================================
+const FEATURES = [["CouponsEnabled", "🎟 الكوبونات"], ["LoyaltyEnabled", "⭐ نقاط الولاء"], ["ReferralEnabled", "🤝 ادعُ صديقاً"], ["DailyOfferEnabled", "🍽 وجبة اليوم"], ["ReviewQrEnabled", "⭐ QR التقييم في الفاتورة"]];
+async function loadOffers() {
+  let offers, coupons;
+  try {
+    [offers, coupons] = await Promise.all([all(() => sb.from("offers").select("*").order("offer_id", { ascending: false })), all(() => sb.from("coupons").select("*").order("code"))]);
+  } catch (e) { $("tblOffers").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 03</div>'; return; }
+  const typeName = t => ({ D: "يومي", W: "أسبوعي", M: "شهري" }[t] || t || "");
+  $("tblOffers").innerHTML = offers.length ? "<table><tr><th>العرض</th><th>النوع</th><th>السعر</th><th>مفعل</th><th></th></tr>" + offers.map(o => `<tr class="${o.is_active ? "" : "off"}" data-o="${o.offer_id}">
+      <td><b>${esc(o.title || "")}</b><br><small class="note">${esc(o.items_text || "")}${o.end_date ? " • حتى " + esc(o.end_date) : ""}</small></td><td>${typeName(o.offer_type)}</td>
+      <td><input class="price" type="number" step="0.5" value="${Number(o.price)}" data-o="${Number(o.price)}"></td>
+      <td><label class="switch"><input type="checkbox" ${o.is_active ? "checked" : ""}><span></span></label></td>
+      <td><button class="btn sm" data-save>حفظ</button></td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد عروض</div>';
+  $("tblOffers").querySelectorAll("tr[data-o]").forEach(tr => {
+    tr.querySelector("[data-save]").onclick = () => {
+      const price = Number(tr.querySelector(".price").value), active = tr.querySelector("input[type=checkbox]").checked;
+      send({ kind: "offer.update", payload: { offer_id: Number(tr.dataset.o), price, is_active: active } });
+    };
+  });
+  $("tblCoupons").innerHTML = coupons.length ? "<table><tr><th>الكود</th><th>الخصم</th><th>الحد الأدنى</th><th>الاستخدام</th><th>مفعل</th></tr>" + coupons.map(c => `<tr class="${c.is_active ? "" : "off"}">
+      <td><b dir="ltr">${esc(c.code)}</b><br><small class="note">${esc(c.title || "")}${c.end_date ? " • حتى " + esc(c.end_date) : ""}</small></td>
+      <td class="n">${c.discount_type === "P" ? fmtQ(c.value) + "%" : fmt(c.value)}${Number(c.max_discount) > 0 ? " (حد " + fmt(c.max_discount) + ")" : ""}</td>
+      <td class="n">${fmt(c.min_order)}</td><td class="n">${c.uses}${c.max_uses ? " / " + c.max_uses : ""}</td>
+      <td><label class="switch"><input type="checkbox" data-code="${esc(c.code)}" ${c.is_active ? "checked" : ""}><span></span></label></td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد كوبونات</div>';
+  $("tblCoupons").querySelectorAll("input[data-code]").forEach(i => i.onchange = () => send({ kind: "coupon.toggle", payload: { code: i.dataset.code, is_active: i.checked } }));
+  $("featureToggles").innerHTML = FEATURES.map(([k, n]) => `<button class="chip" data-k="${k}">${n}: تشغيل</button><button class="chip" data-k="${k}" data-off="1">إيقاف</button>`).join(" &nbsp; ");
+  $("featureToggles").querySelectorAll("button").forEach(b => b.onclick = () => send({ kind: "setting.set", payload: { key: b.dataset.k, value: b.dataset.off ? "0" : "1" } }));
+}
+$("cNew").onclick = () => {
+  openDlg("🎟 كوبون جديد", `<div class="form">
+    <div><label>الكود</label><input class="fld" id="kCode" dir="ltr" style="text-transform:uppercase"></div>
+    <div><label>الوصف</label><input class="fld" id="kTitle"></div>
+    <div><label>نوع الخصم</label><select class="fld" id="kType"><option value="P">نسبة %</option><option value="A">مبلغ ثابت ر.س</option></select></div>
+    <div><label>القيمة</label><input class="fld" id="kVal" type="number" step="0.5" min="0"></div>
+    <div><label>الحد الأدنى للطلب</label><input class="fld" id="kMin" type="number" step="1" min="0" value="0"></div>
+    <div><label>أقصى خصم (للنسبة)</label><input class="fld" id="kMax" type="number" step="1" min="0" value="0"></div>
+    <div><label>ينتهي في</label><input class="fld" id="kEnd" type="date"></div>
+    <div><label>أقصى عدد استخدام (0 = مفتوح)</label><input class="fld" id="kUses" type="number" min="0" value="0"></div>
+    <div class="full"><button class="btn green" id="kOk">✔ إنشاء الكوبون</button></div></div>`);
+  $("kOk").onclick = async () => {
+    const code = $("kCode").value.trim().toUpperCase(), value = Number($("kVal").value);
+    if (code.length < 3 || !(value > 0)) { toast("أدخل الكود والقيمة"); return; }
+    if (await send({ kind: "coupon.upsert", payload: { code, title: $("kTitle").value.trim(), discount_type: $("kType").value, value, min_order: Number($("kMin").value || 0), max_discount: Number($("kMax").value || 0), end_date: $("kEnd").value || null, max_uses: Number($("kUses").value || 0), is_active: true } })) $("dlg").close();
+  };
+};
+
+// =====================================================================
+//  مصروف
+// =====================================================================
+$("eSave").onclick = async () => {
+  const description = $("eDesc").value.trim(), amount = Number($("eAmt").value);
+  if (!description || !(amount > 0)) { toast("أدخل البيان والمبلغ"); return; }
+  if (await send({ kind: "expense.add", payload: { description, amount, vat: $("eVat").checked } })) { $("eDesc").value = ""; $("eAmt").value = ""; $("eVat").checked = false; }
+};
+
+// =====================================================================
+//  متجر زد
+// =====================================================================
+const FN_URL = SUPABASE_URL + "/functions/v1/zid";
+async function fnCall(action) {
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(FN_URL + "?action=" + action, { method: action === "push" ? "POST" : "GET", headers: { Authorization: "Bearer " + session.access_token, apikey: SUPABASE_KEY } });
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(body.error || ("خطأ " + r.status));
+  return body;
+}
+let zidMap = [];
+async function loadZid() {
+  let st = null, orders = [], map = [];
+  try {
+    [st, orders, map] = await Promise.all([
+      sb.from("v_zid_status").select("*").maybeSingle().then(r => r.data),
+      all(() => sb.from("zid_orders").select("zid_id,code,received_at,zid_status,status,pos_order_no,error").order("received_at", { ascending: false }).limit(100)),
+      all(() => sb.from("zid_product_map").select("*").order("product_id", { nullsFirst: true }).order("zid_name"))
+    ]);
+    if (!catalog) await loadCatalog();
+  } catch (e) { $("zidStatus").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 03 في Supabase</div>'; return; }
+  zidMap = map;
+  const card = (l, v, c = "") => `<div class="kpi ${c}"><div class="l">${l}</div><div class="v" style="font-size:1.05rem;direction:rtl;text-align:right">${v}</div></div>`;
+  $("zidStatus").innerHTML = st
+    ? card("الحالة", st.store_id ? "✔ مربوط" : "⏳ لم يكتمل الربط", st.store_id ? "main" : "") + card("المتجر", esc(st.store_name || "—")) + card("استقبال الطلبات", st.webhook_ok ? "✔ مفعل" : "⚠ غير مفعل")
+      + card("طلبات بانتظار الكاشير", st.new_orders) + card("منتجات غير مربوطة", st.unmapped) + card("أسعار بانتظار الإرسال", st.pending_prices)
+    : card("الحالة", "غير مربوط بعد") ;
+  $("zidNote").innerHTML = st && st.last_error && !String(st.last_error).startsWith("state:") ? "⚠ آخر خطأ: " + esc(st.last_error) : "الطلبات الجديدة تصل لجهاز الكاشير خلال ثوانٍ وتُطبع في المطبخ. أي تغيير في أسعار البرنامج يُرسل للمتجر تلقائياً.";
+  const badge = (st && st.new_orders) || 0;
+  $("zidBadge").textContent = badge; $("zidBadge").classList.toggle("hidden", !badge);
+  const stName = s => ({ new: '<span class="tag amber">بانتظار الكاشير</span>', imported: '<span class="tag green">✔ وصل للكاشير</span>', failed: '<span class="tag red">⚠ فشل</span>', ignored: '<span class="tag">متجاهل</span>' }[s] || s);
+  $("tblZidOrders").innerHTML = orders.length ? "<table><tr><th>طلب زد</th><th>الوقت</th><th>الحالة</th><th>رقم الكاشير</th><th></th></tr>" + orders.map(o => `<tr>
+      <td><b dir="ltr">#${esc(o.code || o.zid_id)}</b>${o.error ? `<br><small class="note">${esc(o.error)}</small>` : ""}</td>
+      <td class="n">${esc(new Date(o.received_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
+      <td>${stName(o.status)}</td><td class="n">${o.pos_order_no || ""}</td>
+      <td>${o.status === "failed" || o.status === "ignored" ? `<button class="btn sm" data-retry="${esc(o.zid_id)}">إعادة</button>` : o.status === "new" ? `<button class="btn sm gray" data-ignore="${esc(o.zid_id)}">تجاهل</button>` : ""}</td></tr>`).join("") + "</table>"
+    : '<div class="empty">لا توجد طلبات من المتجر بعد</div>';
+  $("tblZidOrders").querySelectorAll("[data-retry]").forEach(b => b.onclick = async () => { await sb.from("zid_orders").update({ status: "new" }).eq("zid_id", b.dataset.retry); toast("⏳ سيعاد إرساله للكاشير"); loadZid(); });
+  $("tblZidOrders").querySelectorAll("[data-ignore]").forEach(b => b.onclick = async () => { if (!confirm("تجاهل هذا الطلب (لن يصل للكاشير)؟")) return; await sb.from("zid_orders").update({ status: "ignored" }).eq("zid_id", b.dataset.ignore); loadZid(); });
+
+  const options = ['<option value="">— غير مربوط —</option>'];
+  for (const p of catalog.prods.filter(p => p.is_active)) {
+    options.push(`<option value="${p.product_id}|">${esc(p.name_ar)} — ${fmtQ(p.price)}</option>`);
+    for (const s of catalog.sizes.filter(s => s.product_id === p.product_id)) options.push(`<option value="${p.product_id}|${esc(s.size_name)}">${esc(p.name_ar)} (${esc(s.size_name)}) — ${fmtQ(s.price)}</option>`);
+  }
+  const unm = map.filter(m => !m.product_id).length;
+  $("unmappedTag").textContent = unm + " غير مربوط"; $("unmappedTag").classList.toggle("hidden", !unm);
+  $("tblZidMap").innerHTML = map.length ? "<table><tr><th>منتج المتجر</th><th>صنف البرنامج</th></tr>" + map.map(m => `<tr>
+      <td>${esc(m.zid_name || m.zid_key)}<br><small class="note" dir="ltr">${esc(m.zid_key)}</small></td>
+      <td><select class="fld" data-key="${esc(m.zid_key)}" style="width:100%">${options.join("")}</select></td></tr>`).join("") + "</table>"
+    : '<div class="empty">تظهر منتجات المتجر هنا مع أول طلب يصل منه</div>';
+  $("tblZidMap").querySelectorAll("select[data-key]").forEach(s => {
+    const m = map.find(x => x.zid_key === s.dataset.key);
+    s.value = m && m.product_id ? `${m.product_id}|${m.size_name || ""}` : "";
+    s.onchange = async () => {
+      const [pid, size] = s.value.split("|");
+      const { error } = await sb.from("zid_product_map").update({ product_id: pid ? Number(pid) : null, size_name: size || "", updated_at: new Date().toISOString() }).eq("zid_key", s.dataset.key);
+      toast(error ? "⚠ " + error.message : "✔ تم الربط");
+    };
+  });
+}
+$("zReload").onclick = loadZid;
+$("zConnect").onclick = async () => {
+  try { const r = await fnCall("connect"); location.href = r.url; }
+  catch (e) { toast("⚠ " + e.message, 7000); }
+};
+$("zPushAll").onclick = async () => {
+  if (!catalog) await loadCatalog();
+  const rows = [];
+  for (const m of zidMap.filter(m => m.product_id)) {
+    const p = catalog.prods.find(p => p.product_id === m.product_id);
+    if (!p) continue;
+    const s = m.size_name ? catalog.sizes.find(s => s.product_id === p.product_id && s.size_name === m.size_name) : null;
+    rows.push({ zid_key: m.zid_key, price: Number(s ? s.price : p.price), is_published: !!p.is_active, status: "pending" });
+  }
+  if (!rows.length) { toast("لا توجد منتجات مربوطة"); return; }
+  if (!confirm(`إرسال أسعار ${rows.length} منتج من البرنامج إلى متجر زد؟`)) return;
+  const { error } = await sb.from("zid_outbox").insert(rows);
+  if (error) { toast("⚠ " + error.message); return; }
+  try { const r = await fnCall("push"); toast(`✔ أُرسلت ${r.sent || 0} أسعار للمتجر`); } catch (e) { toast("⚠ " + e.message, 7000); }
+  loadZid();
+};
+
+// =====================================================================
+//  سجل التعديلات
+// =====================================================================
+async function loadLog() {
+  let rows;
+  try { rows = await all(() => sb.from("pos_commands").select("*").order("id", { ascending: false }).limit(300)); }
+  catch (e) { $("tblLog").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 03</div>'; return; }
+  const st = s => ({ pending: '<span class="tag amber">⏳ بانتظار البرنامج</span>', done: '<span class="tag green">✔ طُبّق</span>', failed: '<span class="tag red">⚠ لم يُطبق</span>' }[s] || s);
+  const kinds = { "product.update": "تعديل صنف", "size.update": "سعر حجم", "product.create": "صنف جديد", "price.bulk": "تغيير جماعي", "offer.update": "عرض", "coupon.upsert": "كوبون", "coupon.toggle": "كوبون", "expense.add": "مصروف", "setting.set": "إعداد", "category.update": "مجموعة" };
+  $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
+      <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
+      <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
+    : '<div class="empty">لم تُرسل تعديلات بعد</div>';
+}
+
+function openDlg(title, html) { $("dlgTitle").textContent = title; $("dlgBody").innerHTML = html; $("dlg").showModal(); }
 
 start();
 </script>
