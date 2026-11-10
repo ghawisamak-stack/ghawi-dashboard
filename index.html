@@ -114,6 +114,34 @@
   dialog::backdrop { background: rgba(0,0,0,.45); }
   dialog .head { background: var(--navy); color: #fff; padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
   dialog .body { padding: 14px 16px; max-height: 70vh; overflow: auto; }
+  dialog.wide { width: min(1150px, 97vw); }
+  dialog.wide .body { max-height: 82vh; }
+  /* ----- التقارير والقوائم الجديدة ----- */
+  .center { display: grid; grid-template-columns: 270px 1fr; gap: 12px; align-items: start; }
+  .rc-group { font-weight: 800; color: var(--muted); font-size: .85rem; margin: 12px 4px 6px; }
+  .rc-item { display: block; width: 100%; text-align: right; border: 0; background: transparent; color: var(--text); padding: 8px 10px; border-radius: 9px; cursor: pointer; font-weight: 700; }
+  .rc-item:hover { background: var(--bg); } .rc-item.on { background: var(--navy); color: #fff; }
+  .rep-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .rep-head .t { font-weight: 800; font-size: 1.1rem; color: var(--navy); } :root[data-theme="dark"] .rep-head .t { color: #8ab8ee; }
+  .rep-head .s { color: var(--muted); font-size: .9rem; }
+  .rep-sum { padding: 9px 12px; border-radius: 10px; background: var(--bg); font-weight: 700; margin: 8px 0; }
+  .rep-sum.ok { background: #dff6e9; color: #1e8449; } .rep-sum.bad { background: #fde3e0; color: #b03a2e; }
+  table.rep td, table.rep th { white-space: nowrap; } table.rep td.wrap { white-space: normal; min-width: 180px; }
+  table.rep tr.h td { background: var(--bg); font-weight: 800; color: var(--navy); }
+  :root[data-theme="dark"] table.rep tr.h td { color: #8ab8ee; }
+  table.rep tr.t td { font-weight: 800; border-top: 2px solid var(--line); }
+  table.rep tr.g td { font-weight: 800; background: #e8f0fb; color: #143e70; font-size: 1.02rem; }
+  :root[data-theme="dark"] table.rep tr.g td { background: #22344d; color: #e6edf5; }
+  .rep-wrap { overflow: auto; max-height: 68vh; border: 1px solid var(--line); border-radius: 10px; }
+  .wait { text-align: center; padding: 30px 10px; color: var(--muted); font-weight: 700; }
+  .spin { display: inline-block; width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--navy); border-radius: 50%; animation: sp 1s linear infinite; vertical-align: middle; margin-inline-end: 8px; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+  .lines td input, .lines td select { width: 100%; }
+  .acc-row td:first-child { font-variant-numeric: tabular-nums; direction: ltr; text-align: right; color: var(--muted); }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin-bottom: 10px; } .kv b { color: var(--muted); font-weight: 700; }
+  .mo { display: none; }
+  @media (max-width: 800px) { .center { grid-template-columns: 1fr; } .mo { display: block; width: 100%; } #rcList .rc-item, #rcList .rc-group { display: none; } #rcList { padding: 10px; } }
   dialog button.x { background: transparent; border: 0; color: #fff; font-size: 1.3rem; cursor: pointer; }
 </style>
 </head>
@@ -148,9 +176,14 @@
   </header>
 
   <nav class="tabs" id="tabs">
-    <button data-v="reports" class="on">📊 التقارير</button>
+    <button data-v="reports" class="on">📊 اللوحة</button>
+    <button data-v="center">📑 مركز التقارير</button>
     <button data-v="products">🍽 الأصناف والأسعار</button>
     <button data-v="offers">🎁 العروض والكوبونات</button>
+    <button data-v="customers">👥 العملاء</button>
+    <button data-v="suppliers">🚚 الموردون والمشتريات</button>
+    <button data-v="stock">📦 المخزون</button>
+    <button data-v="acc">📒 الحسابات</button>
     <button data-v="expense">💸 مصروف</button>
     <button data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
     <button data-v="log">📨 سجل التعديلات <span class="badge hidden" id="pendingBadge"></span></button>
@@ -229,6 +262,107 @@
     </div>
   </main></section>
 
+
+  <!-- ================= مركز التقارير ================= -->
+  <section class="view" id="v-center"><main>
+    <div class="center">
+      <aside class="card" id="rcList"></aside>
+      <div class="card" style="min-width:0">
+        <h2 id="rcTitle">📑 اختر تقريراً من القائمة</h2>
+        <p class="note" id="rcHint">كل التقارير تُجهَّز في برنامج الكاشير بنفس حساباته، وتصل هنا خلال ثوانٍ (يجب أن يكون جهاز المطعم متصلاً بالإنترنت).</p>
+        <div class="toolbar" id="rcParams"></div>
+        <div id="rcResult"></div>
+      </div>
+    </div>
+  </main></section>
+
+  <!-- ================= العملاء ================= -->
+  <section class="view" id="v-customers"><main>
+    <div class="card">
+      <h2>👥 العملاء <span class="tag" id="cuCount"></span></h2>
+      <div class="toolbar">
+        <input type="search" id="cuSearch" placeholder="🔍 الاسم أو الجوال أو التصنيف">
+        <select id="cuSeg">
+          <option value="">كل العملاء</option><option value="vip">👑 VIP</option><option value="loyal">🔁 دائمون (5 طلبات+)</option>
+          <option value="new">🆕 جدد (آخر 30 يوم)</option><option value="away30">😴 غائبون 30 يوم+</option><option value="away60">💤 غائبون 60 يوم+</option>
+          <option value="points">⭐ لديهم نقاط</option><option value="never">لم يطلبوا بعد</option>
+        </select>
+        <button class="btn sm green" id="cuNew">➕ عميل جديد</button>
+        <button class="btn sm ghost" id="cuCsv">📤 Excel</button>
+      </div>
+      <div class="scroll" style="max-height:none" id="tblCustomers"></div>
+    </div>
+  </main></section>
+
+  <!-- ================= الموردون والمشتريات ================= -->
+  <section class="view" id="v-suppliers"><main>
+    <div class="card">
+      <h2>🚚 الموردون <span class="tag" id="suTotal"></span></h2>
+      <div class="toolbar">
+        <button class="btn sm green" id="suNew">➕ مورد جديد</button>
+        <button class="btn sm" id="suPurchase">🧾 فاتورة مشتريات</button>
+        <button class="btn sm amber" id="suPay">💵 سداد لمورد</button>
+        <label style="font-weight:600"><input type="checkbox" id="suInactive"> إظهار الموقوفين</label>
+      </div>
+      <div class="scroll" id="tblSup"></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>🧾 آخر فواتير المشتريات والسدادات</h2>
+      <div class="grid" style="margin-top:0">
+        <div class="scroll" id="tblPurch"></div>
+        <div class="scroll" id="tblPays"></div>
+      </div>
+    </div>
+  </main></section>
+
+  <!-- ================= المخزون ================= -->
+  <section class="view" id="v-stock"><main>
+    <div class="card">
+      <h2>📦 المخزون <span class="tag" id="stCount"></span></h2>
+      <div class="toolbar">
+        <select id="stType"><option value="">الكل</option><option value="F">🐟 الأسماك</option><option value="M">🧂 المواد والتغليف</option><option value="low">⚠ يحتاج طلب</option></select>
+        <input type="search" id="stSearch" placeholder="🔍 بحث">
+        <button class="btn sm green" id="stNewMat">➕ مادة جديدة</button>
+        <button class="btn sm" id="stFishRep">📊 تقرير الأسماك</button>
+        <button class="btn sm" id="stMatRep">📊 تقرير المواد</button>
+      </div>
+      <div class="scroll" style="max-height:none" id="tblStockFull"></div>
+      <p class="note">اضغط على أي صنف لتسجيل وارد أو هالك أو جرد أو عرض حركاته. الأسماك تظهر بعد أول وارد لها.</p>
+    </div>
+  </main></section>
+
+  <!-- ================= الحسابات ================= -->
+  <section class="view" id="v-acc"><main>
+    <div class="card">
+      <h2>📒 الحسابات</h2>
+      <div class="toolbar">
+        <button class="btn sm green" id="acEntry">➕ قيد يومية</button>
+        <button class="btn sm green" id="acRec">💵 سند قبض</button>
+        <button class="btn sm red" id="acPay">💸 سند صرف</button>
+        <button class="btn sm" id="acTr">🔁 تحويل</button>
+        <button class="btn sm ghost" id="acPost">⚙ ترحيل العمليات</button>
+      </div>
+      <div class="toolbar">
+        <button class="chip" data-rep="acc.journal">📒 القيود</button>
+        <button class="chip" data-rep="acc.ledger">📖 كشف حساب</button>
+        <button class="chip" data-rep="acc.trial">⚖ ميزان المراجعة</button>
+        <button class="chip" data-rep="acc.income">📈 قائمة الدخل</button>
+        <button class="chip" data-rep="acc.balance">🏦 الميزانية</button>
+        <button class="chip" data-rep="acc.vat">🧾 إقرار الضريبة</button>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h2>🌳 شجرة الحسابات <span class="tag" id="acCount"></span></h2>
+      <div class="toolbar">
+        <input type="search" id="acSearch" placeholder="🔍 الكود أو الاسم">
+        <select id="acLevel"><option value="2">حتى المستوى 2</option><option value="3">حتى المستوى 3</option><option value="9" selected>كل المستويات</option></select>
+        <label style="font-weight:600"><input type="checkbox" id="acNonZero"> ذات الرصيد فقط</label>
+      </div>
+      <div class="scroll" style="max-height:none" id="tblAcc"></div>
+      <p class="note">الأرصدة من آخر ترحيل. اضغط على الحساب لكشف الحساب أو إضافة حساب فرعي أو التعديل.</p>
+    </div>
+  </main></section>
+
   <!-- ================= مصروف ================= -->
   <section class="view" id="v-expense"><main>
     <div class="card" style="max-width:640px">
@@ -269,6 +403,8 @@
   </main></section>
 </section>
 
+<dialog id="rdlg" class="wide"><div class="head"><span id="rdlgTitle"></span><button class="x" onclick="document.getElementById('rdlg').close()">×</button></div><div class="body" id="rdlgBody"></div></dialog>
+<datalist id="dlAcc"></datalist>
 <dialog id="dlg"><div class="head"><span id="dlgTitle"></span><button class="x" onclick="document.getElementById('dlg').close()">×</button></div><div class="body" id="dlgBody"></div></dialog>
 <div class="loading hidden" id="loading">جاري التحميل…</div>
 <div class="toast hidden" id="toast"></div>
@@ -566,6 +702,11 @@ function showView(v) {
   if (v === "offers") loadOffers();
   if (v === "zid") loadZid();
   if (v === "log") loadLog();
+  if (v === "center" && !rcCurrent) { renderCenterList(); selectReport("cashier", true); }
+  if (v === "customers") loadCustomers();
+  if (v === "suppliers") loadSuppliers();
+  if (v === "stock") loadStockView();
+  if (v === "acc") loadAccounts();
   try { localStorage.setItem("gs-view", v); } catch (e) {}
 }
 
@@ -594,10 +735,14 @@ function watchCommands() {
       doneAny = true;
       toast((c.status === "done" ? "✔ طُبّق في البرنامج: " : "⚠ لم يُطبق: ") + (c.result || ""), 5000);
     });
-    if (doneAny) { if (view === "products") loadProducts(); if (view === "offers") loadOffers(); if (view === "log") loadLog(); }
+    if (doneAny) { reloadView(); setTimeout(reloadView, 9000); }
     updatePendingBadge();
     watchCommands();
   }, 4000);
+}
+function reloadView() {
+  if (view === "products") loadProducts(); if (view === "offers") loadOffers(); if (view === "log") loadLog();
+  if (view === "customers") loadCustomers(); if (view === "suppliers") loadSuppliers(); if (view === "stock") loadStockView(); if (view === "acc") loadAccounts();
 }
 async function updatePendingBadge() {
   const { count } = await sb.from("pos_commands").select("id", { count: "exact", head: true }).eq("status", "pending");
@@ -858,11 +1003,713 @@ async function loadLog() {
   try { rows = await all(() => sb.from("pos_commands").select("*").order("id", { ascending: false }).limit(300)); }
   catch (e) { $("tblLog").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 03</div>'; return; }
   const st = s => ({ pending: '<span class="tag amber">⏳ بانتظار البرنامج</span>', done: '<span class="tag green">✔ طُبّق</span>', failed: '<span class="tag red">⚠ لم يُطبق</span>' }[s] || s);
-  const kinds = { "product.update": "تعديل صنف", "size.update": "سعر حجم", "product.create": "صنف جديد", "price.bulk": "تغيير جماعي", "offer.update": "عرض", "coupon.upsert": "كوبون", "coupon.toggle": "كوبون", "expense.add": "مصروف", "setting.set": "إعداد", "category.update": "مجموعة" };
+  const kinds = { "product.update": "تعديل صنف", "size.update": "سعر حجم", "product.create": "صنف جديد", "price.bulk": "تغيير جماعي", "offer.update": "عرض", "coupon.upsert": "كوبون", "coupon.toggle": "كوبون", "expense.add": "مصروف", "setting.set": "إعداد", "category.update": "مجموعة",
+    "customer.upsert": "عميل", "customer.delete": "حذف عميل", "customer.points": "نقاط عميل", "supplier.upsert": "مورد", "supplier.payment": "سداد مورد",
+    "purchase.add": "فاتورة مشتريات", "supplier.move.delete": "حذف حركة مورد", "stock.move": "حركة مخزون", "stock.min": "حد أدنى", "material.upsert": "مادة",
+    "journal.save": "قيد", "journal.delete": "حذف قيد", "voucher.save": "سند", "account.upsert": "حساب", "account.delete": "حذف حساب", "acc.post": "ترحيل" };
   $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
       <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
       <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
     : '<div class="empty">لم تُرسل تعديلات بعد</div>';
+}
+
+// =====================================================================
+//  طلب تقرير من برنامج الكاشير (يُجهَّز بنفس حسابات البرنامج)
+// =====================================================================
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function deviceLastSeen() {
+  const { data } = await sb.from("sync_status").select("last_sync").order("last_sync", { ascending: false }).limit(1);
+  return data && data[0] ? Math.round((Date.now() - new Date(data[0].last_sync).getTime()) / 60000) : null;
+}
+async function ask(kind, params = {}, waitMs = 45000) {
+  const { data, error } = await sb.from("pos_requests").insert({ kind, params }).select("id").single();
+  if (error) throw new Error(/pos_requests/.test(error.message) ? "شغّل ملف SQL رقم 04 في Supabase أولاً" : error.message);
+  const t0 = Date.now();
+  let delay = 900;
+  while (Date.now() - t0 < waitMs) {
+    await sleep(delay);
+    delay = Math.min(2000, delay + 300);
+    const { data: r } = await sb.from("pos_requests").select("status,result").eq("id", data.id).single();
+    if (r && r.status === "done") return r.result;
+    if (r && r.status === "failed") throw new Error((r.result && r.result.error) || "تعذر إنشاء التقرير");
+  }
+  const mins = await deviceLastSeen();
+  throw new Error(mins == null || mins > 3
+    ? `جهاز المطعم غير متصل الآن${mins != null ? " (آخر اتصال قبل " + (mins < 60 ? mins + " دقيقة" : Math.round(mins / 60) + " ساعة") + ")" : ""} — التقرير يحتاج أن يكون البرنامج مفتوحاً ومتصلاً. سيُجهَّز تلقائياً عند اتصاله.`
+    : "تأخر البرنامج في الرد — حاول مرة أخرى بعد قليل (تأكد من تحديث البرنامج للإصدار 3.4)");
+}
+
+// ----- عرض التقرير -----
+const MONEY = /مبلغ|إجمالي|الإجمالي|رصيد|الرصيد|مدين|دائن|سعر|الضريبة|التكلفة|تكلفة|نقدي|شبكة|أخرى|الخصومات|الخصم|المصروفات|المرتجعات|متوسط|قيمة|مشتريات|سداد|المشتريات|افتتاحي|حركة|ختامي/;
+function cellFmt(v, col, num) {
+  if (v === null || v === undefined || v === "") return "";
+  if (!num) return esc(v);
+  if (/%/.test(col)) return Number(v).toFixed(1);
+  return MONEY.test(col) ? fmt(v) : fmtQ(v);
+}
+function reportHtml(res, ctx = {}) {
+  let h = `<div class="rep-head"><div><div class="t">${esc(res.title)}</div><div class="s">${esc(res.sub || "")}${res.generated_at ? " • " + esc(res.generated_at) : ""}</div></div>
+    <div class="actions" style="margin:0">${ctx.back ? '<button class="btn sm gray" data-act="back">→ رجوع</button>' : ""}
+      <button class="btn sm ghost" data-act="print">🖨 طباعة / PDF</button><button class="btn sm ghost" data-act="csv">📤 Excel</button>${ctx.extra || ""}</div></div>`;
+  if (res.summary) h += `<div class="rep-sum ${res.ok === true ? "ok" : res.ok === false ? "bad" : ""}">${esc(res.summary)}</div>`;
+  (res.tables || []).forEach((t, ti) => {
+    if (t.title) h += `<h3 style="margin:14px 0 6px">${esc(t.title)} <span class="tag">${t.rows.length}</span></h3>`;
+    if (!t.rows.length) { h += '<div class="empty">لا توجد بيانات</div>'; return; }
+    const wide = t.cols.map((c, i) => !t.num[i] && /البيان|الأصناف|الحساب|البند|ملاحظ|السبب/.test(c));
+    h += `<div class="rep-wrap"><table class="rep"><tr>${t.cols.map((c, i) => `<th${t.num[i] ? ' class="n"' : ""}>${esc(c)}</th>`).join("")}</tr>`;
+    t.rows.forEach((r, i) => {
+      const st = (t.styles && t.styles[i]) || "", key = t.keys && t.keys[i];
+      const cls = [st === "H" ? "h" : st === "T" ? "t" : st === "G" ? "g" : "", key ? "click" : ""].join(" ").trim();
+      h += `<tr${cls ? ` class="${cls}"` : ""}${key ? ` data-t="${ti}" data-k="${esc(key)}"` : ""}>` +
+        r.map((v, j) => `<td class="${t.num[j] ? "n" : ""}${wide[j] ? " wrap" : ""}">${cellFmt(v, t.cols[j], t.num[j])}</td>`).join("") + "</tr>";
+    });
+    h += "</table></div>";
+  });
+  return h;
+}
+function exportCsv(res) {
+  const lines = [res.title, res.sub || "", res.summary || ""];
+  (res.tables || []).forEach(t => {
+    lines.push("");
+    if (t.title) lines.push(t.title);
+    lines.push(t.cols.map(csvCell).join(","));
+    t.rows.forEach(r => lines.push(r.map(v => csvCell(v == null ? "" : typeof v === "number" ? v : String(v).trim())).join(",")));
+  });
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (res.title || "تقرير").replace(/[\\/:*?"<>|]/g, "_") + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+function csvCell(v) { const s = String(v); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
+function printReport(res) {
+  const w = window.open("", "_blank");
+  if (!w) { toast("اسمح بالنوافذ المنبثقة للطباعة"); return; }
+  const body = reportHtml(res).replace(/<div class="actions"[\s\S]*?<\/div><\/div>/, "</div>");
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${esc(res.title)}</title>
+    <style>body{font-family:Tajawal,"Segoe UI",Tahoma,sans-serif;margin:18px;color:#111}.t{font-size:18px;font-weight:800;color:#143e70}.s{color:#555;margin-bottom:8px}
+    .rep-sum{padding:6px 10px;background:#f1f4f8;border-radius:6px;font-weight:700;margin:8px 0}table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{border:1px solid #ccd5df;padding:4px 6px;text-align:right}td.n,th.n{direction:ltr;text-align:left}tr.h td{background:#eef2f7;font-weight:800}
+    tr.t td{font-weight:800}tr.g td{font-weight:800;background:#e8f0fb}.tag{display:none}h3{font-size:14px;margin:12px 0 4px}
+    .foot{margin-top:14px;color:#777;font-size:11px}</style></head><body><div style="font-weight:800;font-size:15px">🐟 مطعم غاوي سمك</div>${body}
+    <div class="foot">طُبع من موقع المدراء ${new Date().toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false })}</div>
+    <script>setTimeout(()=>{print()},300)<\/script></body></html>`);
+  w.document.close();
+}
+function mountReport(el, res, ctx = {}) {
+  el.innerHTML = reportHtml(res, ctx);
+  el.querySelector('[data-act="print"]').onclick = () => printReport(res);
+  el.querySelector('[data-act="csv"]').onclick = () => exportCsv(res);
+  const back = el.querySelector('[data-act="back"]');
+  if (back) back.onclick = () => { rstack.pop(); paintStack(); };
+  el.querySelectorAll("tr[data-k]").forEach(tr => tr.onclick = () => drill(res.tables[tr.dataset.t].key_kind, tr.dataset.k, ctx));
+  if (ctx.after) ctx.after(el, res);
+}
+
+// ----- نافذة التقارير الفرعية (مع رجوع) -----
+const rstack = [];
+function paintStack() {
+  if (!rstack.length) { $("rdlg").close(); return; }
+  const top = rstack[rstack.length - 1];
+  $("rdlgTitle").textContent = top.res ? top.res.title : top.title;
+  if (top.res) mountReport($("rdlgBody"), top.res, Object.assign({}, top.ctx, { back: rstack.length > 1 }));
+  else $("rdlgBody").innerHTML = top.html;
+}
+async function openReport(kind, params, ctx = {}, title = "جاري التجهيز…") {
+  const entry = { title, html: `<div class="wait"><span class="spin"></span>${esc(title)} — يُجهَّز في برنامج الكاشير…</div>` };
+  if (!ctx.keep) rstack.length = 0;
+  rstack.push(entry);
+  paintStack();
+  if (!$("rdlg").open) $("rdlg").showModal();
+  try {
+    const res = await ask(kind, params);
+    entry.res = res;
+    entry.ctx = Object.assign({ params, kind }, ctx);
+  } catch (e) {
+    entry.html = `<div class="wait" style="color:var(--red)">⚠ ${esc(e.message)}</div>${rstack.length > 1 ? '<button class="btn sm gray" onclick="rstack.pop();paintStack()">→ رجوع</button>' : ""}`;
+  }
+  if (rstack.includes(entry)) paintStack();
+  return entry.res;
+}
+$("rdlg").addEventListener("close", () => { rstack.length = 0; });
+
+// ----- الضغط على سطر في تقرير -----
+function drill(kind, key, ctx) {
+  const p = (ctx && ctx.params) || {};
+  const per = { from: p.from, to: p.to || p.at };
+  const keep = { keep: true };
+  if (kind === "ledger") openReport("acc.ledger", { code: key, from: per.from || monthStartIso(), to: per.to || iso(businessToday()) }, keep, "كشف حساب " + key);
+  else if (kind === "entry") openEntry(key, true);
+  else if (kind === "fish") openReport("stock.moves", { type: "F", id: Number(key) }, keep, "حركات الصنف");
+  else if (kind === "material") openReport("stock.moves", { type: "M", id: Number(key) }, keep, "حركات المادة");
+  else if (kind === "supplier_move") {
+    if (key[0] === "P") openReport("purchase.detail", { purchase_id: Number(key.slice(1)) }, Object.assign({}, keep, {
+      extra: '<button class="btn sm red" data-act="delmove">🗑 حذف الفاتورة</button>',
+      after: el => el.querySelector('[data-act="delmove"]').onclick = async () => {
+        if (!confirm("حذف فاتورة المشتريات نهائياً؟ (تُحذف كمياتها من المخزون)")) return;
+        if (await send({ kind: "supplier.move.delete", payload: { key } })) $("rdlg").close();
+      }
+    }), "فاتورة المشتريات");
+    else if (key[0] === "Y" && confirm("حذف هذا السداد نهائياً؟")) send({ kind: "supplier.move.delete", payload: { key } }).then(ok => ok && $("rdlg").close());
+  }
+}
+function monthStartIso() { const t = businessToday(); return iso(new Date(t.getFullYear(), t.getMonth(), 1)); }
+function yearStartIso() { return iso(new Date(businessToday().getFullYear(), 0, 1)); }
+
+// =====================================================================
+//  مركز التقارير
+// =====================================================================
+const REPORTS = [
+  ["المبيعات", [
+    ["cashier", "🧾 تقرير اليوم / الفترة (مثل الكاشير)", "نفس تقرير الكاشير: المبيعات بطرق الدفع، المرتجعات، المصروفات، الصافي، الأصناف الأكثر مبيعاً", "today"],
+    ["sales:ItemSales", "📦 مبيعات الأصناف", "كمية ومبلغ كل صنف خلال الفترة", "today"],
+    ["sales:SingleItem", "🔎 صنف معين", "مبيعات صنف واحد يوماً بيوم", "month", "product"],
+    ["sales:CategorySales", "🗂 مبيعات الفئات", "أي الفئات تحقق أعلى مبيعات", "today"],
+    ["sales:ByHour", "⏰ ساعات الذروة", "المبيعات حسب الساعة", "week"],
+    ["sales:DailySummary", "📅 ملخص الأيام", "لكل يوم: الطلبات، النقدي، الشبكة، المصروفات، المرتجعات", "month"],
+    ["sales:PaymentTypes", "💳 طرق الدفع", "النقدي والشبكة والأخرى", "today"],
+    ["sales:OrderTypes", "🛵 أنواع الطلبات", "سفري / محلي / توصيل / المنصات", "today"],
+    ["sales:Discounts", "٪ الخصومات", "كل الطلبات التي عليها خصم مع السبب والكاشير", "month"],
+    ["sales:TopCustomers", "👥 العملاء الأكثر طلباً", "العملاء وعدد طلباتهم ومشترياتهم", "month"],
+    ["sales:Returns", "↩ المرتجعات", "كل مرتجعات العملاء", "month"],
+    ["sales:ReturnedItems", "↩ الأصناف المرتجعة", "أكثر الأصناف إرجاعاً", "month"],
+    ["sales:Expenses", "💸 المصروفات", "تفاصيل مصروفات الفرع", "month"]
+  ]],
+  ["المشتريات والمخزون", [
+    ["sales:Purchases", "🚚 المشتريات", "فواتير المشتريات حسب المورد", "month"],
+    ["sales:MaterialUsage", "🧂 استهلاك المواد", "المواد المنصرفة من المبيعات وتكلفتها", "month"],
+    ["stock.fish", "🐟 مخزون الأسماك", "الوارد والمباع والهالك والرصيد بالكيلو", "today"],
+    ["stock.materials", "📦 المواد والتغليف", "الوارد والمنصرف والهالك والرصيد", "month"]
+  ]],
+  ["الحسابات", [
+    ["acc.income", "📈 قائمة الدخل", "الإيرادات وتكلفة المبيعات والمصروفات وصافي الربح", "month"],
+    ["acc.balance", "🏦 الميزانية العمومية", "المركز المالي في تاريخ محدد", "at"],
+    ["acc.trial", "⚖ ميزان المراجعة", "الأرصدة الافتتاحية والحركة والختامية", "year", "level"],
+    ["acc.ledger", "📖 كشف حساب", "حركة حساب مع الرصيد بعد كل حركة", "month", "account"],
+    ["acc.journal", "📒 القيود اليومية", "كل القيود اليدوية والآلية", "month", "jkind"],
+    ["acc.vat", "🧾 إقرار ضريبة القيمة المضافة", "المخرجات والمدخلات وصافي الضريبة", "quarter"]
+  ]]
+];
+const REP_INDEX = {};
+REPORTS.forEach(([, items]) => items.forEach(r => REP_INDEX[r[0]] = r));
+let rcCurrent = null, rcPeriod = "today";
+function periodRange(p, f, t) {
+  const today = businessToday(), d = new Date(today);
+  switch (p) {
+    case "yesterday": d.setDate(d.getDate() - 1); return [iso(d), iso(d)];
+    case "week": d.setDate(d.getDate() - 6); return [iso(d), iso(today)];
+    case "month": return [monthStartIso(), iso(today)];
+    case "lastmonth": return [iso(new Date(today.getFullYear(), today.getMonth() - 1, 1)), iso(new Date(today.getFullYear(), today.getMonth(), 0))];
+    case "quarter": { const q = Math.floor(today.getMonth() / 3); return [iso(new Date(today.getFullYear(), q * 3, 1)), iso(new Date(today.getFullYear(), q * 3 + 3, 0))]; }
+    case "year": return [yearStartIso(), iso(today)];
+    case "custom": return f > t ? [t, f] : [f, t];
+    default: return [iso(today), iso(today)];
+  }
+}
+function renderCenterList() {
+  $("rcList").innerHTML = `<select class="fld mo" id="rcSelect">${REPORTS.map(([g, items]) => `<optgroup label="${g}">` + items.map(r => `<option value="${r[0]}" ${rcCurrent === r[0] ? "selected" : ""}>${r[1]}</option>`).join("") + "</optgroup>").join("")}</select>` +
+    REPORTS.map(([g, items]) => `<div class="rc-group">${g}</div>` +
+    items.map(r => `<button class="rc-item${rcCurrent === r[0] ? " on" : ""}" data-r="${r[0]}">${r[1]}</button>`).join("")).join("");
+  $("rcList").querySelectorAll(".rc-item").forEach(b => b.onclick = () => selectReport(b.dataset.r));
+  $("rcSelect").onchange = e => selectReport(e.target.value);
+}
+async function selectReport(key, autoRun) {
+  rcCurrent = key;
+  const r = REP_INDEX[key];
+  renderCenterList();
+  $("rcTitle").textContent = r[1];
+  $("rcHint").textContent = r[2];
+  $("rcResult").innerHTML = "";
+  const def = r[3], extra = r[4];
+  let h = "";
+  if (def === "at") h += `<label>في تاريخ <input type="date" class="fld" id="rpAt" value="${iso(businessToday())}"></label>`;
+  else {
+    rcPeriod = def;
+    const chips = [["today", "اليوم"], ["yesterday", "أمس"], ["week", "7 أيام"], ["month", "هذا الشهر"], ["lastmonth", "الشهر الماضي"], ["quarter", "الربع"], ["year", "هذه السنة"], ["custom", "فترة"]];
+    h += chips.map(([k, n]) => `<button class="chip${k === def ? " on" : ""}" data-p="${k}">${n}</button>`).join("");
+    const [f, t] = periodRange(def);
+    h += `<span id="rpCustom" class="hidden"><input type="date" class="fld" id="rpFrom" value="${f}"> ← <input type="date" class="fld" id="rpTo" value="${t}"></span>`;
+  }
+  if (extra === "product") {
+    if (!catalog) await loadCatalog().catch(() => {});
+    h += `<select class="fld" id="rpProduct"><option value="">— اختر الصنف —</option>${(catalog ? catalog.prods : []).map(p => `<option>${esc(p.name_ar)}</option>`).join("")}</select>`;
+  }
+  if (extra === "account") { await ensureAccounts(); h += `<input class="fld" id="rpAccount" list="dlAccAll" placeholder="الحساب: اكتب الكود أو الاسم" style="min-width:280px">`; }
+  if (extra === "level") h += `<select class="fld" id="rpLevel"><option value="1">المستوى 1</option><option value="2">المستوى 2</option><option value="3">المستوى 3</option><option value="4" selected>كل المستويات</option></select><label style="font-weight:600"><input type="checkbox" id="rpZero" checked> إخفاء الأصفار</label>`;
+  if (extra === "jkind") h += `<select class="fld" id="rpJKind"><option value="">كل الأنواع</option><option value="manual">يدوية فقط</option><option value="auto">آلية فقط</option>${["قيد يومية", "سند قبض", "سند صرف", "تحويل", "افتتاحي", "مبيعات", "مصروفات", "مشتريات", "سداد موردين", "ورديات", "تكلفة المبيعات", "إهلاك"].map(k => `<option>${k}</option>`).join("")}</select><input class="fld" id="rpQ" placeholder="🔍 بحث في البيان">`;
+  h += `<button class="btn" id="rpRun">▶ عرض التقرير</button>`;
+  $("rcParams").innerHTML = h;
+  $("rcParams").querySelectorAll(".chip[data-p]").forEach(b => b.onclick = () => {
+    $("rcParams").querySelectorAll(".chip[data-p]").forEach(x => x.classList.toggle("on", x === b));
+    rcPeriod = b.dataset.p;
+    $("rpCustom").classList.toggle("hidden", rcPeriod !== "custom");
+    if (rcPeriod !== "custom") runCenter();
+  });
+  $("rpRun").onclick = runCenter;
+  if (autoRun) runCenter();
+}
+function centerParams() {
+  const key = rcCurrent, r = REP_INDEX[key], p = {};
+  if (r[3] === "at") p.at = $("rpAt").value;
+  else [p.from, p.to] = periodRange(rcPeriod, $("rpFrom").value, $("rpTo").value);
+  if (r[4] === "product") { p.product = $("rpProduct").value; if (!p.product) throw new Error("اختر الصنف"); }
+  if (r[4] === "account") { p.code = accCodeFrom($("rpAccount").value); if (!p.code) throw new Error("اختر الحساب"); }
+  if (r[4] === "level") { p.level = Number($("rpLevel").value); p.hide_zero = $("rpZero").checked; }
+  if (r[4] === "jkind") { p.kind = $("rpJKind").value; p.q = $("rpQ").value.trim(); }
+  let kind = key;
+  if (key.startsWith("sales:")) { kind = "sales"; p.report = key.slice(6); }
+  return [kind, p];
+}
+let rcSeq = 0;
+async function runCenter() {
+  let kind, p;
+  try { [kind, p] = centerParams(); } catch (e) { toast(e.message); return; }
+  const seq = ++rcSeq;
+  $("rcResult").innerHTML = `<div class="wait"><span class="spin"></span>يُجهَّز التقرير في برنامج الكاشير…</div>`;
+  try {
+    const res = await ask(kind, p);
+    if (seq !== rcSeq) return;
+    mountReport($("rcResult"), res, { params: p, kind });
+  } catch (e) {
+    if (seq === rcSeq) $("rcResult").innerHTML = `<div class="wait" style="color:var(--red)">⚠ ${esc(e.message)}</div>`;
+  }
+}
+function openCenter(key) {
+  showView("center");
+  const r = REP_INDEX[key];
+  selectReport(key, !(r[4] === "product" || r[4] === "account"));
+}
+
+// =====================================================================
+//  الحسابات (شجرة الحسابات من آخر مزامنة)
+// =====================================================================
+let accounts = [];
+async function ensureAccounts(force) {
+  if (accounts.length && !force) return accounts;
+  accounts = await all(() => sb.from("accounts").select("*").order("code"));
+  const post = accounts.filter(a => !a.has_children && a.is_active);
+  $("dlAcc").innerHTML = post.map(a => `<option value="${esc(a.code + " - " + a.name)}">`).join("");
+  if (!$("dlAccAll")) { const d = document.createElement("datalist"); d.id = "dlAccAll"; document.body.appendChild(d); }
+  $("dlAccAll").innerHTML = accounts.filter(a => a.is_active).map(a => `<option value="${esc(a.code + " - " + a.name)}">`).join("");
+  return accounts;
+}
+function accCodeFrom(v) { const m = String(v || "").trim().match(/^(\d+)/); if (!m) { const a = accounts.find(x => x.name === String(v).trim()); return a ? a.code : ""; } return m[1]; }
+function accLabel(code) { const a = accounts.find(x => x.code === code); return a ? a.code + " - " + a.name : code; }
+async function loadAccounts() {
+  try { await ensureAccounts(true); } catch (e) { $("tblAcc").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 04 ثم انتظر مزامنة البرنامج</div>'; return; }
+  renderAccounts();
+}
+function renderAccounts() {
+  const q = $("acSearch").value.trim(), lvl = Number($("acLevel").value), nz = $("acNonZero").checked;
+  let list = accounts.filter(a => (q ? (a.code.startsWith(q) || (a.name || "").includes(q)) : a.level <= lvl) && (!nz || Number(a.balance) !== 0));
+  $("acCount").textContent = accounts.length ? accounts.length + " حساب" : "";
+  if (!list.length) { $("tblAcc").innerHTML = '<div class="empty">' + (accounts.length ? "لا توجد نتائج" : "تظهر الشجرة بعد أول مزامنة من البرنامج (الإصدار 3.4)") + "</div>"; return; }
+  $("tblAcc").innerHTML = '<table><tr><th>الكود</th><th>الحساب</th><th class="hm">الطبيعة</th><th>الرصيد</th></tr>' + list.map(a => `<tr class="click acc-row${a.is_active ? "" : " off"}" data-c="${esc(a.code)}">
+    <td>${esc(a.code)}</td><td style="padding-inline-start:${(a.level - 1) * 16 + 4}px;${a.level <= 2 ? "font-weight:800" : ""}">${a.has_children ? "📁 " : ""}${esc(a.name)}</td>
+    <td class="hm">${esc(a.nature || "")}</td><td class="n">${Number(a.balance) ? fmt(a.balance) : ""}</td></tr>`).join("") + "</table>";
+  $("tblAcc").querySelectorAll("tr[data-c]").forEach(tr => tr.onclick = () => accountDialog(tr.dataset.c));
+}
+["acSearch", "acLevel", "acNonZero"].forEach(id => $(id).addEventListener(id === "acSearch" ? "input" : "change", renderAccounts));
+function accountDialog(code) {
+  const a = accounts.find(x => x.code === code);
+  if (!a) return;
+  openDlg(`${a.code} - ${a.name}`, `<div class="kv"><b>الرصيد</b><span>${fmt(a.balance)}</span><b>الطبيعة</b><span>${esc(a.nature || "")}</span>
+      <b>النوع</b><span>${a.has_children ? "حساب تجميعي" : "حساب تفصيلي (يقبل القيود)"}${a.is_active ? "" : " • موقوف"}</span></div>
+    <div class="actions"><button class="btn" id="adLedger">📖 كشف الحساب</button><button class="btn green" id="adSub">➕ حساب فرعي</button>
+      <button class="btn amber" id="adEdit">✏ تعديل</button><button class="btn gray" id="adDel">🗑 حذف</button></div>`);
+  $("adLedger").onclick = () => { $("dlg").close(); openReport("acc.ledger", { code, from: monthStartIso(), to: iso(businessToday()) }, {}, "كشف حساب " + code); };
+  $("adSub").onclick = () => openDlg("➕ حساب فرعي تحت: " + a.name, `<div class="form">
+      <div class="full"><label>اسم الحساب</label><input class="fld" id="naName"></div>
+      <div><label>الكود (فارغ = تلقائي)</label><input class="fld" id="naCode" dir="ltr" placeholder="${esc(a.code)}.."></div>
+      <div><label>الطبيعة</label><select class="fld" id="naNat"><option ${a.nature === "مدين" ? "selected" : ""}>مدين</option><option ${a.nature === "دائن" ? "selected" : ""}>دائن</option></select></div>
+      <div class="full"><button class="btn green" id="naOk">✔ إضافة</button></div></div>`) || ($("naOk").onclick = async () => {
+        const name = $("naName").value.trim();
+        if (!name) { toast("اكتب اسم الحساب"); return; }
+        if (await send({ kind: "account.upsert", payload: { is_new: true, parent: a.code, code: $("naCode").value.trim(), name, nature: $("naNat").value } })) $("dlg").close();
+      });
+  $("adEdit").onclick = () => openDlg("✏ تعديل الحساب " + a.code, `<div class="form">
+      <div class="full"><label>اسم الحساب</label><input class="fld" id="eaName" value="${esc(a.name)}"></div>
+      <div><label>الطبيعة</label><select class="fld" id="eaNat"><option ${a.nature === "مدين" ? "selected" : ""}>مدين</option><option ${a.nature === "دائن" ? "selected" : ""}>دائن</option></select></div>
+      <div><label>الحالة</label><select class="fld" id="eaAct"><option value="1">نشط</option><option value="0" ${a.is_active ? "" : "selected"}>موقوف</option></select></div>
+      <div class="full"><button class="btn green" id="eaOk">✔ حفظ</button></div></div>`) || ($("eaOk").onclick = async () => {
+        if (await send({ kind: "account.upsert", payload: { code: a.code, name: $("eaName").value.trim(), nature: $("eaNat").value, is_active: $("eaAct").value === "1" } })) $("dlg").close();
+      });
+  $("adDel").onclick = async () => { if (confirm(`حذف الحساب ${a.code} - ${a.name}؟`) && await send({ kind: "account.delete", payload: { code: a.code } })) $("dlg").close(); };
+}
+document.querySelectorAll("#v-acc [data-rep]").forEach(b => b.onclick = () => openCenter(b.dataset.rep));
+$("acEntry").onclick = () => entryEditor();
+$("acRec").onclick = () => voucherDialog("سند قبض");
+$("acPay").onclick = () => voucherDialog("سند صرف");
+$("acTr").onclick = () => voucherDialog("تحويل");
+$("acPost").onclick = () => openDlg("⚙ ترحيل عمليات البرنامج إلى قيود", `<p class="note">يحوّل المبيعات والمصروفات والمشتريات والسدادات والورديات إلى قيود ملخصة لكل يوم (مثل زر الترحيل في البرنامج). القيود الآلية للأيام المختارة يُعاد إنشاؤها.</p>
+  <div class="form"><div><label>من</label><input type="date" class="fld" id="poFrom" value="${monthStartIso()}"></div><div><label>إلى</label><input type="date" class="fld" id="poTo" value="${iso(businessToday())}"></div>
+  <div class="full"><button class="btn green" id="poOk">⚙ ترحيل</button></div></div>`) || ($("poOk").onclick = async () => {
+    if (await send({ kind: "acc.post", payload: { from: $("poFrom").value, to: $("poTo").value } })) $("dlg").close();
+  });
+
+// ----- قيد يومية -----
+async function entryEditor(entry) {
+  await ensureAccounts().catch(() => {});
+  const e = entry || { date: iso(businessToday()), kind: "قيد يومية", description: "", lines: [{}, {}] };
+  const kinds = ["قيد يومية", "افتتاحي", "سند قبض", "سند صرف", "تحويل"];
+  openDlg(entry ? `✏ تعديل ${e.kind}` : "➕ قيد يومية", `<div class="form">
+      <div><label>التاريخ</label><input type="date" class="fld" id="jeDate" value="${esc(e.date)}"></div>
+      <div><label>النوع</label><select class="fld" id="jeKind">${kinds.map(k => `<option ${k === e.kind ? "selected" : ""}>${k}</option>`).join("")}</select></div>
+      <div class="full"><label>البيان</label><input class="fld" id="jeDesc" value="${esc(e.description)}"></div></div>
+    <table class="lines" style="margin-top:10px"><tr><th>الحساب</th><th>مدين</th><th>دائن</th><th class="hm">ملاحظة</th><th></th></tr><tbody id="jeLines"></tbody></table>
+    <div class="actions"><button class="btn sm ghost" id="jeAdd">➕ سطر</button><span id="jeTot" style="font-weight:800;align-self:center"></span></div>
+    <div class="actions"><button class="btn green" id="jeOk">💾 حفظ القيد</button></div>`);
+  $("dlg").classList.add("wide");
+  const addLine = l => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><input class="fld" list="dlAcc" data-f="code" value="${l.code ? esc(accLabel(l.code)) : ""}" placeholder="اكتب الكود أو الاسم"></td>
+      <td><input class="fld price" type="number" step="0.01" min="0" data-f="debit" value="${Number(l.debit) || ""}"></td>
+      <td><input class="fld price" type="number" step="0.01" min="0" data-f="credit" value="${Number(l.credit) || ""}"></td>
+      <td class="hm"><input class="fld" data-f="note" value="${esc(l.note || "")}"></td><td><button class="btn sm gray" type="button">×</button></td>`;
+    tr.querySelector("button").onclick = () => { tr.remove(); tot(); };
+    tr.querySelectorAll("input").forEach(i => i.oninput = tot);
+    $("jeLines").appendChild(tr);
+  };
+  const read = () => [...$("jeLines").querySelectorAll("tr")].map(tr => {
+    const g = f => tr.querySelector(`[data-f="${f}"]`).value;
+    return { code: accCodeFrom(g("code")), debit: Number(g("debit") || 0), credit: Number(g("credit") || 0), note: g("note").trim(), raw: g("code") };
+  }).filter(l => l.raw || l.debit || l.credit);
+  const tot = () => {
+    const ls = read(), d = ls.reduce((s, l) => s + l.debit, 0), c = ls.reduce((s, l) => s + l.credit, 0), diff = Math.round((d - c) * 100) / 100;
+    $("jeTot").innerHTML = `مدين ${fmt(d)} • دائن ${fmt(c)} • ${diff === 0 ? '<span class="tag green">متوازن ✔</span>' : `<span class="tag red">الفرق ${fmt(diff)}</span>`}`;
+  };
+  (e.lines.length ? e.lines : [{}, {}]).forEach(addLine);
+  tot();
+  $("jeAdd").onclick = () => addLine({});
+  $("jeOk").onclick = async () => {
+    const lines = read();
+    if (lines.some(l => !l.code)) { toast("اختر الحساب في كل سطر"); return; }
+    const d = lines.reduce((s, l) => s + l.debit, 0), c = lines.reduce((s, l) => s + l.credit, 0);
+    if (lines.length < 2 || Math.round((d - c) * 100) !== 0 || d === 0) { toast("القيد غير متوازن أو ناقص"); return; }
+    if (!$("jeDesc").value.trim()) { toast("اكتب البيان"); return; }
+    const payload = { date: $("jeDate").value, kind: $("jeKind").value, description: $("jeDesc").value.trim(), lines: lines.map(({ raw, ...l }) => l) };
+    if (entry) payload.entry_id = entry.id;
+    if (await send({ kind: "journal.save", payload })) { $("dlg").close(); if ($("rdlg").open) $("rdlg").close(); }
+  };
+}
+$("dlg").addEventListener("close", () => $("dlg").classList.remove("wide"));
+async function openEntry(id, keep) {
+  await ensureAccounts().catch(() => {});
+  const res = await openReport("acc.entry", { entry_id: Number(id) }, { keep, extra: "" }, "القيد");
+  if (!res || !res.entry) return;
+  const en = res.entry, top = rstack[rstack.length - 1];
+  if (!en.auto && !en.locked) {
+    top.ctx.extra = '<button class="btn sm amber" data-act="edit">✏ تعديل</button><button class="btn sm red" data-act="del">🗑 حذف</button>';
+    top.ctx.after = el => {
+      el.querySelector('[data-act="edit"]').onclick = () => entryEditor(en);
+      el.querySelector('[data-act="del"]').onclick = async () => { if (confirm("حذف القيد نهائياً؟") && await send({ kind: "journal.delete", payload: { entry_id: en.id } })) $("rdlg").close(); };
+    };
+    paintStack();
+  }
+}
+
+// ----- السندات -----
+async function voucherDialog(kind) {
+  await ensureAccounts().catch(() => {});
+  const cash = accounts.filter(a => a.code.startsWith("1101") && !a.has_children && a.is_active);
+  const transfer = kind === "تحويل", pay = kind === "سند صرف";
+  const opts = (sel) => cash.map(a => `<option value="${a.code}" ${a.code === sel ? "selected" : ""}>${esc(a.code + " - " + a.name)}</option>`).join("");
+  openDlg((transfer ? "🔁 " : pay ? "💸 " : "💵 ") + kind, `<div class="form">
+    <div><label>التاريخ</label><input type="date" class="fld" id="vDate" value="${iso(businessToday())}"></div>
+    <div><label>المبلغ</label><input type="number" class="fld" id="vAmt" step="0.01" min="0"></div>
+    <div class="full"><label>${transfer ? "من حساب" : pay ? "يُصرف من" : "يُقبض في"}</label><select class="fld" id="vCash">${opts(cash[0] && cash[0].code)}</select></div>
+    <div class="full"><label>${transfer ? "إلى حساب" : pay ? "الحساب المصروف له" : "المقبوض من حساب"}</label>${transfer ? `<select class="fld" id="vOther">${opts(cash[1] && cash[1].code)}</select>` : `<input class="fld" id="vOther" list="dlAcc" placeholder="اكتب الكود أو الاسم">`}</div>
+    ${pay ? '<div class="full"><label style="font-weight:600"><input type="checkbox" id="vVat"> المبلغ شامل ضريبة 15% (فاتورة ضريبية)</label></div>' : ""}
+    <div class="full"><label>البيان</label><input class="fld" id="vDesc"></div>
+    <div class="full"><button class="btn green" id="vOk">💾 حفظ السند</button></div></div>`);
+  $("vOk").onclick = async () => {
+    const payload = { kind, date: $("vDate").value, amount: Number($("vAmt").value), cash_code: $("vCash").value,
+      other_code: transfer ? $("vOther").value : accCodeFrom($("vOther").value), description: $("vDesc").value.trim(), vat: pay && $("vVat").checked };
+    if (!(payload.amount > 0) || !payload.other_code || !payload.description) { toast("أكمل البيانات"); return; }
+    if (await send({ kind: "voucher.save", payload })) $("dlg").close();
+  };
+}
+
+// =====================================================================
+//  العملاء
+// =====================================================================
+let customers = [];
+async function loadCustomers() {
+  $("tblCustomers").innerHTML = '<div class="empty">جاري التحميل…</div>';
+  try { customers = await all(() => sb.from("customers").select("*").order("last_order", { ascending: false, nullsFirst: false })); }
+  catch (e) { $("tblCustomers").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 04 ثم انتظر مزامنة البرنامج</div>'; return; }
+  renderCustomers();
+}
+const daysSince = d => d ? Math.floor((Date.now() - new Date(String(d).replace(" ", "T")).getTime()) / 86400000) : null;
+function customerList() {
+  const q = $("cuSearch").value.trim().toLowerCase(), seg = $("cuSeg").value;
+  return customers.filter(c => {
+    if (q && !((c.name || "").toLowerCase().includes(q) || c.phone.includes(q) || (c.tags || "").toLowerCase().includes(q) || (c.address || "").toLowerCase().includes(q))) return false;
+    const ds = daysSince(c.last_order);
+    switch (seg) {
+      case "vip": return /VIP/i.test(c.tags || "") || Number(c.total_spent) >= 1000;
+      case "loyal": return c.orders_count >= 5;
+      case "new": { const n = daysSince(c.created_at || c.last_order); return n != null && n <= 30; }
+      case "away30": return ds != null && ds >= 30;
+      case "away60": return ds != null && ds >= 60;
+      case "points": return Number(c.points) > 0;
+      case "never": return !c.orders_count;
+      default: return true;
+    }
+  });
+}
+function renderCustomers() {
+  const list = customerList();
+  $("cuCount").textContent = list.length + " عميل";
+  if (!list.length) { $("tblCustomers").innerHTML = '<div class="empty">' + (customers.length ? "لا توجد نتائج" : "تظهر قائمة العملاء بعد أول مزامنة من البرنامج (الإصدار 3.4)") + "</div>"; return; }
+  const shown = list.slice(0, 400);
+  $("tblCustomers").innerHTML = '<table><tr><th>العميل</th><th>الجوال</th><th>الطلبات</th><th class="hm">المشتريات</th><th class="hm">آخر طلب</th><th>النقاط</th></tr>' +
+    shown.map(c => { const ds = daysSince(c.last_order); return `<tr class="click" data-p="${esc(c.phone)}"><td>${esc(c.name || "—")}${c.tags ? ` <span class="tag">${esc(c.tags)}</span>` : ""}${c.no_offers ? ' <span class="tag red">🚫 عروض</span>' : ""}</td>
+      <td class="n">${esc(c.phone)}</td><td class="n">${c.orders_count || 0}</td><td class="n hm">${fmt(c.total_spent)}</td>
+      <td class="hm">${c.last_order ? esc(String(c.last_order).slice(0, 10)) + (ds != null ? ` <small class="note">(${ds} يوم)</small>` : "") : ""}</td><td class="n">${Number(c.points) ? fmtQ(c.points) : ""}</td></tr>`; }).join("") +
+    "</table>" + (list.length > shown.length ? `<p class="note">يظهر أول ${shown.length} — استخدم البحث للوصول لبقية العملاء.</p>` : "");
+  $("tblCustomers").querySelectorAll("tr[data-p]").forEach(tr => tr.onclick = () => customerDialog(tr.dataset.p));
+}
+$("cuSearch").oninput = renderCustomers;
+$("cuSeg").onchange = renderCustomers;
+$("cuNew").onclick = () => customerForm(null);
+$("cuCsv").onclick = () => exportCsv({ title: "العملاء", sub: iso(businessToday()), summary: "", tables: [{ cols: ["الاسم", "الجوال", "العنوان", "الطلبات", "المشتريات", "آخر طلب", "النقاط", "التصنيف", "ملاحظات"],
+  rows: customerList().map(c => [c.name, c.phone, c.address, c.orders_count, c.total_spent, c.last_order, c.points, c.tags, c.notes]) }] });
+function customerDialog(phone) {
+  const c = customers.find(x => x.phone === phone);
+  if (!c) return;
+  const wa = "https://wa.me/" + (phone.startsWith("05") ? "966" + phone.slice(1) : phone.replace(/^\+/, ""));
+  openDlg("👤 " + (c.name || phone), `<div class="kv"><b>الجوال</b><span dir="ltr">${esc(phone)}</span><b>العنوان</b><span>${esc(c.address || "—")}</span>
+      <b>الطلبات</b><span>${c.orders_count || 0} طلب • ${fmt(c.total_spent)} ر.س</span><b>آخر طلب</b><span>${esc(c.last_order || "—")}</span>
+      <b>النقاط</b><span>${fmtQ(c.points)}</span><b>التصنيف</b><span>${esc(c.tags || "—")}</span><b>ملاحظات</b><span>${esc(c.notes || "—")}</span></div>
+    <div class="actions"><button class="btn" id="cdHist">📜 سجل الطلبات والنقاط</button><button class="btn amber" id="cdEdit">✏ تعديل</button>
+      <button class="btn green" id="cdPts">⭐ نقاط</button><a class="btn" style="background:#25d366;text-decoration:none" href="${wa}" target="_blank" rel="noopener">واتساب</a>
+      <button class="btn gray" id="cdDel">🗑 حذف</button></div>`);
+  $("cdHist").onclick = () => { $("dlg").close(); openReport("customer.history", { phone }, {}, "سجل العميل"); };
+  $("cdEdit").onclick = () => customerForm(c);
+  $("cdPts").onclick = () => openDlg("⭐ نقاط " + (c.name || phone) + " — الرصيد " + fmtQ(c.points), `<div class="form">
+      <div><label>العملية</label><select class="fld" id="ptK"><option value="1">إضافة نقاط (مكافأة)</option><option value="-1">خصم نقاط</option></select></div>
+      <div><label>عدد النقاط</label><input class="fld" type="number" min="1" step="1" id="ptN"></div>
+      <div class="full"><label>السبب</label><input class="fld" id="ptNote"></div><div class="full"><button class="btn green" id="ptOk">✔ تنفيذ</button></div></div>`) || ($("ptOk").onclick = async () => {
+        const n = Number($("ptN").value);
+        if (!(n > 0)) { toast("أدخل عدد النقاط"); return; }
+        if (await send({ kind: "customer.points", payload: { phone, points: n * Number($("ptK").value), note: $("ptNote").value.trim() } })) $("dlg").close();
+      });
+  $("cdDel").onclick = async () => { if (confirm(`حذف ملف العميل ${c.name || ""} (${phone}) ونقاطه؟ طلباته السابقة تبقى في التقارير.`) && await send({ kind: "customer.delete", payload: { phone } })) $("dlg").close(); };
+}
+function customerForm(c) {
+  openDlg(c ? "✏ تعديل بيانات العميل" : "➕ عميل جديد", `<div class="form">
+    <div><label>الجوال</label><input class="fld" id="cfPhone" dir="ltr" value="${esc(c ? c.phone : "")}"></div>
+    <div><label>الاسم</label><input class="fld" id="cfName" value="${esc(c ? c.name || "" : "")}"></div>
+    <div class="full"><label>العنوان</label><input class="fld" id="cfAddr" value="${esc(c ? c.address || "" : "")}"></div>
+    <div><label>التصنيف</label><input class="fld" id="cfTags" list="dlTags" value="${esc(c ? c.tags || "" : "")}"><datalist id="dlTags"><option>VIP</option><option>موظف</option><option>شركة</option><option>قريب/صديق</option></datalist></div>
+    <div><label>دعاه صديق (جواله)</label><input class="fld" id="cfRef" dir="ltr" value="${esc(c ? c.referred_by || "" : "")}"></div>
+    <div class="full"><label>ملاحظات</label><input class="fld" id="cfNotes" value="${esc(c ? c.notes || "" : "")}"></div>
+    <div class="full"><label style="font-weight:600"><input type="checkbox" id="cfNo" ${c && c.no_offers ? "checked" : ""}> لا يرغب باستقبال العروض</label></div>
+    <div class="full"><button class="btn green" id="cfOk">💾 حفظ</button></div></div>`);
+  $("cfOk").onclick = async () => {
+    const payload = { phone: $("cfPhone").value.trim(), name: $("cfName").value.trim(), address: $("cfAddr").value.trim(), tags: $("cfTags").value.trim(),
+      referred_by: $("cfRef").value.trim(), notes: $("cfNotes").value.trim(), no_offers: $("cfNo").checked };
+    if (payload.phone.length < 7) { toast("رقم الجوال غير صحيح"); return; }
+    if (c) payload.old_phone = c.phone;
+    if (await send({ kind: "customer.upsert", payload })) $("dlg").close();
+  };
+}
+
+// =====================================================================
+//  الموردون والمشتريات
+// =====================================================================
+let suppliers = [], stockItems = [];
+async function loadSuppliers() {
+  $("tblSup").innerHTML = '<div class="empty">جاري التحميل…</div>';
+  let purch, pays;
+  try {
+    [suppliers, purch, pays] = await Promise.all([
+      all(() => sb.from("v_suppliers_all").select("*").order("name")),
+      sb.from("purchases").select("*").order("purchase_date", { ascending: false }).order("purchase_id", { ascending: false }).limit(60).then(r => r.data || []),
+      sb.from("supplier_payments").select("*").order("pay_date", { ascending: false }).limit(60).then(r => r.data || [])
+    ]);
+  } catch (e) { $("tblSup").innerHTML = '<div class="empty">⚠ شغّل ملف SQL رقم 04 في Supabase</div>'; return; }
+  const showAll = $("suInactive").checked, list = suppliers.filter(s => showAll || s.is_active);
+  const total = list.reduce((s, x) => s + Number(x.balance || 0), 0);
+  $("suTotal").textContent = `${list.length} مورد • المستحق ${fmt(total)} ر.س`;
+  $("tblSup").innerHTML = list.length ? '<table><tr><th>المورد</th><th class="hm">الجوال</th><th class="hm">المشتريات</th><th class="hm">المسدد</th><th>المستحق له</th></tr>' + list.map(s => `<tr class="click${s.is_active ? "" : " off"}" data-s="${s.supplier_id}">
+      <td><b>${esc(s.name)}</b></td><td class="n hm">${esc(s.phone || "")}</td><td class="n hm">${fmt(s.purchases)}</td><td class="n hm">${fmt(s.paid)}</td>
+      <td class="n"><b style="color:${Number(s.balance) > 0 ? "var(--red)" : "var(--green)"}">${fmt(s.balance)}</b></td></tr>`).join("") + "</table>"
+    : '<div class="empty">لا يوجد موردون بعد — اضغط ➕ مورد جديد</div>';
+  $("tblSup").querySelectorAll("tr[data-s]").forEach(tr => tr.onclick = () => supplierDialog(Number(tr.dataset.s)));
+  const sName = id => (suppliers.find(s => s.supplier_id === id) || {}).name || "";
+  $("tblPurch").innerHTML = purch.length ? '<table><tr><th>التاريخ</th><th>المورد</th><th class="hm">الفاتورة</th><th>المبلغ</th></tr>' + purch.map(p => `<tr class="click" data-p="${p.purchase_id}">
+      <td class="n">${esc(p.purchase_date)}</td><td>${esc(sName(p.supplier_id))}</td><td class="hm">${esc(p.invoice_no || "")}</td><td class="n">${fmt(p.total)}</td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد فواتير</div>';
+  $("tblPurch").querySelectorAll("tr[data-p]").forEach(tr => tr.onclick = () => drill("supplier_move", "P" + tr.dataset.p, {}));
+  $("tblPays").innerHTML = pays.length ? '<table><tr><th>التاريخ</th><th>المورد</th><th class="hm">الطريقة</th><th>السداد</th></tr>' + pays.map(p => `<tr>
+      <td class="n">${esc(String(p.pay_date).slice(0, 10))}</td><td>${esc(sName(p.supplier_id))}</td><td class="hm">${esc(p.method || "")}</td><td class="n">${fmt(p.amount)}</td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد سدادات</div>';
+}
+$("suInactive").onchange = loadSuppliers;
+$("suNew").onclick = () => supplierForm(null);
+$("suPurchase").onclick = () => purchaseForm();
+$("suPay").onclick = () => paymentForm();
+function supplierDialog(id) {
+  const s = suppliers.find(x => x.supplier_id === id);
+  if (!s) return;
+  openDlg("🚚 " + s.name, `<div class="kv"><b>الجوال</b><span dir="ltr">${esc(s.phone || "—")}</span><b>الرقم الضريبي</b><span dir="ltr">${esc(s.vat_no || "—")}</span>
+      <b>المشتريات</b><span>${fmt(s.purchases)}</span><b>المسدد</b><span>${fmt(s.paid)}</span><b>المستحق له</b><span><b>${fmt(s.balance)} ر.س</b></span><b>ملاحظات</b><span>${esc(s.notes || "—")}</span></div>
+    <div class="actions"><button class="btn" id="sdSt">📖 كشف الحساب</button><button class="btn green" id="sdPur">🧾 فاتورة مشتريات</button>
+      <button class="btn amber" id="sdPay">💵 سداد</button><button class="btn ghost" id="sdEdit">✏ تعديل</button></div>`);
+  $("sdSt").onclick = () => { $("dlg").close(); openReport("supplier.statement", { supplier_id: id }, {}, "كشف حساب المورد"); };
+  $("sdPur").onclick = () => purchaseForm(id);
+  $("sdPay").onclick = () => paymentForm(id);
+  $("sdEdit").onclick = () => supplierForm(s);
+}
+function supplierForm(s) {
+  openDlg(s ? "✏ تعديل مورد" : "➕ مورد جديد", `<div class="form">
+    <div class="full"><label>اسم المورد</label><input class="fld" id="sfName" value="${esc(s ? s.name : "")}"></div>
+    <div><label>الجوال</label><input class="fld" id="sfPhone" dir="ltr" value="${esc(s ? s.phone || "" : "")}"></div>
+    <div><label>الرقم الضريبي</label><input class="fld" id="sfVat" dir="ltr" value="${esc(s ? s.vat_no || "" : "")}"></div>
+    <div><label>رصيد افتتاحي له</label><input class="fld" id="sfOpen" type="number" step="0.01" value="${s ? Number(s.opening_balance) : 0}"></div>
+    ${s ? `<div><label>الحالة</label><select class="fld" id="sfAct"><option value="1">نشط</option><option value="0" ${s.is_active ? "" : "selected"}>موقوف</option></select></div>` : ""}
+    <div class="full"><label>ملاحظات</label><input class="fld" id="sfNotes" value="${esc(s ? s.notes || "" : "")}"></div>
+    <div class="full"><button class="btn green" id="sfOk">💾 حفظ</button></div></div>`);
+  $("sfOk").onclick = async () => {
+    const payload = { name: $("sfName").value.trim(), phone: $("sfPhone").value.trim(), vat_no: $("sfVat").value.trim(), opening_balance: Number($("sfOpen").value || 0), notes: $("sfNotes").value.trim() };
+    if (!payload.name) { toast("اكتب اسم المورد"); return; }
+    if (s) { payload.supplier_id = s.supplier_id; payload.is_active = $("sfAct").value === "1"; }
+    if (await send({ kind: "supplier.upsert", payload })) $("dlg").close();
+  };
+}
+const supOptions = sel => suppliers.filter(s => s.is_active).map(s => `<option value="${s.supplier_id}" ${s.supplier_id === sel ? "selected" : ""}>${esc(s.name)} (${fmt(s.balance)})</option>`).join("");
+const PAY_METHODS = ["نقدي من الإدارة", "تحويل بنكي", "شيك"];
+async function paymentForm(id) {
+  if (!suppliers.length) await loadSuppliers();
+  openDlg("💵 سداد لمورد", `<div class="form">
+    <div class="full"><label>المورد</label><select class="fld" id="pfSup">${supOptions(id)}</select></div>
+    <div><label>المبلغ</label><input class="fld" type="number" step="0.01" min="0" id="pfAmt"></div>
+    <div><label>طريقة الدفع</label><select class="fld" id="pfM">${PAY_METHODS.map(m => `<option>${m}</option>`).join("")}</select></div>
+    <div><label>التاريخ</label><input class="fld" type="date" id="pfDate" value="${iso(businessToday())}"></div>
+    <div><label>ملاحظات</label><input class="fld" id="pfNotes"></div>
+    <div class="full"><button class="btn green" id="pfOk">💾 تسجيل السداد</button></div></div>
+    <p class="note">السداد من الموقع لا يُخصم من درج الكاشير (يُسجل كسداد من الإدارة أو البنك).</p>`);
+  const fill = () => { const s = suppliers.find(x => x.supplier_id === Number($("pfSup").value)); if (s && !$("pfAmt").value) $("pfAmt").value = Math.max(0, Number(s.balance)).toFixed(2); };
+  $("pfSup").onchange = () => { $("pfAmt").value = ""; fill(); };
+  fill();
+  $("pfOk").onclick = async () => {
+    const payload = { supplier_id: Number($("pfSup").value), amount: Number($("pfAmt").value), method: $("pfM").value, date: $("pfDate").value, notes: $("pfNotes").value.trim() };
+    if (!payload.supplier_id || !(payload.amount > 0)) { toast("اختر المورد وأدخل المبلغ"); return; }
+    if (await send({ kind: "supplier.payment", payload })) $("dlg").close();
+  };
+}
+async function purchaseForm(id) {
+  if (!suppliers.length) await loadSuppliers();
+  if (!catalog) await loadCatalog().catch(() => {});
+  stockItems = await all(() => sb.from("stock_snapshot").select("*").order("item_name")).catch(() => []);
+  const items = [];
+  (catalog ? catalog.prods : []).filter(p => p.is_weighted).forEach(p => {
+    const st = stockItems.find(x => x.item_key === "F:" + p.product_id);
+    items.push({ v: "P:" + p.product_id, n: "🐟 " + p.name_ar + " (كجم)", c: Number((st && st.last_cost) || p.cost_price || 0) });
+  });
+  stockItems.filter(x => x.item_key.startsWith("M:")).forEach(x => items.push({ v: "M:" + x.item_key.slice(2), n: x.item_name + (x.unit ? " (" + x.unit + ")" : ""), c: Number(x.last_cost || 0) }));
+  const itemOpts = '<option value="">— اختر —</option>' + items.map(i => `<option value="${i.v}">${esc(i.n)}</option>`).join("");
+  openDlg("🧾 فاتورة مشتريات", `<div class="form">
+    <div class="full"><label>المورد</label><select class="fld" id="puSup">${supOptions(id)}</select></div>
+    <div><label>التاريخ</label><input class="fld" type="date" id="puDate" value="${iso(businessToday())}"></div>
+    <div><label>رقم فاتورة المورد</label><input class="fld" id="puInv"></div>
+    <div class="full"><label>ملاحظات</label><input class="fld" id="puNotes"></div></div>
+    <table class="lines" style="margin-top:10px"><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th><th></th></tr><tbody id="puLines"></tbody></table>
+    <div class="actions"><button class="btn sm ghost" id="puAdd">➕ سطر</button><span style="font-weight:800;align-self:center">الإجمالي: <span id="puTot">0.00</span> ر.س</span></div>
+    <div class="form" style="margin-top:8px"><div><label>المدفوع الآن</label><input class="fld" type="number" step="0.01" min="0" id="puPaid" value="0"></div>
+      <div><label>طريقة الدفع</label><select class="fld" id="puM">${PAY_METHODS.map(m => `<option>${m}</option>`).join("")}</select></div>
+      <div class="full"><button class="btn green" id="puOk">💾 حفظ الفاتورة</button></div></div>
+    <p class="note">الكميات تُضاف للمخزون تلقائياً، وتُحدَّث تكلفة الصنف. ${items.length ? "" : "⚠ لا توجد أصناف بعد — أضف المواد من تبويب المخزون."}</p>`);
+  $("dlg").classList.add("wide");
+  const tot = () => {
+    let t = 0;
+    $("puLines").querySelectorAll("tr").forEach(tr => { const q = Number(tr.querySelector("[data-f=q]").value || 0), c = Number(tr.querySelector("[data-f=c]").value || 0); tr.querySelector("[data-f=t]").textContent = fmt(q * c); t += Math.round(q * c * 100) / 100; });
+    $("puTot").textContent = fmt(t);
+  };
+  const add = () => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><select class="fld" data-f="i">${itemOpts}</select></td><td><input class="fld price" type="number" step="0.001" min="0" data-f="q"></td>
+      <td><input class="fld price" type="number" step="0.01" min="0" data-f="c"></td><td class="n" data-f="t">0.00</td><td><button class="btn sm gray" type="button">×</button></td>`;
+    tr.querySelector("[data-f=i]").onchange = e => { const it = items.find(i => i.v === e.target.value); if (it && it.c) tr.querySelector("[data-f=c]").value = it.c; tot(); };
+    tr.querySelectorAll("input").forEach(i => i.oninput = tot);
+    tr.querySelector("button").onclick = () => { tr.remove(); tot(); };
+    $("puLines").appendChild(tr);
+  };
+  add(); add();
+  $("puAdd").onclick = add;
+  $("puOk").onclick = async () => {
+    const lines = [...$("puLines").querySelectorAll("tr")].map(tr => ({ v: tr.querySelector("[data-f=i]").value, q: Number(tr.querySelector("[data-f=q]").value || 0), c: Number(tr.querySelector("[data-f=c]").value || 0) })).filter(l => l.v || l.q);
+    if (!lines.length || lines.some(l => !l.v || !(l.q > 0))) { toast("اختر الصنف وأدخل الكمية في كل سطر"); return; }
+    const payload = { supplier_id: Number($("puSup").value), date: $("puDate").value, invoice_no: $("puInv").value.trim(), notes: $("puNotes").value.trim(),
+      paid: Number($("puPaid").value || 0), pay_method: $("puM").value, items: lines.map(l => ({ type: l.v[0], id: Number(l.v.slice(2)), qty: l.q, unit_cost: l.c })) };
+    if (!payload.supplier_id) { toast("اختر المورد"); return; }
+    if (await send({ kind: "purchase.add", payload })) $("dlg").close();
+  };
+}
+
+// =====================================================================
+//  المخزون
+// =====================================================================
+async function loadStockView() {
+  $("tblStockFull").innerHTML = '<div class="empty">جاري التحميل…</div>';
+  try { stockItems = await all(() => sb.from("stock_snapshot").select("*").order("item_type").order("item_name")); }
+  catch (e) { $("tblStockFull").innerHTML = '<div class="empty">⚠ تعذر التحميل</div>'; return; }
+  renderStockView();
+}
+function renderStockView() {
+  const t = $("stType").value, q = $("stSearch").value.trim();
+  const list = stockItems.filter(s => (!t || (t === "low" ? low(s) : s.item_key[0] === t)) && (!q || s.item_name.includes(q)));
+  $("stCount").textContent = `${list.length} صنف • ${stockItems.filter(low).length} يحتاج طلب`;
+  $("tblStockFull").innerHTML = list.length ? '<table><tr><th>الصنف</th><th class="hm">النوع</th><th>الرصيد</th><th class="hm">الحد الأدنى</th><th class="hm">التكلفة</th><th>الحالة</th></tr>' + list.map(s => `<tr class="click" data-k="${esc(s.item_key)}">
+      <td><b>${esc(s.item_name)}</b></td><td class="hm">${esc(s.item_type)}</td><td class="n">${fmtQ(s.balance)} ${esc(s.unit || "")}</td><td class="n hm">${Number(s.min_stock) ? fmtQ(s.min_stock) : ""}</td>
+      <td class="n hm">${Number(s.last_cost) ? fmt(s.last_cost) : ""}</td><td>${low(s) ? '<span class="tag red">⚠ ' + (Number(s.balance) < 0 ? "سالب" : "منخفض") + "</span>" : '<span class="tag green">✔</span>'}</td></tr>`).join("") + "</table>"
+    : '<div class="empty">لا توجد أصناف</div>';
+  $("tblStockFull").querySelectorAll("tr[data-k]").forEach(tr => tr.onclick = () => stockDialog(tr.dataset.k));
+}
+$("stType").onchange = renderStockView;
+$("stSearch").oninput = renderStockView;
+$("stFishRep").onclick = () => openCenter("stock.fish");
+$("stMatRep").onclick = () => openCenter("stock.materials");
+$("stNewMat").onclick = () => materialForm(null);
+function stockDialog(key) {
+  const s = stockItems.find(x => x.item_key === key);
+  if (!s) return;
+  const type = key[0], id = Number(key.slice(2)), unit = s.unit || "";
+  openDlg((type === "F" ? "🐟 " : "🧂 ") + s.item_name, `<div class="kv"><b>الرصيد الحالي</b><span><b>${fmtQ(s.balance)} ${esc(unit)}</b></span><b>الحد الأدنى</b><span>${fmtQ(s.min_stock)}</span><b>آخر تكلفة</b><span>${fmt(s.last_cost)}</span></div>
+    <div class="form"><div><label>العملية</label><select class="fld" id="smK"><option value="in">➕ وارد</option><option value="waste">🗑 هالك / تالف</option><option value="count">📋 جرد (الكمية الفعلية)</option></select></div>
+      <div><label>الكمية (${esc(unit)})</label><input class="fld" type="number" step="0.001" min="0" id="smQ"></div>
+      <div class="full"><label>ملاحظة / السبب</label><input class="fld" id="smN"></div>
+      <div class="full"><button class="btn green" id="smOk">✔ تسجيل</button></div></div>
+    <div class="actions"><button class="btn ghost" id="smMoves">📜 الحركات</button><button class="btn ghost" id="smMin">⚠ الحد الأدنى</button>${type === "M" ? '<button class="btn ghost" id="smEdit">✏ تعديل المادة</button>' : ""}</div>
+    <p class="note">الوارد مع فاتورة مورد يُسجل من «فاتورة مشتريات» حتى يدخل في حساب المورد.</p>`);
+  $("smK").onchange = () => { if ($("smK").value === "count") $("smQ").value = Math.max(0, Number(s.balance)).toFixed(3); };
+  $("smOk").onclick = async () => {
+    const qty = Number($("smQ").value);
+    if (!(qty > 0) && $("smK").value !== "count") { toast("أدخل الكمية"); return; }
+    if (await send({ kind: "stock.move", payload: { type, id, kind: $("smK").value, qty, note: $("smN").value.trim() } })) $("dlg").close();
+  };
+  $("smMoves").onclick = () => { $("dlg").close(); openReport("stock.moves", { type, id }, {}, "حركات " + s.item_name); };
+  $("smMin").onclick = async () => {
+    const v = prompt("الحد الأدنى للتنبيه (" + unit + "):", Number(s.min_stock) || 0);
+    if (v !== null && await send({ kind: "stock.min", payload: { type, id, min: Number(v) } })) $("dlg").close();
+  };
+  if (type === "M") $("smEdit").onclick = () => materialForm(s);
+}
+function materialForm(s) {
+  openDlg(s ? "✏ تعديل مادة" : "➕ مادة جديدة", `<div class="form">
+    <div class="full"><label>اسم المادة</label><input class="fld" id="mfName" value="${esc(s ? s.item_name : "")}"></div>
+    <div><label>الوحدة</label><input class="fld" id="mfUnit" list="dlUnits" value="${esc(s ? s.unit || "" : "")}"><datalist id="dlUnits"><option>كجم</option><option>لتر</option><option>حبة</option><option>كرتون</option><option>علبة</option><option>كيس</option></datalist></div>
+    <div><label>النوع</label><select class="fld" id="mfKind"><option>خام</option><option ${s && s.item_type === "تغليف" ? "selected" : ""}>تغليف</option><option ${s && s.item_type === "أخرى" ? "selected" : ""}>أخرى</option></select></div>
+    <div><label>الحد الأدنى</label><input class="fld" type="number" step="0.001" min="0" id="mfMin" value="${s ? Number(s.min_stock) : 0}"></div>
+    <div><label>تكلفة الوحدة</label><input class="fld" type="number" step="0.01" min="0" id="mfCost" value="${s ? Number(s.last_cost) : 0}"></div>
+    <div class="full"><button class="btn green" id="mfOk">💾 حفظ</button></div></div>`);
+  $("mfOk").onclick = async () => {
+    const payload = { name: $("mfName").value.trim(), unit: $("mfUnit").value.trim(), kind: $("mfKind").value, min_stock: Number($("mfMin").value || 0), last_cost: Number($("mfCost").value || 0) };
+    if (!payload.name) { toast("اكتب اسم المادة"); return; }
+    if (s) payload.material_id = Number(s.item_key.slice(2));
+    if (await send({ kind: "material.upsert", payload })) $("dlg").close();
+  };
 }
 
 function openDlg(title, html) { $("dlgTitle").textContent = title; $("dlgBody").innerHTML = html; $("dlg").showModal(); }
