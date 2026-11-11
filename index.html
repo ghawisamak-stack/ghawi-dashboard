@@ -115,6 +115,7 @@
   dialog .head { background: var(--navy); color: #fff; padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
   dialog .body { padding: 14px 16px; max-height: 70vh; overflow: auto; }
   dialog.wide { width: min(1150px, 97vw); }
+  .form label:has(> input[type=checkbox]), .toolbar label:has(> input[type=checkbox]) { display: inline-flex; gap: 6px; align-items: center; }
   dialog.wide .body { max-height: 82vh; }
   /* ----- التقارير والقوائم الجديدة ----- */
   .center { display: grid; grid-template-columns: 270px 1fr; gap: 12px; align-items: start; }
@@ -252,7 +253,7 @@
   <!-- ================= العروض والكوبونات ================= -->
   <section class="view" id="v-offers"><main>
     <div class="grid">
-      <div class="card"><h2>🎁 العروض</h2><p class="note">غيّر سعر العرض أو أوقفه/فعّله.</p><div class="scroll" id="tblOffers"></div></div>
+      <div class="card"><h2>🎁 العروض <button class="btn sm green" id="oNew">➕ عرض جديد</button></h2><p class="note">أنشئ عرضاً جديداً، أو غيّر سعر العرض، أو أوقفه/فعّله، أو احذفه.</p><div class="scroll" id="tblOffers"></div></div>
       <div class="card"><h2>🎟 الكوبونات <button class="btn sm" id="cNew">➕ كوبون</button></h2><div class="scroll" id="tblCoupons"></div></div>
     </div>
     <div class="card" style="margin-top:12px">
@@ -868,12 +869,13 @@ async function loadOffers() {
       <td><b>${esc(o.title || "")}</b><br><small class="note">${esc(o.items_text || "")}${o.end_date ? " • حتى " + esc(o.end_date) : ""}</small></td><td>${typeName(o.offer_type)}</td>
       <td><input class="price" type="number" step="0.5" value="${Number(o.price)}" data-o="${Number(o.price)}"></td>
       <td><label class="switch"><input type="checkbox" ${o.is_active ? "checked" : ""}><span></span></label></td>
-      <td><button class="btn sm" data-save>حفظ</button></td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد عروض</div>';
+      <td style="white-space:nowrap"><button class="btn sm" data-save>حفظ</button> <button class="btn sm gray" data-del title="حذف العرض">🗑</button></td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد عروض</div>';
   $("tblOffers").querySelectorAll("tr[data-o]").forEach(tr => {
     tr.querySelector("[data-save]").onclick = () => {
       const price = Number(tr.querySelector(".price").value), active = tr.querySelector("input[type=checkbox]").checked;
       send({ kind: "offer.update", payload: { offer_id: Number(tr.dataset.o), price, is_active: active } });
     };
+    tr.querySelector("[data-del]").onclick = () => { if (confirm("حذف هذا العرض نهائياً؟")) send({ kind: "offer.delete", payload: { offer_id: Number(tr.dataset.o) } }); };
   });
   $("tblCoupons").innerHTML = coupons.length ? "<table><tr><th>الكود</th><th>الخصم</th><th>الحد الأدنى</th><th>الاستخدام</th><th>مفعل</th></tr>" + coupons.map(c => `<tr class="${c.is_active ? "" : "off"}">
       <td><b dir="ltr">${esc(c.code)}</b><br><small class="note">${esc(c.title || "")}${c.end_date ? " • حتى " + esc(c.end_date) : ""}</small></td>
@@ -884,6 +886,7 @@ async function loadOffers() {
   $("featureToggles").innerHTML = FEATURES.map(([k, n]) => `<button class="chip" data-k="${k}">${n}: تشغيل</button><button class="chip" data-k="${k}" data-off="1">إيقاف</button>`).join(" &nbsp; ");
   $("featureToggles").querySelectorAll("button").forEach(b => b.onclick = () => send({ kind: "setting.set", payload: { key: b.dataset.k, value: b.dataset.off ? "0" : "1" } }));
 }
+$("oNew").onclick = () => offerForm();
 $("cNew").onclick = () => {
   openDlg("🎟 كوبون جديد", `<div class="form">
     <div><label>الكود</label><input class="fld" id="kCode" dir="ltr" style="text-transform:uppercase"></div>
@@ -1006,7 +1009,7 @@ async function loadLog() {
   const kinds = { "product.update": "تعديل صنف", "size.update": "سعر حجم", "product.create": "صنف جديد", "price.bulk": "تغيير جماعي", "offer.update": "عرض", "coupon.upsert": "كوبون", "coupon.toggle": "كوبون", "expense.add": "مصروف", "setting.set": "إعداد", "category.update": "مجموعة",
     "customer.upsert": "عميل", "customer.delete": "حذف عميل", "customer.points": "نقاط عميل", "supplier.upsert": "مورد", "supplier.payment": "سداد مورد",
     "purchase.add": "فاتورة مشتريات", "supplier.move.delete": "حذف حركة مورد", "stock.move": "حركة مخزون", "stock.min": "حد أدنى", "material.upsert": "مادة",
-    "journal.save": "قيد", "journal.delete": "حذف قيد", "voucher.save": "سند", "account.upsert": "حساب", "account.delete": "حذف حساب", "acc.post": "ترحيل" };
+    "journal.save": "قيد", "journal.delete": "حذف قيد", "voucher.save": "سند", "account.upsert": "حساب", "account.delete": "حذف حساب", "acc.post": "ترحيل", "offer.create": "عرض جديد", "offer.delete": "حذف عرض" };
   $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
       <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
       <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
@@ -1051,6 +1054,7 @@ function reportHtml(res, ctx = {}) {
   let h = `<div class="rep-head"><div><div class="t">${esc(res.title)}</div><div class="s">${esc(res.sub || "")}${res.generated_at ? " • " + esc(res.generated_at) : ""}</div></div>
     <div class="actions" style="margin:0">${ctx.back ? '<button class="btn sm gray" data-act="back">→ رجوع</button>' : ""}
       <button class="btn sm ghost" data-act="print">🖨 طباعة / PDF</button><button class="btn sm ghost" data-act="csv">📤 Excel</button>${ctx.extra || ""}</div></div>`;
+  h += cacheBanner(res);
   if (res.summary) h += `<div class="rep-sum ${res.ok === true ? "ok" : res.ok === false ? "bad" : ""}">${esc(res.summary)}</div>`;
   (res.tables || []).forEach((t, ti) => {
     if (t.title) h += `<h3 style="margin:14px 0 6px">${esc(t.title)} <span class="tag">${t.rows.length}</span></h3>`;
@@ -1123,7 +1127,7 @@ async function openReport(kind, params, ctx = {}, title = "جاري التجهي
   paintStack();
   if (!$("rdlg").open) $("rdlg").showModal();
   try {
-    const res = await ask(kind, params);
+    const res = await getReport(kind, params);
     entry.res = res;
     entry.ctx = Object.assign({ params, kind }, ctx);
   } catch (e) {
@@ -1268,7 +1272,7 @@ async function runCenter() {
   const seq = ++rcSeq;
   $("rcResult").innerHTML = `<div class="wait"><span class="spin"></span>يُجهَّز التقرير في برنامج الكاشير…</div>`;
   try {
-    const res = await ask(kind, p);
+    const res = await getReport(kind, p);
     if (seq !== rcSeq) return;
     mountReport($("rcResult"), res, { params: p, kind });
   } catch (e) {
@@ -1709,6 +1713,241 @@ function materialForm(s) {
     if (!payload.name) { toast("اكتب اسم المادة"); return; }
     if (s) payload.material_id = Number(s.item_key.slice(2));
     if (await send({ kind: "material.upsert", payload })) $("dlg").close();
+  };
+}
+
+// =====================================================================
+//  التقارير والجهاز مغلق: نسخة محفوظة من البرنامج، أو حساب من البيانات المتزامنة
+// =====================================================================
+function cacheKey(kind, p) {
+  return kind + "?" + Object.keys(p).sort().map(k => k + "=" + (p[k] === true ? "true" : p[k] === false ? "false" : p[k] == null ? "" : String(p[k]))).join("&");
+}
+async function fromCache(kind, p) {
+  const { data, error } = await sb.from("report_cache").select("result,generated_at").eq("key", cacheKey(kind, p)).maybeSingle();
+  if (error || !data) return null;
+  const r = data.result;
+  r._cached = data.generated_at;
+  return r;
+}
+function offlineText(mins) {
+  return "جهاز المطعم غير متصل" + (mins != null ? " (آخر اتصال قبل " + (mins < 60 ? mins + " دقيقة" : mins < 2880 ? Math.round(mins / 60) + " ساعة" : Math.round(mins / 1440) + " يوم") + ")" : "");
+}
+async function getReport(kind, p) {
+  const mins = await deviceLastSeen().catch(() => null);
+  if (mins != null && mins <= 3) {
+    try { return await ask(kind, p, 30000); }
+    catch (e) { if (!/غير متصل|تأخر/.test(e.message)) throw e; }
+  }
+  const cached = await fromCache(kind, p).catch(() => null);
+  if (cached) { cached._offline = offlineText(mins); return cached; }
+  const local = await cloudCompute(kind, p).catch(e => { console.warn(e); return null; });
+  if (local) { local._offline = offlineText(mins); return local; }
+  throw new Error(offlineText(mins) + " ولا توجد نسخة محفوظة لهذا التقرير بهذه الفترة. اختر فترة جاهزة (اليوم، أمس، 7 أيام، الشهر، الشهر الماضي، الربع، السنة) أو افتح البرنامج.");
+}
+function cacheBanner(res) {
+  if (res._cached) return `<div class="rep-sum" style="background:#fff4e0;color:#9a5b00">📦 نسخة محفوظة من البرنامج — آخر تحديث ${esc(new Date(res._cached).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}${res._offline ? " • " + esc(res._offline) : ""}</div>`;
+  if (res._cloud) return `<div class="rep-sum" style="background:#e8f4fd;color:#1f5f8b">☁ محسوب من بيانات المبيعات المتزامنة${res._offline ? " (" + esc(res._offline) + ")" : ""} — قد يختلف قليلاً عن البرنامج في الطلبات المعدلة حديثاً</div>`;
+  return "";
+}
+
+// ----- حساب التقارير من البيانات المتزامنة -----
+const bday = ts => { const d = new Date(String(ts).replace(" ", "T")); d.setHours(d.getHours() - DAY_START_HOUR); return iso(d); };
+function table(cols, num, rows, styles) { return { title: "", cols, num, rows, styles: styles || rows.map(() => ""), keys: null }; }
+function groupSum(list, keyFn, valFns) {
+  const m = new Map();
+  list.forEach(x => { const k = keyFn(x); if (!m.has(k)) m.set(k, valFns.map(() => 0).concat([new Set()])); const a = m.get(k); valFns.forEach((f, i) => a[i] += f(x)); });
+  return m;
+}
+const r2 = v => Math.round(v * 100) / 100, r3 = v => Math.round(v * 1000) / 1000;
+async function ordersIn(f, t, withItems) {
+  return all(() => sb.from("orders").select(withItems ? "*, order_items(*)" : "*").gte("business_date", f).lte("business_date", t).order("order_id"));
+}
+async function cloudCompute(kind, p) {
+  const f = p.from, t = p.to, sub = f === t ? f.replaceAll("-", "/") : `من ${f.replaceAll("-", "/")} إلى ${t.replaceAll("-", "/")}`;
+  const R = (title, summary, ...tables) => ({ title, sub, summary, ok: null, tables, generated_at: new Date().toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17), _cloud: true });
+  const rep = kind === "sales" ? p.report : kind;
+  const expIn = async () => (await all(() => sb.from("expenses").select("*").gte("expense_date", f + " 00:00").lte("expense_date", addDays(t, 1) + " 23:59"))).filter(e => { const d = bday(e.expense_date); return d >= f && d <= t; });
+  const retIn = () => all(() => sb.from("returns").select("*, return_items(*)").gte("business_date", f).lte("business_date", t));
+  switch (rep) {
+    case "cashier": {
+      const [os, ex, rt] = await Promise.all([ordersIn(f, t, true), expIn(), retIn()]);
+      const sum = (l, fn) => l.reduce((s, x) => s + Number(fn(x) || 0), 0);
+      const total = sum(os, o => o.total), cash = sum(os, o => o.paid_cash), net = sum(os, o => o.paid_network), other = total - cash - net;
+      const disc = sum(os, o => o.discount), exp = sum(ex, e => e.amount), ret = sum(rt, r => r.amount), retCash = sum(rt.filter(r => /نقد/.test(r.refund_method || "")), r => r.amount);
+      const items = groupSum(os.flatMap(o => o.order_items || []), i => i.product_name, [i => Number(i.quantity), i => Number(i.total)]);
+      const top = [...items.entries()].sort((a, b) => b[1][1] - a[1][1]).slice(0, 10);
+      const rows = [["المبيعات", null], ["عدد الطلبات", String(os.length)], ["💵 نقدي", fmt(cash)], ["💳 شبكة", fmt(net)], ["📱 أخرى / تطبيقات", fmt(other)], ["إجمالي المبيعات (شامل الضريبة)", fmt(total)],
+        ["الخصومات", fmt(disc)], ["الخصم والمرتجعات والمصروفات", null], ["↩ المرتجعات", fmt(ret)], ["💸 المصروفات", fmt(exp)], ["صافي النقدية المتوقع في الدرج", fmt(cash - exp - retCash)],
+        ["الأصناف الأكثر مبيعاً", null], ...top.map(([n, v]) => [n, fmtQ(v[0]) + " • " + fmt(v[1])])];
+      const st = rows.map(r => r[1] == null ? "H" : /إجمالي|صافي/.test(r[0]) ? "T" : "");
+      return R("تقرير المبيعات (من البيانات المتزامنة)", `الإجمالي ${fmt(total)} • الطلبات ${os.length}`, table(["البند", "القيمة"], [false, false], rows, st));
+    }
+    case "ItemSales": case "CategorySales": {
+      const os = await ordersIn(f, t, true);
+      const its = os.flatMap(o => (o.order_items || []).map(i => Object.assign({ oid: o.order_id }, i)));
+      const byCat = rep === "CategorySales";
+      const m = groupSum(its, i => byCat ? (i.category || "غير مصنف") : i.product_name, [i => Number(i.quantity), i => Number(i.total)]);
+      its.forEach(i => m.get(byCat ? (i.category || "غير مصنف") : i.product_name)[2].add(i.oid));
+      const rows = [...m.entries()].map(([k, v]) => [k, r3(v[0]), v[2].size, r2(v[1])]).sort((a, b) => b[3] - a[3]);
+      const tot = rows.reduce((s, r) => s + r[3], 0);
+      rows.forEach(r => r.push(tot ? Math.round(r[3] / tot * 1000) / 10 : 0));
+      return R(byCat ? "مبيعات الفئات" : "مبيعات الأصناف", `${rows.length} ${byCat ? "فئة" : "صنف"} • الإجمالي ${fmt(tot)} ر.س`, table([byCat ? "الفئة" : "الصنف", "الكمية", "عدد الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true, true], rows));
+    }
+    case "ByHour": {
+      const os = await ordersIn(f, t);
+      const m = groupSum(os, o => String(o.order_date).slice(11, 13), [() => 1, o => Number(o.total)]);
+      const rows = [...m.entries()].sort().map(([h, v]) => [h + ":00", v[0], r2(v[1]), r2(v[1] / v[0])]);
+      return R("المبيعات حسب الساعة", `${os.length} طلب`, table(["الساعة", "الطلبات", "المبيعات", "متوسط الطلب"], [false, true, true, true], rows));
+    }
+    case "DailySummary": {
+      const [os, ex, rt] = await Promise.all([ordersIn(f, t), expIn(), retIn()]);
+      const days = new Map();
+      const g = d => { if (!days.has(d)) days.set(d, [0, 0, 0, 0, 0, 0]); return days.get(d); };
+      os.forEach(o => { const a = g(o.business_date); a[0]++; a[1] += +o.total; a[2] += +o.paid_cash; a[3] += +o.paid_network; });
+      ex.forEach(e => g(bday(e.expense_date))[4] += +e.amount);
+      rt.forEach(r => g(r.business_date)[5] += +r.amount);
+      const rows = [...days.entries()].sort().map(([d, a]) => [d, a[0], r2(a[1]), r2(a[2]), r2(a[3]), r2(a[1] - a[2] - a[3]), r2(a[4]), r2(a[5])]);
+      const tot = rows.reduce((s, r) => s + r[2], 0);
+      return R("ملخص الأيام", `${rows.length} يوم • الإجمالي ${fmt(tot)} ر.س`, table(["التاريخ", "الطلبات", "الإجمالي", "نقدي", "شبكة", "أخرى", "المصروفات", "المرتجعات"], [false, true, true, true, true, true, true, true], rows));
+    }
+    case "PaymentTypes": case "OrderTypes": {
+      const os = await ordersIn(f, t);
+      const pay = rep === "PaymentTypes";
+      const m = groupSum(os, o => (pay ? o.payment_type : o.order_type) || "—", [() => 1, o => Number(o.total)]);
+      const tot = os.reduce((s, o) => s + Number(o.total), 0);
+      const rows = [...m.entries()].map(([k, v]) => [k, v[0], r2(v[1]), tot ? Math.round(v[1] / tot * 1000) / 10 : 0]).sort((a, b) => b[2] - a[2]);
+      return R(pay ? "طرق الدفع" : "أنواع الطلبات", `الإجمالي ${fmt(tot)} ر.س`, table([pay ? "طريقة الدفع" : "النوع", "الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true], rows));
+    }
+    case "Discounts": {
+      const os = (await ordersIn(f, t)).filter(o => Number(o.discount) > 0);
+      const rows = os.map(o => [o.business_date, o.daily_no || o.order_id, o.customer_name || "", r2(+o.discount), o.discount_reason || "", o.cashier || ""]);
+      return R("الخصومات", `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, table(["التاريخ", "رقم الطلب", "العميل", "الخصم", "السبب", "الكاشير"], [false, false, false, true, false, false], rows));
+    }
+    case "TopCustomers": {
+      const os = (await ordersIn(f, t)).filter(o => o.customer_phone);
+      const m = groupSum(os, o => o.customer_phone, [() => 1, o => Number(o.total)]);
+      const names = {}; os.forEach(o => { if (o.customer_name && o.customer_name !== "عميل نقدي") names[o.customer_phone] = o.customer_name; });
+      const rows = [...m.entries()].map(([ph, v]) => [names[ph] || "", ph, v[0], r2(v[1])]).sort((a, b) => b[3] - a[3]).slice(0, 200);
+      return R("العملاء الأكثر طلباً", `${rows.length} عميل`, table(["العميل", "الجوال", "الطلبات", "الإجمالي"], [false, false, true, true], rows));
+    }
+    case "Returns": case "ReturnedItems": {
+      const rt = await retIn();
+      if (rep === "Returns") {
+        const rows = rt.map(r => [r.business_date, r.order_no || r.order_id || "", r2(+r.amount), r.refund_method || "", r.reason || "", r.cashier || ""]);
+        return R("المرتجعات", `${rows.length} مرتجع • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, table(["التاريخ", "الطلب", "المبلغ", "طريقة الرد", "السبب", "الكاشير"], [false, false, true, false, false, false], rows));
+      }
+      const m = groupSum(rt.flatMap(r => r.return_items || []), i => i.product_name, [i => +i.quantity, i => +i.total]);
+      const rows = [...m.entries()].map(([k, v]) => [k, r3(v[0]), r2(v[1])]).sort((a, b) => b[2] - a[2]);
+      return R("الأصناف المرتجعة", `${rows.length} صنف`, table(["الصنف", "الكمية", "الإجمالي"], [false, true, true], rows));
+    }
+    case "Expenses": {
+      const ex = await expIn();
+      const rows = ex.map(e => [String(e.expense_date).slice(0, 16), e.description || "", r2(+e.amount), e.cashier || ""]);
+      return R("المصروفات", `${rows.length} مصروف • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, table(["التاريخ", "البيان", "المبلغ", "الكاشير"], [false, false, true, false], rows));
+    }
+    case "Purchases": {
+      const [pu, sups] = await Promise.all([all(() => sb.from("purchases").select("*").gte("purchase_date", f).lte("purchase_date", t).order("purchase_date")), all(() => sb.from("suppliers").select("supplier_id,name"))]);
+      const nm = Object.fromEntries(sups.map(s => [s.supplier_id, s.name]));
+      const rows = pu.map(x => [x.purchase_date, nm[x.supplier_id] || "", x.invoice_no || "", r2(+x.total), x.notes || ""]);
+      return R("المشتريات", `${rows.length} فاتورة • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, table(["التاريخ", "المورد", "الفاتورة", "الإجمالي", "ملاحظات"], [false, false, false, true, false], rows));
+    }
+    case "stock.fish": case "stock.materials": {
+      const st = await all(() => sb.from("stock_snapshot").select("*").order("item_name"));
+      const fish = kind === "stock.fish";
+      const list = st.filter(s => s.item_key[0] === (fish ? "F" : "M"));
+      const rows = list.map(s => [s.item_name, s.unit || "", r3(+s.balance), r3(+s.min_stock), Number(s.balance) < 0 ? "⚠ سالب" : Number(s.min_stock) > 0 && Number(s.balance) <= Number(s.min_stock) ? "⚠ منخفض" : "✔"]);
+      return Object.assign(R(fish ? "مخزون الأسماك (الرصيد الحالي)" : "المواد الخام والتغليف (الرصيد الحالي)", "حركة الفترة متاحة عند اتصال البرنامج", table(["الصنف", "الوحدة", "الرصيد الحالي", "الحد الأدنى", "الحالة"], [false, false, true, true, false], rows)), { sub: "آخر رصيد متزامن" });
+    }
+    case "supplier.statement": {
+      const id = p.supplier_id;
+      const [s, pu, py] = await Promise.all([sb.from("suppliers").select("*").eq("supplier_id", id).maybeSingle().then(r => r.data),
+        all(() => sb.from("purchases").select("*").eq("supplier_id", id)), all(() => sb.from("supplier_payments").select("*").eq("supplier_id", id))]);
+      if (!s) return null;
+      const mv = [];
+      if (Number(s.opening_balance)) mv.push(["", "رصيد افتتاحي", +s.opening_balance, 0]);
+      pu.forEach(x => mv.push([x.purchase_date, "فاتورة مشتريات" + (x.invoice_no ? " رقم " + x.invoice_no : ""), +x.total, 0]));
+      py.forEach(x => mv.push([String(x.pay_date).slice(0, 10), "سداد (" + (x.method || "") + ")", 0, +x.amount]));
+      mv.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
+      let bal = 0;
+      const rows = mv.map(m => { bal += m[2] - m[3]; return [m[0], m[1], r2(m[2]), r2(m[3]), r2(bal)]; });
+      return Object.assign(R("كشف حساب المورد: " + s.name, `الرصيد المستحق ${fmt(bal)} ر.س`, table(["التاريخ", "البيان", "مشتريات (له)", "سداد (عليه)", "الرصيد"], [false, false, true, true, true], rows)), { sub: "" });
+    }
+    case "customer.history": {
+      const os = await all(() => sb.from("orders").select("*, order_items(product_name)").eq("customer_phone", p.phone).order("order_id", { ascending: false }));
+      const rows = os.map(o => [o.business_date, String(o.order_date).slice(11, 16), o.daily_no || o.order_id, o.order_type || "", o.payment_type || "", r2(+o.total), (o.order_items || []).map(i => i.product_name).join("، ")]);
+      return Object.assign(R("سجل العميل: " + p.phone, `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[5], 0))} ر.س`, Object.assign(table(["التاريخ", "الوقت", "رقم الطلب", "النوع", "الدفع", "الإجمالي", "الأصناف"], [false, false, false, false, false, true, false], rows), { title: "🧾 الطلبات" })), { sub: "" });
+    }
+    default: return null;
+  }
+}
+function addDays(isoDate, n) { const d = new Date(isoDate + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); }
+
+// =====================================================================
+//  عرض جديد من الموقع
+// =====================================================================
+const DAY_NAMES = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+async function offerForm() {
+  if (!catalog) await loadCatalog().catch(() => {});
+  if (!catalog) { toast("تعذر تحميل الأصناف"); return; }
+  const opts = [];
+  catalog.prods.filter(p => p.is_active !== false).forEach(p => {
+    const sz = catalog.sizes.filter(s => s.product_id === p.product_id);
+    if (sz.length) sz.forEach(s => opts.push({ v: p.product_id + "|" + s.size_name, n: `${p.name_ar} (${s.size_name})`, pr: Number(s.price) }));
+    else opts.push({ v: p.product_id + "|", n: p.name_ar, pr: Number(p.price) });
+  });
+  const optHtml = '<option value="">— اختر الصنف —</option>' + opts.map(o => `<option value="${esc(o.v)}">${esc(o.n)} — ${fmt(o.pr)}</option>`).join("");
+  const today = iso(businessToday());
+  openDlg("🎁 عرض جديد", `<div class="form">
+      <div class="full"><label>اسم العرض (يظهر للكاشير وفي الفاتورة)</label><input class="fld" id="ofTitle" placeholder="مثال: وجبة العائلة"></div>
+      <div><label>نوع العرض</label><select class="fld" id="ofType"><option value="D">🍽 عرض اليوم</option><option value="W">📅 عرض الأسبوع</option><option value="M">🗓 عرض الشهر</option></select></div>
+      <div><label>سعر العرض (شامل الضريبة)</label><input class="fld" id="ofPrice" type="number" step="0.5" min="0"></div></div>
+    <table class="lines" style="margin-top:10px"><tr><th>الصنف</th><th style="width:90px">الكمية</th><th></th></tr><tbody id="ofLines"></tbody></table>
+    <div class="actions"><button class="btn sm ghost" id="ofAdd">➕ صنف</button><span id="ofReg" class="note" style="align-self:center"></span></div>
+    <label style="display:block;margin-top:10px;font-weight:700">الأيام</label>
+    <div class="toolbar" id="ofDays">${DAY_NAMES.map((d, i) => `<label style="font-weight:600"><input type="checkbox" value="${i}" checked> ${d}</label>`).join("")}</div>
+    <div class="form"><div><label style="font-weight:600"><input type="checkbox" id="ofPeriod"> لفترة محددة فقط</label></div><div></div>
+      <div><label>من</label><input class="fld" type="date" id="ofFrom" value="${today}" disabled></div><div><label>إلى</label><input class="fld" type="date" id="ofTo" value="${addDays(today, 6)}" disabled></div>
+      <div class="full"><button class="btn green" id="ofOk">✔ إنشاء العرض</button></div></div>
+    <p class="note">يظهر العرض في برنامج الكاشير خلال ثوانٍ، ويُفعَّل قسم العروض تلقائياً إن كان موقفاً.</p>`);
+  $("dlg").classList.add("wide");
+  const read = () => [...$("ofLines").querySelectorAll("tr")].map(tr => ({ v: tr.querySelector("select").value, q: Number(tr.querySelector("input").value || 1) })).filter(l => l.v);
+  const upd = () => {
+    const reg = read().reduce((s, l) => s + (opts.find(o => o.v === l.v) || { pr: 0 }).pr * l.q, 0), price = Number($("ofPrice").value || 0);
+    $("ofReg").textContent = reg ? `السعر العادي ${fmt(reg)} ر.س` + (price > 0 && price < reg ? ` • توفير ${fmt(reg - price)} (${Math.round((reg - price) / reg * 100)}%)` : "") : "";
+  };
+  const add = () => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td><select class="fld">${optHtml}</select></td><td><input class="fld price" type="number" min="0.5" step="0.5" value="1"></td><td><button class="btn sm gray" type="button">×</button></td>`;
+    tr.querySelector("select").onchange = () => { const ls = read(); if (ls.length === 1 && !$("ofPrice").value) $("ofPrice").value = (opts.find(o => o.v === ls[0].v) || {}).pr || ""; upd(); };
+    tr.querySelector("input").oninput = upd;
+    tr.querySelector("button").onclick = () => { tr.remove(); upd(); };
+    $("ofLines").appendChild(tr);
+  };
+  add();
+  $("ofAdd").onclick = add;
+  $("ofPrice").oninput = upd;
+  $("ofPeriod").onchange = () => { $("ofFrom").disabled = $("ofTo").disabled = !$("ofPeriod").checked; };
+  $("ofType").onchange = () => {
+    const tp = $("ofType").value;
+    $("ofPeriod").checked = tp !== "D"; $("ofPeriod").onchange();
+    const t = businessToday();
+    $("ofFrom").value = today;
+    $("ofTo").value = tp === "M" ? iso(new Date(t.getFullYear(), t.getMonth() + 1, 0)) : addDays(today, 6);
+  };
+  $("ofOk").onclick = async () => {
+    const lines = read();
+    if (!lines.length) { toast("اختر صنفاً واحداً على الأقل"); return; }
+    const bundle = lines.length > 1 || lines[0].q !== 1;
+    const title = $("ofTitle").value.trim(), price = Number($("ofPrice").value);
+    if (bundle && !title) { toast("اكتب اسم العرض المجمع"); return; }
+    if (!(price > 0)) { toast("أدخل سعر العرض"); return; }
+    const days = [...$("ofDays").querySelectorAll("input:checked")].map(i => Number(i.value));
+    if (!days.length) { toast("اختر يوماً واحداً على الأقل"); return; }
+    const per = $("ofPeriod").checked;
+    if (per && $("ofTo").value < $("ofFrom").value) { toast("تاريخ النهاية قبل البداية"); return; }
+    const payload = { title, offer_type: $("ofType").value, price, days, start_date: per ? $("ofFrom").value : "", end_date: per ? $("ofTo").value : "",
+      items: lines.map(l => { const [pid, size] = l.v.split("|"); return { product_id: Number(pid), size: size || "", qty: l.q }; }) };
+    if (await send({ kind: "offer.create", payload })) $("dlg").close();
   };
 }
 
