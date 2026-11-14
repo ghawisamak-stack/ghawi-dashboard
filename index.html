@@ -140,6 +140,18 @@
   .so-card:hover { transform: translateY(-2px); }
   .so-card .so-ic { font-size: 1.6rem; } .so-card .so-nm { font-weight: 800; margin-top: 4px; } .so-card .so-ln { font-size: .78rem; opacity: .9; direction: ltr; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 4px; }
   .so-card .so-ed { position: absolute; top: 8px; left: 8px; border: 0; border-radius: 8px; background: rgba(255,255,255,.25); color: inherit; cursor: pointer; padding: 3px 7px; }
+  .pm-grp { border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; overflow: hidden; background: var(--card); }
+  .pm-grp > summary { list-style: none; cursor: pointer; padding: 10px 14px; font-weight: 800; display: flex; align-items: center; gap: 10px; background: var(--bg); }
+  .pm-grp > summary::-webkit-details-marker { display: none; }
+  .pm-grp > summary .cnt { margin-inline-start: auto; font-size: .82rem; font-weight: 700; color: var(--muted); }
+  .pm-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 14px; padding: 10px 16px 14px; }
+  .pm-items label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; padding: 4px 0; cursor: pointer; }
+  .pm-items label.sec { color: var(--blue); }
+  .al-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: var(--bg); margin: 6px 0; font-weight: 700; }
+  .al-row.urgent { border-inline-start: 5px solid var(--amber); }
+  .al-row .ic { font-size: 1.4rem; }
+  .ed-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } .ed-cmp pre { white-space: pre-wrap; background: var(--bg); border-radius: 10px; padding: 10px; margin: 4px 0; font-family: inherit; min-height: 60px; }
+  @media (max-width: 640px) { .ed-cmp { grid-template-columns: 1fr; } }
   .so-targets { display: flex; flex-wrap: wrap; gap: 6px 14px; } .form label.so-t, .so-t { font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
   textarea.fld { font-family: inherit; font-size: 1rem; }
   .wait { text-align: center; padding: 30px 10px; color: var(--muted); font-weight: 700; }
@@ -537,12 +549,47 @@
     <div class="card">
       <h2>🛡 الإدارة</h2>
       <div class="toolbar" id="adTabs">
-        <button class="chip on" data-a="users">👥 المستخدمون والصلاحيات</button>
+        <button class="chip on" data-a="alerts">🔔 التنبيهات</button>
+        <button class="chip" data-a="edits">🕵 الطلبات المعدلة</button>
+        <button class="chip" data-a="perms">🔐 الصلاحيات</button>
+        <button class="chip" data-a="users">👥 المستخدمون</button>
         <button class="chip" data-a="settings">⚙ الإعدادات</button>
-        <button class="chip" data-a="audit">🕵 سجل العمليات</button>
+        <button class="chip" data-a="audit">📜 سجل العمليات</button>
       </div>
       <div id="adBanner"></div>
-      <div class="apane" id="a-users">
+      <div class="apane" id="a-alerts">
+        <div class="kpis" id="alKpis"></div>
+        <div id="alList" style="margin-top:12px"></div>
+        <p class="note">نفس بطاقتي الشاشة الرئيسية في البرنامج: مبيعات اليوم مقارنة بأمس لنفس الوقت، والتنبيهات التي تحتاج انتباهك.</p>
+      </div>
+      <div class="apane hidden" id="a-edits">
+        <div class="toolbar">
+          <input type="date" class="fld" id="edFrom"> ← <input type="date" class="fld" id="edTo">
+          <select class="fld" id="edAction"><option value="">كل العمليات</option><option value="تعديل">✏ تعديل</option><option value="إضافة">➕ إضافة أصناف</option><option value="حذف">🗑 حذف طلب</option><option value="دفع">💳 تغيير طريقة الدفع</option></select>
+          <select class="fld" id="edUser"><option value="">كل المستخدمين</option></select>
+          <input type="search" id="edQ" placeholder="🔍 رقم الطلب، صنف، عميل">
+          <button class="btn sm" id="edRun">عرض</button>
+          <button class="btn sm ghost" id="edPrint">🖨 طباعة</button>
+          <button class="btn sm ghost" id="edCsv">📤 Excel</button>
+        </div>
+        <div class="kpis" id="edKpis"></div>
+        <div id="edUsers" style="margin-top:10px"></div>
+        <div class="scroll" style="max-height:none;margin-top:10px" id="tblEdits"></div>
+        <p class="note">اضغط على أي حركة لعرض الأصناف قبل التعديل وبعده بالتفصيل.</p>
+      </div>
+      <div class="apane hidden" id="a-perms">
+        <div class="toolbar">
+          <label style="font-weight:700">المستوى:</label>
+          <select class="fld" id="pmRole"><option value="supervisor">🛡 مسئول</option><option value="cashier">👤 كاشير</option></select>
+          <button class="btn sm ghost" id="pmAll">☑ الكل</button><button class="btn sm ghost" id="pmNone">☐ لا شيء</button>
+          <button class="btn sm green" id="pmSave">💾 حفظ صلاحيات المستوى</button><span class="tag" id="pmDirty"></span>
+        </div>
+        <div id="pmTree"></div>
+        <h3 style="margin:18px 0 8px;color:var(--navy)">👤 صلاحيات خاصة لمستخدم</h3>
+        <div class="scroll" style="max-height:none" id="pmUsers"></div>
+        <p class="note">المدير يملك كل شيء. العملية غير المسموحة تطلب كلمة مرور المدير في البرنامج. علامة القسم تحدد/تلغي كل عملياته.</p>
+      </div>
+      <div class="apane hidden" id="a-users">
         <div class="scroll" style="max-height:none" id="tblUsers"></div>
         <p class="note">تغيير الصلاحية أو إيقاف المستخدم يُطبق في البرنامج خلال ثوانٍ. كلمات المرور تُغيّر من البرنامج فقط (للأمان).</p>
       </div>
@@ -819,8 +866,11 @@ async function showOrder(id, o) {
   $("dlgTitle").textContent = `طلب #${o.daily_no} • ${o.business_date}`;
   $("dlgBody").innerHTML = `<p>${esc(o.customer_name)} • ${esc(o.order_type || "")} • ${esc(o.payment_type)} • الكاشير: ${esc(o.cashier)}</p>` +
     table(["الصنف", "الكمية", "الطهي", "المبلغ"], (data || []).map(i => [esc(i.product_name), fmtQ(i.quantity), esc(i.notes), fmt(i.total)]), [1, 3]) +
-    `<p style="font-weight:800;font-size:1.1rem">الإجمالي: ${fmt(o.total)} ر.س</p>`;
+    `<p style="font-weight:800;font-size:1.1rem">الإجمالي: ${fmt(o.total)} ر.س</p>` +
+    `<div class="actions"><button class="btn" id="odPay">💳 تغيير طريقة الدفع</button><button class="btn ghost" id="odHist">🕵 سجل تعديلات الطلب</button></div>`;
   $("dlg").showModal();
+  $("odPay").onclick = () => orderPaymentForm(Number(id), o);
+  $("odHist").onclick = () => { $("dlg").close(); showOrderEdits(Number(id), o.daily_no); };
 }
 function renderShifts(rows) {
   $("tblShifts").innerHTML = table(["#", "الكاشير", "البداية", "المبيعات", "الفرق"], rows.map(s => {
@@ -1182,7 +1232,8 @@ async function loadLog() {
     "hr.emp.upsert": "موظف", "hr.move.add": "حركة موظف", "hr.move.delete": "حذف حركة موظف", "hr.stop.save": "توقف موظف", "hr.stop.return": "عودة موظف", "hr.stop.delete": "حذف توقف",
     "hr.pay.edit": "تعديل المسير", "hr.payroll.approve": "اعتماد رواتب", "hr.payroll.pay": "صرف رواتب", "hr.payroll.unapprove": "إلغاء اعتماد رواتب",
     "count.save": "جرد", "pr.save": "طلب شراء", "pr.status": "حالة طلب شراء", "pr.delete": "حذف طلب شراء", "material.delete": "حذف مادة",
-    "social.link": "رابط منصة", "social.hashtags": "هاشتاقات", "social.post.add": "منشور", "social.post.delete": "حذف منشور", "user.update": "مستخدم", "admin.setting": "إعداد" };
+    "social.link": "رابط منصة", "social.hashtags": "هاشتاقات", "social.post.add": "منشور", "social.post.delete": "حذف منشور", "user.update": "مستخدم", "admin.setting": "إعداد",
+    "perms.role": "صلاحيات المستوى", "perms.user": "صلاحيات مستخدم", "order.payment": "تغيير دفع طلب" };
   $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
       <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
       <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
@@ -2659,7 +2710,7 @@ $("soPublish").onclick = async () => {
 };
 
 // ---------------------------------------------------------------- الإدارة
-let adm = { users: null, settings: null }, admPane = "users", setDirty = {};
+let adm = { users: null, settings: null }, admPane = "alerts", setDirty = {};
 document.querySelectorAll("#adTabs .chip").forEach(b => b.onclick = () => { admPane = b.dataset.a; paneSwitch("adTabs", "a", "a", admPane); loadAdmin(); });
 async function loadAdmin() {
   if (admPane === "users") {
@@ -2690,6 +2741,9 @@ async function loadAdmin() {
       $("setDirty").textContent = Object.keys(setDirty).length + " تعديل غير محفوظ";
     });
   }
+  if (admPane === "alerts") loadAlerts();
+  if (admPane === "edits") loadEdits();
+  if (admPane === "perms") loadPerms();
   if (admPane === "audit") {
     if (!$("auFrom").value) { const d = businessToday(); $("auTo").value = iso(d); d.setDate(d.getDate() - 6); $("auFrom").value = iso(d); }
     $("adBanner").innerHTML = "";
@@ -2700,6 +2754,158 @@ $("setSave").onclick = async () => {
   if (!keys.length) { toast("لا توجد تعديلات"); return; }
   if (await send(keys.map(k => ({ kind: "admin.setting", payload: { key: k, value: setDirty[k] } })))) { setDirty = {}; $("setDirty").textContent = ""; }
 };
+
+// ---------------------------------------------------------------- التنبيهات
+async function loadAlerts() {
+  $("alList").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  let d;
+  try { d = await liveData("admin.alerts", {}, "adBanner"); } catch (e) { errBox("alList", e); return; }
+  const pct = n2(d.yesterday) > 0 ? Math.round((n2(d.total) - n2(d.yesterday)) / n2(d.yesterday) * 100) : null;
+  $("alKpis").innerHTML = `<div class="kpi main"><div class="l">مبيعات اليوم</div><div class="v">${fmt(d.total)}</div></div>
+    <div class="kpi"><div class="l">مقارنة بأمس لنفس الوقت</div><div class="v" style="color:${pct == null ? "inherit" : pct >= 0 ? "var(--green)" : "var(--red)"}">${pct == null ? "—" : (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct) + "%"}</div></div>
+    <div class="kpi"><div class="l">الطلبات</div><div class="v">${d.orders}</div></div><div class="kpi"><div class="l">نقدي</div><div class="v">${fmt(d.cash)}</div></div>
+    <div class="kpi"><div class="l">شبكة</div><div class="v">${fmt(d.network)}</div></div><div class="kpi"><div class="l">التطبيقات</div><div class="v">${fmt(d.apps)}</div></div>`;
+  $("alList").innerHTML = d.alerts.length ? d.alerts.map(a => `<div class="al-row${a.urgent ? " urgent" : ""}"><span class="ic">${esc(a.icon)}</span><span>${esc(a.text)}</span></div>`).join("")
+    : '<div class="empty" style="font-size:1.1rem">✅ لا توجد تنبيهات — كل شيء تمام</div>';
+}
+
+// ---------------------------------------------------------------- الطلبات المعدلة
+let edData = null, edOrder = 0;
+function edParams() {
+  const p = { from: $("edFrom").value, to: $("edTo").value };
+  if ($("edAction").value) p.action = $("edAction").value;
+  if ($("edUser").value) p.user = $("edUser").value;
+  if ($("edQ").value.trim()) p.q = $("edQ").value.trim();
+  if (edOrder) p.order_id = edOrder;
+  return p;
+}
+async function loadEdits() {
+  if (!$("edFrom").value) { const d = businessToday(); $("edTo").value = iso(d); d.setDate(d.getDate() - 6); $("edFrom").value = iso(d); }
+  $("tblEdits").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  try { edData = await liveData("orders.edits", edParams(), "adBanner"); } catch (e) { errBox("tblEdits", e); return; }
+  const keep = $("edUser").value;
+  $("edUser").innerHTML = '<option value="">كل المستخدمين</option>' + edData.users.map(u => `<option ${u === keep ? "selected" : ""}>${esc(u)}</option>`).join("");
+  const s = edData.summary;
+  $("edKpis").innerHTML = `${edOrder ? `<div class="kpi main"><div class="l">طلب واحد</div><div class="v">#${esc(String($("edQ").dataset.no || edOrder))} <button class="btn sm ghost" id="edClear">✕ كل الطلبات</button></div></div>` : ""}
+    <div class="kpi"><div class="l">كل الحركات</div><div class="v">${s.count}</div></div><div class="kpi"><div class="l">✏ تعديل</div><div class="v">${s.edits}</div></div>
+    <div class="kpi"><div class="l">➕ إضافة</div><div class="v">${s.appends}</div></div><div class="kpi"><div class="l">💳 تغيير دفع</div><div class="v">${s.payments}</div></div>
+    <div class="kpi"><div class="l">🗑 حذف</div><div class="v" style="color:var(--red)">${s.deletes} • ${fmt(s.deleted_value)}</div></div>
+    <div class="kpi"><div class="l">صافي فرق التعديلات</div><div class="v">${money(s.net_change, true)}</div></div>`;
+  if ($("edClear")) $("edClear").onclick = () => { edOrder = 0; loadEdits(); };
+  $("edUsers").innerHTML = edData.by_user.length > 1 ? `<table><tr><th>المستخدم</th><th>الحركات</th><th>الحذف</th><th>قيمة المحذوف</th></tr>` +
+    edData.by_user.map(u => `<tr><td><b>${esc(u.user || "—")}</b></td><td class="n">${u.count}</td><td class="n">${u.deleted}</td><td class="n">${fmt(u.deleted_value)}</td></tr>`).join("") + "</table>" : "";
+  const tag = r => r.action === "حذف" ? '<span class="tag red">🗑 حذف</span>' : r.action === "إضافة" ? '<span class="tag green">➕ إضافة</span>' : String(r.changes).startsWith("💳") ? '<span class="tag" style="color:var(--blue)">💳 دفع</span>' : '<span class="tag amber">✏ تعديل</span>';
+  $("tblEdits").innerHTML = edData.rows.length ? `<table><tr><th>الوقت</th><th>الطلب</th><th>العملية</th><th>بواسطة</th><th class="hm">قبل</th><th class="hm">بعد</th><th>الفرق</th><th>ما الذي تغير</th></tr>` +
+    edData.rows.map(r => { const diff = r.action === "حذف" ? -n2(r.old_total) : n2(r.new_total) - n2(r.old_total); return `<tr class="click" data-h="${r.id}">
+      <td class="n">${esc(String(r.time).slice(5, 16))}</td><td class="n"><b>#${r.no}</b><div class="note" style="margin:0">${esc(r.day)}</div></td><td>${tag(r)}</td><td>${esc(r.user)}</td>
+      <td class="n hm">${fmt(r.old_total)}</td><td class="n hm">${r.action === "حذف" ? "—" : fmt(r.new_total)}</td><td class="n">${diff ? money(diff, true) : "0.00"}</td>
+      <td class="wrap">${esc(r.changes)}</td></tr>`; }).join("") + "</table>"
+    : '<div class="empty">لا توجد طلبات معدلة في هذه الفترة</div>';
+  $("tblEdits").querySelectorAll("tr[data-h]").forEach(tr => tr.onclick = () => editDetail(edData.rows.find(x => x.id === Number(tr.dataset.h))));
+}
+function editDetail(r) {
+  if (!r) return;
+  openDlg(`🕵 طلب #${r.no} — ${r.action}`, `<div class="kv">
+      <b>الوقت</b><span>${esc(r.time)}</span><b>بواسطة</b><span>${esc(r.user)}</span><b>يوم الطلب</b><span>${esc(r.day)}</span>
+      <b>العميل</b><span>${esc(r.customer || "—")}</span><b>الدفع</b><span>${esc(r.payment || "—")}</span>
+      <b>الإجمالي</b><span>${fmt(r.old_total)} ← ${r.action === "حذف" ? "محذوف" : fmt(r.new_total)}</span>
+      <b>الطلب الآن</b><span>${r.exists_now ? "موجود" : '<span class="tag red">محذوف</span>'}</span></div>
+    <p style="font-weight:800;margin:12px 0 4px">ما الذي تغير</p><div class="al-row">${esc(r.changes)}</div>
+    ${r.before || r.after ? `<div class="ed-cmp"><div><b>الأصناف قبل</b><pre>${esc(r.before || "—")}</pre></div><div><b>الأصناف بعد</b><pre>${esc(r.after || (r.action === "حذف" ? "🗑 حُذف الطلب" : "—"))}</pre></div></div>` : ""}
+    <div class="actions"><button class="btn ghost" id="edAll">🕵 كل تعديلات هذا الطلب</button></div>`);
+  $("edAll").onclick = () => { $("dlg").close(); showOrderEdits(r.order_id, r.no); };
+}
+function showOrderEdits(orderId, no) {
+  showView("admin");
+  admPane = "edits"; paneSwitch("adTabs", "a", "a", "edits");
+  edOrder = orderId; $("edQ").dataset.no = no || orderId;
+  loadEdits();
+}
+$("edRun").onclick = () => { edOrder = 0; loadEdits(); };
+["edAction", "edUser"].forEach(i => $(i).onchange = () => loadEdits());
+const edReport = () => repFromRows("تقرير الطلبات المعدلة", `${edData.from} ← ${edData.to}`, ["الوقت", "يوم الطلب", "رقم الطلب", "العملية", "بواسطة", "قبل", "بعد", "ما الذي تغير", "الأصناف قبل", "الأصناف بعد"],
+  edData.rows.map(r => [r.time, r.day, r.no, r.action, r.user, n2(r.old_total), r.action === "حذف" ? "" : n2(r.new_total), r.changes, r.before, r.after]), [5, 6]);
+$("edPrint").onclick = () => edData && printReport(edReport());
+$("edCsv").onclick = () => edData && exportCsv(edReport());
+
+function orderPaymentForm(id, o) {
+  openDlg(`💳 تغيير طريقة الدفع — طلب #${o.daily_no}`, `<div class="kv"><b>الحالية</b><span>${esc(o.payment_type)}</span><b>الإجمالي</b><span>${fmt(o.total)} ر.س</span></div>
+    <div class="form"><div class="full"><label>طريقة الدفع الجديدة</label><select class="fld" id="opType">
+      <option>نقدي</option><option>شبكة</option><option value="مقسم">مقسم (نقدي + شبكة)</option><option>تحويل بنكي</option><option>Apple Pay</option><option>أخرى</option></select></div>
+      <div class="full hidden" id="opSplit"><label>مبلغ النقدي (والباقي شبكة)</label><input class="fld" type="number" step="0.01" min="0" id="opCash"></div>
+      <div class="full"><button class="btn green" id="opOk">💾 حفظ</button></div></div>
+    <p class="note">يُسجل التغيير في سجل الطلبات المعدلة باسمك، ولا يمكن تغيير طلبات تطبيقات التوصيل.</p>`);
+  $("opType").onchange = () => $("opSplit").classList.toggle("hidden", $("opType").value !== "مقسم");
+  $("opOk").onclick = async () => {
+    const payload = { order_id: id, type: $("opType").value, cash: Number($("opCash").value || 0) };
+    if (payload.type === "مقسم" && !(payload.cash > 0 && payload.cash < n2(o.total))) { toast("اكتب مبلغ النقدي أقل من الإجمالي"); return; }
+    if (await send({ kind: "order.payment", payload })) $("dlg").close();
+  };
+}
+
+// ---------------------------------------------------------------- الصلاحيات
+let pm = null, pmSel = null, pmDirty = false;
+async function loadPerms() {
+  $("pmTree").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  try { pm = await liveData("admin.perms", {}, "adBanner"); } catch (e) { errBox("pmTree", e); return; }
+  pmSel = new Set(pm.roles[$("pmRole").value] || []);
+  pmDirty = false; $("pmDirty").textContent = "";
+  $("pmTree").innerHTML = permTree(pmSel, "r");
+  wirePermTree("pmTree", pmSel, () => { pmDirty = true; $("pmDirty").textContent = "تعديلات غير محفوظة"; });
+  $("pmUsers").innerHTML = "<table><tr><th>المستخدم</th><th>المستوى</th><th>الصلاحيات</th><th></th></tr>" + pm.users.map(u => `<tr>
+      <td><b>${esc(u.name)}</b>${u.active ? "" : ' <span class="tag red">موقوف</span>'}</td><td>${esc(u.role_title)}</td>
+      <td>${u.role === "admin" ? "👑 كل الصلاحيات" : u.custom ? `<span class="tag amber">خاصة (${u.custom.length})</span>` : '<span class="tag">حسب المستوى</span>'}</td>
+      <td>${u.role === "admin" ? "" : `<button class="btn sm" data-u="${u.id}">🔐 تعديل</button>`}</td></tr>`).join("") + "</table>";
+  $("pmUsers").querySelectorAll("[data-u]").forEach(b => b.onclick = () => userPermForm(pm.users.find(x => x.id === Number(b.dataset.u))));
+}
+function permTree(sel, pfx) {
+  return pm.groups.map((g, gi) => {
+    const on = g.items.filter(i => sel.has(i.key)).length;
+    return `<details class="pm-grp" ${gi < 2 ? "open" : ""}><summary style="color:${g.color}"><input type="checkbox" data-g="${gi}" ${on === g.items.length ? "checked" : ""}>${esc(g.title)}<span class="cnt" data-c="${gi}">${on} / ${g.items.length}</span></summary>
+      <div class="pm-items">${g.items.map(i => `<label class="${i.section ? "sec" : ""}"><input type="checkbox" data-k="${esc(i.key)}" data-gi="${gi}" ${sel.has(i.key) ? "checked" : ""}> ${esc(i.title)}</label>`).join("")}</div></details>`;
+  }).join("");
+}
+function wirePermTree(boxId, sel, onChange) {
+  const box = $(boxId);
+  const refresh = gi => {
+    const g = pm.groups[gi], on = g.items.filter(i => sel.has(i.key)).length;
+    box.querySelector(`[data-c="${gi}"]`).textContent = `${on} / ${g.items.length}`;
+    const gc = box.querySelector(`[data-g="${gi}"]`); gc.checked = on === g.items.length; gc.indeterminate = on > 0 && on < g.items.length;
+  };
+  pm.groups.forEach((g, gi) => refresh(gi));
+  box.querySelectorAll("[data-g]").forEach(c => { c.onclick = e => e.stopPropagation(); c.onchange = () => {
+    const gi = Number(c.dataset.g);
+    pm.groups[gi].items.forEach(i => { if (c.checked) sel.add(i.key); else sel.delete(i.key); });
+    box.querySelectorAll(`[data-gi="${gi}"]`).forEach(x => x.checked = c.checked);
+    refresh(gi); onChange();
+  }; });
+  box.querySelectorAll("[data-k]").forEach(c => c.onchange = () => { if (c.checked) sel.add(c.dataset.k); else sel.delete(c.dataset.k); refresh(Number(c.dataset.gi)); onChange(); });
+}
+$("pmRole").onchange = () => { if (pmDirty && !confirm("توجد تعديلات غير محفوظة — تجاهلها؟")) return; loadPerms(); };
+const pmSetAll = v => { pm.groups.forEach(g => g.items.forEach(i => v ? pmSel.add(i.key) : pmSel.delete(i.key))); $("pmTree").innerHTML = permTree(pmSel, "r"); wirePermTree("pmTree", pmSel, () => { pmDirty = true; $("pmDirty").textContent = "تعديلات غير محفوظة"; }); pmDirty = true; $("pmDirty").textContent = "تعديلات غير محفوظة"; };
+$("pmAll").onclick = () => pm && pmSetAll(true);
+$("pmNone").onclick = () => pm && pmSetAll(false);
+$("pmSave").onclick = async () => {
+  if (!pm) return;
+  const role = $("pmRole").value;
+  if (!confirm(`حفظ صلاحيات ${role === "supervisor" ? "المسئول" : "الكاشير"} (${pmSel.size} عملية)؟\nتُطبق في البرنامج خلال ثوانٍ.`)) return;
+  if (await send({ kind: "perms.role", payload: { role, keys: [...pmSel] } })) { pmDirty = false; $("pmDirty").textContent = ""; }
+};
+function userPermForm(u) {
+  if (!u) return;
+  const sel = new Set(u.custom || pm.roles[u.role] || []);
+  openDlg("🔐 صلاحيات " + u.name, `<label style="font-weight:700;display:block;margin-bottom:8px"><input type="checkbox" id="upRole" ${u.custom ? "" : "checked"}> استخدام صلاحيات مستواه (${esc(u.role_title)})</label>
+    <div id="upTree"></div><div class="actions"><button class="btn green" id="upOk">💾 حفظ</button></div>`);
+  $("upTree").innerHTML = permTree(sel, "u");
+  wirePermTree("upTree", sel, () => { $("upRole").checked = false; });
+  const dim = () => $("upTree").style.opacity = $("upRole").checked ? .45 : 1;
+  $("upRole").onchange = dim; dim();
+  $("upOk").onclick = async () => {
+    const payload = $("upRole").checked ? { id: u.id, use_role: true, keys: [] } : { id: u.id, keys: [...sel] };
+    if (await send({ kind: "perms.user", payload })) $("dlg").close();
+  };
+}
+
 $("auRun").onclick = () => openReport("admin.audit", { from: $("auFrom").value, to: $("auTo").value, q: $("auQ").value.trim() }, {}, "سجل العمليات");
 
 start();
