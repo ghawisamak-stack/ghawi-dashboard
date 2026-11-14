@@ -3003,6 +3003,9 @@ function applyWebAccess() {
   }
 }
 let webUsers = [];
+// تنظيف البريد من الرموز المخفية (علامات اتجاه RTL/LTR ومسافات غير مرئية تضيفها لوحة المفاتيح العربية أو النسخ)
+const cleanEmail = e => String(e || "").normalize("NFKC").toLowerCase().replace(/[^a-z0-9@._+\-]/g, "");
+const validEmail = e => /^[a-z0-9._+\-]+@[a-z0-9\-]+(\.[a-z0-9\-]+)+$/.test(e);
 async function loadWebUsers() {
   $("tblWeb").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
   let res = await sb.from("managers").select("email,full_name,is_active,role,perms,created_at").order("created_at");
@@ -3012,7 +3015,7 @@ async function loadWebUsers() {
   }
   webUsers = res.data || [];
   $("tblWeb").innerHTML = "<table><tr><th>الاسم</th><th>البريد</th><th>النوع</th><th>الشاشات</th><th>الحالة</th><th></th></tr>" + webUsers.map((u, i) => `<tr>
-      <td><b>${esc(u.full_name)}</b></td><td dir="ltr" style="text-align:right">${esc(u.email)}</td>
+      <td><b>${esc(u.full_name)}</b></td><td dir="ltr" style="text-align:right">${esc(cleanEmail(u.email))}${cleanEmail(u.email) !== u.email ? '<br><span class="tag red" dir="rtl">⚠ في البريد رموز مخفية — اضغط تعديل ثم حفظ</span>' : ""}</td>
       <td>${u.role === "staff" ? '<span class="tag amber">🔐 محدود</span>' : '<span class="tag green">👑 مدير كامل</span>'}</td>
       <td class="wrap">${u.role === "staff" ? (u.perms || []).map(p => esc((WEB_PERMS.find(x => x[0] === p) || [p, p])[1])).join("، ") || "—" : "كل الشاشات"}</td>
       <td>${u.is_active ? "✔ نشط" : '<span class="tag red">موقوف</span>'}</td>
@@ -3024,7 +3027,7 @@ function webUserForm(u) {
   const self = u && u.email.toLowerCase() === (myEmail || "").toLowerCase();
   openDlg(u ? "✏ مستخدم الموقع" : "➕ مستخدم جديد للموقع", `<div class="form">
     <div><label>الاسم</label><input class="fld" id="wuName" value="${esc(u ? u.full_name : "مسئول المطعم")}"></div>
-    <div><label>البريد الإلكتروني (للدخول)</label><input class="fld" id="wuEmail" dir="ltr" value="${esc(u ? u.email : "")}" ${u ? "disabled" : ""}></div>
+    <div><label>البريد الإلكتروني (للدخول)</label><input class="fld" id="wuEmail" dir="ltr" value="${esc(u ? cleanEmail(u.email) : "")}" ${u ? "disabled" : ""} placeholder="name@gmail.com" autocomplete="off" spellcheck="false" oninput="const c=cleanEmail(this.value);if(c!==this.value)this.value=c"></div>
     <div><label>النوع</label><select class="fld" id="wuRole" ${self ? "disabled" : ""}><option value="staff">🔐 محدود — شاشات محددة</option><option value="owner" ${u && u.role !== "staff" ? "selected" : ""}>👑 مدير كامل</option></select></div>
     <div><label>الحالة</label><select class="fld" id="wuActive" ${self ? "disabled" : ""}><option value="1">✔ نشط</option><option value="0" ${u && !u.is_active ? "selected" : ""}>⛔ موقوف</option></select></div>
     <div class="full" id="wuPermsBox"><label>الشاشات المسموحة</label><div class="pm-items" style="padding:4px 0">${WEB_PERMS.map(([k, t]) => `<label><input type="checkbox" data-wp="${k}" ${u && (u.perms || []).includes(k) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div></div>
@@ -3035,8 +3038,8 @@ function webUserForm(u) {
   $("wuRole").onchange = sync; sync();
   const invite = async email => send({ kind: "web.user.invite", payload: { email, redirect: location.origin + location.pathname } });
   $("wuOk").onclick = async () => {
-    const email = $("wuEmail").value.trim().toLowerCase(), name = $("wuName").value.trim();
-    if (!name || !email.includes("@")) { toast("اكتب الاسم والبريد الإلكتروني"); return; }
+    const email = cleanEmail(u ? u.email : $("wuEmail").value), name = $("wuName").value.trim();
+    if (!name || !validEmail(email)) { toast("اكتب الاسم والبريد الإلكتروني بشكل صحيح (مثل name@gmail.com)"); return; }
     const row = { email, full_name: name, role: $("wuRole").value, is_active: $("wuActive").value === "1",
       perms: $("wuRole").value === "staff" ? [...document.querySelectorAll("[data-wp]:checked")].map(c => c.dataset.wp) : [] };
     if (row.role === "staff" && !row.perms.length) { toast("اختر شاشة واحدة على الأقل"); return; }
@@ -3046,7 +3049,7 @@ function webUserForm(u) {
     toast("✔ تم الحفظ" + (!u && $("wuInvite").checked ? " — يُرسل البريد عند اتصال برنامج الكاشير" : ""), 5000);
     $("dlg").close(); loadWebUsers();
   };
-  if ($("wuInv")) $("wuInv").onclick = async () => { if (await invite(u.email)) toast("📧 يُرسل رابط تعيين كلمة المرور خلال ثوانٍ"); };
+  if ($("wuInv")) $("wuInv").onclick = async () => { if (await invite(cleanEmail(u.email))) toast("📧 يُرسل رابط تعيين كلمة المرور خلال ثوانٍ"); };
   if ($("wuDel")) $("wuDel").onclick = async () => {
     if (!confirm(`حذف ${u.full_name} من مستخدمي الموقع؟ لن يستطيع الدخول بعد ذلك.`)) return;
     const res = await sb.from("managers").delete().eq("email", u.email);
