@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>لوحة غاوي سمك</title>
-<meta name="theme-color" content="#1c5596">
+<meta name="theme-color" content="#2e547e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="غاوي سمك">
 <link rel="manifest" href="manifest.json">
@@ -16,13 +16,14 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
   :root {
-    --navy: #1c5596; --navy-dark: #143e70; --bg: #eef2f7; --card: #ffffff; --text: #23324a; --muted: #6e7d8c;
-    --green: #27ae60; --red: #e74c3c; --amber: #f39c12; --blue: #2980b9; --purple: #8e44ad; --line: #e3e9f0;
+    /* ألوان هادئة مريحة للعين */
+    --navy: #2e547e; --navy-dark: #223e5e; --bg: #eef0f3; --card: #fbfbfc; --text: #2c3a4c; --muted: #75828f;
+    --green: #46946c; --red: #c05c52; --amber: #d4a048; --blue: #467ca8; --purple: #7c62a3; --line: #e1e5ea;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg: #0f1722; --card: #182334; --text: #e6edf5; --muted: #93a4b8; --line: #263449; }
+    :root:not([data-theme="light"]) { --bg: #141b24; --card: #1c2532; --text: #dbe2ea; --muted: #8d9bab; --line: #2a3544; }
   }
-  :root[data-theme="dark"] { --bg: #0f1722; --card: #182334; --text: #e6edf5; --muted: #93a4b8; --line: #263449; }
+  :root[data-theme="dark"] { --bg: #141b24; --card: #1c2532; --text: #dbe2ea; --muted: #8d9bab; --line: #2a3544; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Tajawal", "Segoe UI", sans-serif; }
   body { min-height: 100vh; }
@@ -31,7 +32,7 @@
 
   /* ----- الدخول ----- */
   #login { min-height: 100vh; display: grid; place-items: center; padding: 16px;
-           background: linear-gradient(135deg, var(--navy-dark), #2a74c4); }
+           background: linear-gradient(135deg, var(--navy-dark), #3f668f); }
   .login-card { background: var(--card); width: 100%; max-width: 380px; border-radius: 18px; padding: 28px 24px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
   .login-card h1 { margin: 0 0 4px; color: var(--navy); font-size: 1.5rem; text-align: center; }
   .login-card p { margin: 0 0 20px; color: var(--muted); text-align: center; }
@@ -62,7 +63,7 @@
   .kpi { background: var(--card); border-radius: 14px; padding: 12px 14px; border: 1px solid var(--line); }
   .kpi .l { color: var(--muted); font-size: .85rem; font-weight: 700; }
   .kpi .v { font-size: 1.35rem; font-weight: 800; margin-top: 4px; direction: ltr; text-align: right; }
-  .kpi.main { background: linear-gradient(135deg, var(--green), #1e8e4f); color: #fff; border: 0; }
+  .kpi.main { background: linear-gradient(135deg, var(--green), #3d8160); color: #fff; border: 0; }
   .kpi.main .l { color: rgba(255,255,255,.85); }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 12px; margin-top: 12px; }
@@ -76,7 +77,7 @@
   td.n { direction: ltr; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .scroll { max-height: 360px; overflow: auto; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; background: var(--bg); }
-  .tag.red { background: #fde3e0; color: #b03a2e; } .tag.green { background: #dff6e9; color: #1e8449; } .tag.amber { background: #fef1d6; color: #9a6206; }
+  .tag.red { background: #f5e4e2; color: #9e4840; } .tag.green { background: #e2f0e8; color: #3a7656; } .tag.amber { background: #f6eddb; color: #85622a; }
   tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
   .empty { color: var(--muted); text-align: center; padding: 18px 0; }
   .loading { position: fixed; bottom: 16px; left: 16px; background: var(--navy); color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: 700; }
@@ -90,7 +91,7 @@
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
   .toolbar input[type=search], .toolbar select, .fld { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 8px 10px; }
   .btn.sm { padding: 8px 12px; font-size: .9rem; }
-  .btn.green { background: var(--green); } .btn.red { background: var(--red); } .btn.amber { background: var(--amber); color: #222; } .btn.gray { background: #95a5a6; }
+  .btn.green { background: var(--green); } .btn.red { background: var(--red); } .btn.amber { background: var(--amber); color: #222; } .btn.gray { background: #9aa5ad; }
   input.price { width: 96px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px; direction: ltr; text-align: left; font-weight: 700; }
   input.price.changed, input.txt.changed { border-color: var(--amber); background: #fff7e6; color: #222; }
   input.txt { width: 100%; min-width: 120px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px; }
@@ -499,6 +500,7 @@
         <button class="chip on" data-i="count">⚖ نموذج الجرد</button>
         <button class="chip" data-i="pr">🛒 طلبات الشراء</button>
         <button class="chip" data-i="hist">📜 سجل الجرد</button>
+        <button class="chip" data-i="rep">📊 تقرير الطلبات</button>
       </div>
       <div id="invBanner"></div>
       <div class="ipane" id="i-count">
@@ -518,6 +520,19 @@
         <div class="scroll" style="max-height:none" id="tblPr"></div>
       </div>
       <div class="ipane hidden" id="i-hist"><div class="scroll" style="max-height:none" id="tblIh"></div></div>
+      <div class="ipane hidden" id="i-rep">
+        <div class="toolbar">
+          <input type="date" class="fld" id="rpFrom"> ← <input type="date" class="fld" id="rpTo">
+          <select class="fld" id="rpStatus"><option value="">كل الطلبات</option><option value="مرسل">المرسلة</option><option value="مسودة">المسودات</option></select>
+          <input type="search" id="rpItem" placeholder="🔍 صنف محدد">
+          <button class="btn sm" id="rpRun">عرض</button>
+          <button class="chip on" id="rpSumBtn">📦 ملخص الأصناف</button><button class="chip" id="rpDetBtn">🧾 التفاصيل</button>
+          <button class="btn sm ghost" id="rpPrint">🖨 طباعة</button><button class="btn sm ghost" id="rpCsv">📤 Excel</button>
+        </div>
+        <div class="kpis" id="rpKpis"></div>
+        <div id="rpBody" style="margin-top:10px"></div>
+        <p class="note">التقدير الشهري = إجمالي الكمية المطلوبة ÷ أيام الفترة × 30. اضغط على صنف في الملخص لعرض كل طلباته (متى وكم).</p>
+      </div>
     </div>
   </main></section>
 
@@ -552,7 +567,8 @@
         <button class="chip on" data-a="alerts">🔔 التنبيهات</button>
         <button class="chip" data-a="edits">🕵 الطلبات المعدلة</button>
         <button class="chip" data-a="perms">🔐 الصلاحيات</button>
-        <button class="chip" data-a="users">👥 المستخدمون</button>
+        <button class="chip" data-a="users">👥 مستخدمو البرنامج</button>
+        <button class="chip" data-a="web">🌐 مستخدمو الموقع</button>
         <button class="chip" data-a="settings">⚙ الإعدادات</button>
         <button class="chip" data-a="audit">📜 سجل العمليات</button>
       </div>
@@ -588,6 +604,12 @@
         <h3 style="margin:18px 0 8px;color:var(--navy)">👤 صلاحيات خاصة لمستخدم</h3>
         <div class="scroll" style="max-height:none" id="pmUsers"></div>
         <p class="note">المدير يملك كل شيء. العملية غير المسموحة تطلب كلمة مرور المدير في البرنامج. علامة القسم تحدد/تلغي كل عملياته.</p>
+      </div>
+      <div class="apane hidden" id="a-web">
+        <div class="toolbar"><button class="btn sm green" id="wuNew">➕ مستخدم جديد للموقع</button></div>
+        <div class="scroll" style="max-height:none" id="tblWeb"></div>
+        <p class="note">المدير الكامل يرى كل شيء. المستخدم المحدود (مثل مسئول المطعم) يرى فقط الشاشات التي تحددها، ويُطبَّق ذلك في قاعدة البيانات وفي برنامج الكاشير معاً.
+          عند الإضافة يصل للمستخدم بريد لتعيين كلمة المرور (يحتاج تشغيل ملف SQL رقم 07 مرة واحدة).</p>
       </div>
       <div class="apane hidden" id="a-users">
         <div class="scroll" style="max-height:none" id="tblUsers"></div>
@@ -708,23 +730,28 @@ sb.auth.onAuthStateChange((event) => { if (event === "PASSWORD_RECOVERY") setTim
 async function start() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { $("login").classList.remove("hidden"); $("app").classList.add("hidden"); return; }
-  const { data: me } = await sb.from("managers").select("full_name").eq("email", session.user.email).maybeSingle();
-  if (!me) {
+  let { data: meRow, error: meErr } = await sb.from("managers").select("full_name,role,perms").eq("email", session.user.email).maybeSingle();
+  if (meErr) ({ data: meRow } = await sb.from("managers").select("full_name").eq("email", session.user.email).maybeSingle()); // قبل ملف 07
+  const me0 = meRow;
+  if (!me0) {
     $("login").classList.remove("hidden"); $("app").classList.add("hidden");
     $("loginMsg").textContent = "هذا الحساب غير مسجل كمدير. تواصل مع الإدارة.";
     await sb.auth.signOut();
     return;
   }
-  $("who").textContent = "• " + me.full_name;
+  me = { role: me0.role || "owner", perms: me0.perms || [] };
+  $("who").textContent = "• " + me0.full_name + (isOwner() ? "" : " (صلاحيات محددة)");
+  applyWebAccess();
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
   myEmail = session.user.email;
   let v = "reports";
   try { v = localStorage.getItem("gs-view") || "reports"; } catch (e) {}
+  if (!canView(v)) v = Object.keys(VIEW_PERMS).find(canView) || "log";
   showView(v);
   updatePendingBadge();
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => { if (view === "reports") load(); else if (view === "zid") loadZid(); updatePendingBadge(); }, 60000);
+  refreshTimer = setInterval(() => { if (view === "reports" && canView("reports")) load(); else if (view === "zid" && isOwner()) loadZid(); updatePendingBadge(); }, 60000);
 }
 
 // ----- الفترات -----
@@ -822,7 +849,7 @@ function draw(id, cfg) {
 }
 function renderDays(days) {
   draw("chDays", { type: "bar", data: { labels: days.map(d => d.business_date.slice(5)), datasets: [
-    { label: "المبيعات", data: days.map(d => d.total), backgroundColor: "#2980b9", borderRadius: 6 }] },
+    { label: "المبيعات", data: days.map(d => d.total), backgroundColor: "#467ca8", borderRadius: 6 }] },
     options: { plugins: { legend: { display: false } } } });
 }
 function renderHours(rows) {
@@ -832,7 +859,7 @@ function renderHours(rows) {
   const from = first < 0 ? 10 : first, to = first < 0 ? 23 : last;
   const labels = [], data = [];
   for (let i = from; i <= to; i++) { labels.push(i + ":00"); data.push(h[i]); }
-  draw("chHours", { type: "line", data: { labels, datasets: [{ label: "المبيعات", data, borderColor: "#e67e22", backgroundColor: "rgba(230,126,34,.15)", fill: true, tension: .35 }] },
+  draw("chHours", { type: "line", data: { labels, datasets: [{ label: "المبيعات", data, borderColor: "#c88552", backgroundColor: "rgba(230,126,34,.15)", fill: true, tension: .35 }] },
     options: { plugins: { legend: { display: false } } } });
 }
 function renderItems(items) {
@@ -849,7 +876,7 @@ function renderItems(items) {
 }
 function renderPay(days, types) {
   const cash = sum(days, "cash"), net = sum(days, "network"), other = sum(days, "other");
-  draw("chPay", { type: "doughnut", data: { labels: ["نقدي", "شبكة", "أخرى"], datasets: [{ data: [cash, net, other], backgroundColor: ["#27ae60", "#2980b9", "#f39c12"] }] } });
+  draw("chPay", { type: "doughnut", data: { labels: ["نقدي", "شبكة", "أخرى"], datasets: [{ data: [cash, net, other], backgroundColor: ["#46946c", "#467ca8", "#d4a048"] }] } });
   const t = {};
   types.forEach(r => { const a = t[r.order_type] ||= { c: 0, s: 0 }; a.c += Number(r.orders_count); a.s += Number(r.total); });
   $("tblTypes").innerHTML = table(["نوع الطلب", "العدد", "المبلغ"], Object.entries(t).map(([n, v]) => [esc(n), v.c, fmt(v.s)]), [1, 2]);
@@ -908,6 +935,7 @@ let view = "reports", catalog = null, sessionToken = "", myEmail = "";
 function toast(msg, ms = 3500) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add("hidden"), ms); }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showView(b.dataset.v));
 function showView(v) {
+  if (typeof canView === "function" && !canView(v)) { toast("هذه الشاشة غير مسموحة لك"); return; }
   view = v;
   document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x.dataset.v === v));
   document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + v));
@@ -1233,7 +1261,7 @@ async function loadLog() {
     "hr.pay.edit": "تعديل المسير", "hr.payroll.approve": "اعتماد رواتب", "hr.payroll.pay": "صرف رواتب", "hr.payroll.unapprove": "إلغاء اعتماد رواتب",
     "count.save": "جرد", "pr.save": "طلب شراء", "pr.status": "حالة طلب شراء", "pr.delete": "حذف طلب شراء", "material.delete": "حذف مادة",
     "social.link": "رابط منصة", "social.hashtags": "هاشتاقات", "social.post.add": "منشور", "social.post.delete": "حذف منشور", "user.update": "مستخدم", "admin.setting": "إعداد",
-    "perms.role": "صلاحيات المستوى", "perms.user": "صلاحيات مستخدم", "order.payment": "تغيير دفع طلب" };
+    "perms.role": "صلاحيات المستوى", "perms.user": "صلاحيات مستخدم", "order.payment": "تغيير دفع طلب", "pr.report": "تقرير طلبات الشراء", "web.user.invite": "دعوة مستخدم للموقع" };
   $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
       <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
       <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
@@ -2534,6 +2562,7 @@ function renderInv() {
   if (invPane === "count") renderCount();
   if (invPane === "pr") renderPr();
   if (invPane === "hist") renderCountHist();
+  if (invPane === "rep") loadPrReport();
 }
 const ikey = i => i.src + i.id;
 function countList() {
@@ -2618,11 +2647,13 @@ async function prForm(r, preset) {
     <datalist id="dlMats">${mats.map(m => `<option value="${esc(m.name)}">${esc(m.category)}</option>`).join("")}</datalist>`);
   const paint = () => {
     const byCat = [...new Set(lines.map(l => l.category))];
-    $("prLines").innerHTML = lines.length ? "<table><tr><th>الصنف</th><th class=\"hm\">الرصيد</th><th>الكمية</th><th class=\"hm\">الوحدة</th><th></th></tr>" +
+    $("prLines").innerHTML = lines.length ? "<table><tr><th>الصنف</th><th class=\"hm\">الرصيد</th><th>الكمية</th><th>الوحدة</th><th></th></tr>" +
       byCat.map(c => `<tr class="h"><td colspan="5"><b>${esc(c || "عام")}</b></td></tr>` + lines.map((l, i) => l.category !== c ? "" : `<tr><td>${esc(l.name)}</td><td class="n hm">${fmtQ(l.current)}</td>
-        <td><input class="fld" type="number" step="0.5" min="0" style="width:90px" data-q="${i}" value="${n2(l.qty)}"></td><td class="hm">${esc(l.unit)}</td><td><button class="btn sm red" data-x="${i}">✕</button></td></tr>`).join("")).join("") + "</table>"
+        <td><input class="fld" type="number" step="0.5" min="0" style="width:90px" data-q="${i}" value="${n2(l.qty)}"></td>
+        <td><select class="fld" data-u="${i}" style="min-width:96px">${unitOpts(l.unit)}</select></td><td><button class="btn sm red" data-x="${i}">✕</button></td></tr>`).join("")).join("") + "</table>"
       : '<div class="empty">أضف الأصناف المطلوبة</div>';
     $("prLines").querySelectorAll("[data-q]").forEach(inp => inp.oninput = () => lines[Number(inp.dataset.q)].qty = Number(inp.value || 0));
+    $("prLines").querySelectorAll("[data-u]").forEach(sel => sel.onchange = () => lines[Number(sel.dataset.u)].unit = sel.value);
     $("prLines").querySelectorAll("[data-x]").forEach(b => b.onclick = () => { lines.splice(Number(b.dataset.x), 1); paint(); });
   };
   paint();
@@ -2645,7 +2676,7 @@ async function prForm(r, preset) {
     let phone = "";
     const sup = suppliers.find(s => s.supplier_id === Number($("prSup").value));
     if (sup && sup.phone) phone = sup.phone;
-    else { try { const st = await getReport("admin.settings", {}); phone = ((st.settings || []).find(x => x.key === "PurchaseManagerPhone") || {}).value || ""; } catch (e) {} }
+    else phone = (prData && prData.manager_phone) || "";
     phone = String(phone).replace(/\D/g, "").replace(/^0/, "966");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text()), "_blank");
     if (r && r.status !== "مرسل") send({ kind: "pr.status", payload: { id: r.id, status: "مرسل" } });
@@ -2655,6 +2686,47 @@ async function prForm(r, preset) {
   if ($("prSent")) $("prSent").onclick = async () => { if (await send({ kind: "pr.status", payload: { id: r.id, status: r.status === "مرسل" ? "مسودة" : "مرسل" } })) $("dlg").close(); };
   if ($("prDel")) $("prDel").onclick = async () => { if (confirm(`حذف طلب الشراء رقم ${r.id}؟`) && await send({ kind: "pr.delete", payload: { id: r.id } })) $("dlg").close(); };
 }
+
+
+// ---------------------------------------------------------------- الوحدات وتقرير طلبات الشراء
+function unitOpts(cur) {
+  const list = [...new Set([...(prData && prData.units || ["كجم", "حبة", "كرتون", "عبوة"]), cur].filter(Boolean))];
+  return list.map(u => `<option ${u === cur ? "selected" : ""}>${esc(u)}</option>`).join("");
+}
+let rpData = null, rpMode = "sum";
+async function loadPrReport() {
+  if (!$("rpFrom").value) { const d = businessToday(); $("rpTo").value = iso(d); d.setDate(d.getDate() - 29); $("rpFrom").value = iso(d); }
+  $("rpBody").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  const p = { from: $("rpFrom").value, to: $("rpTo").value };
+  if ($("rpStatus").value) p.status = $("rpStatus").value;
+  if ($("rpItem").value.trim()) p.item = $("rpItem").value.trim();
+  try { rpData = await liveData("pr.report", p, "invBanner"); } catch (e) { errBox("rpBody", e); return; }
+  const sum = rpData.summary.tables[0], det = rpData.detail.tables[0];
+  const ci = n => sum.cols.indexOf(n);
+  const total = sum.rows.reduce((a, r) => a + n2(r[ci("إجمالي الكمية")]), 0);
+  $("rpKpis").innerHTML = `<div class="kpi"><div class="l">أيام الفترة</div><div class="v">${rpData.days}</div></div><div class="kpi"><div class="l">طلبات الشراء</div><div class="v">${rpData.requests}</div></div>
+    <div class="kpi"><div class="l">الأصناف المطلوبة</div><div class="v">${sum.rows.length}</div></div><div class="kpi"><div class="l">سطور الطلبات</div><div class="v">${det.rows.length}</div></div>`;
+  renderPrReport();
+}
+function renderPrReport() {
+  if (!rpData) return;
+  const t = rpMode === "sum" ? rpData.summary.tables[0] : rpData.detail.tables[0];
+  const cat = t.cols.indexOf("القسم"), item = t.cols.indexOf("الصنف");
+  if (!t.rows.length) { $("rpBody").innerHTML = '<div class="empty">لا توجد طلبات شراء في هذه الفترة</div>'; return; }
+  let h = "<table><tr>" + t.cols.filter((c, i) => i !== cat).map(c => `<th>${esc(c)}</th>`).join("") + "</tr>", last = null;
+  t.rows.forEach((r, ri) => {
+    if (r[cat] !== last) { last = r[cat]; h += `<tr class="h"><td colspan="${t.cols.length - 1}"><b>${esc(r[cat] || "عام")}</b></td></tr>`; }
+    h += `<tr class="${rpMode === "sum" ? "click" : ""}" data-it="${esc(r[item])}">` + r.map((v, i) => i === cat ? "" : `<td class="${t.num[i] ? "n" : ""}">${t.num[i] ? fmtQ(v) : esc(v ?? "")}</td>`).join("") + "</tr>";
+  });
+  $("rpBody").innerHTML = `<div class="scroll" style="max-height:none">${h}</table></div>`;
+  if (rpMode === "sum") $("rpBody").querySelectorAll("tr[data-it]").forEach(tr => tr.onclick = () => { $("rpItem").value = tr.dataset.it; rpMode = "det"; rpChips(); loadPrReport(); });
+}
+function rpChips() { $("rpSumBtn").classList.toggle("on", rpMode === "sum"); $("rpDetBtn").classList.toggle("on", rpMode === "det"); }
+$("rpRun").onclick = loadPrReport;
+$("rpSumBtn").onclick = () => { rpMode = "sum"; rpChips(); renderPrReport(); };
+$("rpDetBtn").onclick = () => { rpMode = "det"; rpChips(); renderPrReport(); };
+$("rpPrint").onclick = () => rpData && printReport(rpMode === "sum" ? rpData.summary : rpData.detail);
+$("rpCsv").onclick = () => rpData && exportCsv(rpMode === "sum" ? rpData.summary : rpData.detail);
 
 // ---------------------------------------------------------------- المنصات
 let so = null;
@@ -2742,6 +2814,7 @@ async function loadAdmin() {
     });
   }
   if (admPane === "alerts") loadAlerts();
+  if (admPane === "web") loadWebUsers();
   if (admPane === "edits") loadEdits();
   if (admPane === "perms") loadPerms();
   if (admPane === "audit") {
@@ -2903,6 +2976,82 @@ function userPermForm(u) {
   $("upOk").onclick = async () => {
     const payload = $("upRole").checked ? { id: u.id, use_role: true, keys: [] } : { id: u.id, keys: [...sel] };
     if (await send({ kind: "perms.user", payload })) $("dlg").close();
+  };
+}
+
+
+// ---------------------------------------------------------------- مستخدمو الموقع وصلاحيات الشاشات
+const WEB_PERMS = [
+  ["web.sales", "📊 المبيعات والتقارير والطلبات"], ["web.purchase", "🛒 طلبات الشراء"], ["web.count", "⚖ الجرد"], ["web.stock", "📦 المخزون والمواد الخام"],
+  ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
+  ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"]];
+// الشاشة ← الصلاحيات التي تفتحها
+const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
+  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], log: ["*"] };
+let me = { role: "owner", perms: [] };
+const isOwner = () => me.role !== "staff";
+const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
+const canView = v => isOwner() || (VIEW_PERMS[v] || []).some(canWeb);
+function applyWebAccess() {
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("hidden", !canView(b.dataset.v)));
+  if (!isOwner()) {
+    // داخل الجرد والطلبات: كل جزء حسب صلاحيته
+    const show = { count: canWeb("web.count"), hist: canWeb("web.count"), pr: canWeb("web.purchase"), rep: canWeb("web.purchase") };
+    document.querySelectorAll("#invTabs .chip").forEach(c => c.classList.toggle("hidden", !show[c.dataset.i]));
+    if (!show[invPane]) { invPane = Object.keys(show).find(k => show[k]) || "pr"; paneSwitch("invTabs", "i", "i", invPane); }
+    if ($("icSave")) $("icSave").classList.toggle("hidden", !canWeb("web.count"));
+  }
+}
+let webUsers = [];
+async function loadWebUsers() {
+  $("tblWeb").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  let res = await sb.from("managers").select("email,full_name,is_active,role,perms,created_at").order("created_at");
+  if (res.error) {
+    $("tblWeb").innerHTML = `<div class="empty" style="color:var(--red)">⚠ شغّل ملف SQL رقم 07 (07_web_users.sql) في Supabase أولاً لتفعيل المستخدمين المحدودين.<br><small>${esc(res.error.message)}</small></div>`;
+    return;
+  }
+  webUsers = res.data || [];
+  $("tblWeb").innerHTML = "<table><tr><th>الاسم</th><th>البريد</th><th>النوع</th><th>الشاشات</th><th>الحالة</th><th></th></tr>" + webUsers.map((u, i) => `<tr>
+      <td><b>${esc(u.full_name)}</b></td><td dir="ltr" style="text-align:right">${esc(u.email)}</td>
+      <td>${u.role === "staff" ? '<span class="tag amber">🔐 محدود</span>' : '<span class="tag green">👑 مدير كامل</span>'}</td>
+      <td class="wrap">${u.role === "staff" ? (u.perms || []).map(p => esc((WEB_PERMS.find(x => x[0] === p) || [p, p])[1])).join("، ") || "—" : "كل الشاشات"}</td>
+      <td>${u.is_active ? "✔ نشط" : '<span class="tag red">موقوف</span>'}</td>
+      <td style="white-space:nowrap"><button class="btn sm" data-wu="${i}">✏ تعديل</button></td></tr>`).join("") + "</table>";
+  $("tblWeb").querySelectorAll("[data-wu]").forEach(b => b.onclick = () => webUserForm(webUsers[Number(b.dataset.wu)]));
+}
+$("wuNew").onclick = () => webUserForm(null);
+function webUserForm(u) {
+  const self = u && u.email.toLowerCase() === (myEmail || "").toLowerCase();
+  openDlg(u ? "✏ مستخدم الموقع" : "➕ مستخدم جديد للموقع", `<div class="form">
+    <div><label>الاسم</label><input class="fld" id="wuName" value="${esc(u ? u.full_name : "مسئول المطعم")}"></div>
+    <div><label>البريد الإلكتروني (للدخول)</label><input class="fld" id="wuEmail" dir="ltr" value="${esc(u ? u.email : "")}" ${u ? "disabled" : ""}></div>
+    <div><label>النوع</label><select class="fld" id="wuRole" ${self ? "disabled" : ""}><option value="staff">🔐 محدود — شاشات محددة</option><option value="owner" ${u && u.role !== "staff" ? "selected" : ""}>👑 مدير كامل</option></select></div>
+    <div><label>الحالة</label><select class="fld" id="wuActive" ${self ? "disabled" : ""}><option value="1">✔ نشط</option><option value="0" ${u && !u.is_active ? "selected" : ""}>⛔ موقوف</option></select></div>
+    <div class="full" id="wuPermsBox"><label>الشاشات المسموحة</label><div class="pm-items" style="padding:4px 0">${WEB_PERMS.map(([k, t]) => `<label><input type="checkbox" data-wp="${k}" ${u && (u.perms || []).includes(k) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div></div>
+    ${u ? "" : '<div class="full"><label style="font-weight:600"><input type="checkbox" id="wuInvite" checked> إرسال بريد للمستخدم لتعيين كلمة المرور (ينشئ حسابه تلقائياً عبر برنامج الكاشير)</label></div>'}
+    <div class="full"><button class="btn green" id="wuOk">💾 حفظ</button> ${u && !self ? '<button class="btn ghost" id="wuInv">📧 إعادة إرسال رابط كلمة المرور</button> <button class="btn red" id="wuDel">🗑 حذف</button>' : ""}</div></div>
+    <p class="note">مثال: مسئول المطعم ← محدود + (🛒 طلبات الشراء، ⚖ الجرد) فيستطيع إنشاء طلبات الشراء من المنزل دون رؤية المبيعات أو الحسابات.</p>`);
+  const sync = () => $("wuPermsBox").style.display = $("wuRole").value === "staff" ? "" : "none";
+  $("wuRole").onchange = sync; sync();
+  const invite = async email => send({ kind: "web.user.invite", payload: { email, redirect: location.origin + location.pathname } });
+  $("wuOk").onclick = async () => {
+    const email = $("wuEmail").value.trim().toLowerCase(), name = $("wuName").value.trim();
+    if (!name || !email.includes("@")) { toast("اكتب الاسم والبريد الإلكتروني"); return; }
+    const row = { email, full_name: name, role: $("wuRole").value, is_active: $("wuActive").value === "1",
+      perms: $("wuRole").value === "staff" ? [...document.querySelectorAll("[data-wp]:checked")].map(c => c.dataset.wp) : [] };
+    if (row.role === "staff" && !row.perms.length) { toast("اختر شاشة واحدة على الأقل"); return; }
+    const res = u ? await sb.from("managers").update(row).eq("email", u.email) : await sb.from("managers").insert(row);
+    if (res.error) { toast("⚠ " + res.error.message, 6000); return; }
+    if (!u && $("wuInvite").checked) await invite(email);
+    toast("✔ تم الحفظ" + (!u && $("wuInvite").checked ? " — يُرسل البريد عند اتصال برنامج الكاشير" : ""), 5000);
+    $("dlg").close(); loadWebUsers();
+  };
+  if ($("wuInv")) $("wuInv").onclick = async () => { if (await invite(u.email)) toast("📧 يُرسل رابط تعيين كلمة المرور خلال ثوانٍ"); };
+  if ($("wuDel")) $("wuDel").onclick = async () => {
+    if (!confirm(`حذف ${u.full_name} من مستخدمي الموقع؟ لن يستطيع الدخول بعد ذلك.`)) return;
+    const res = await sb.from("managers").delete().eq("email", u.email);
+    if (res.error) { toast("⚠ " + res.error.message, 6000); return; }
+    $("dlg").close(); loadWebUsers();
   };
 }
 
