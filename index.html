@@ -65,6 +65,10 @@
   .kpi .v { font-size: 1.35rem; font-weight: 800; margin-top: 4px; direction: ltr; text-align: right; }
   .kpi.main { background: linear-gradient(135deg, var(--green), #3d8160); color: #fff; border: 0; }
   .kpi.main .l { color: rgba(255,255,255,.85); }
+  .kpi[data-pay] { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+  .kpi[data-pay]:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+  .kpi[data-pay] .l::after { content: " 🔍"; font-size: .75rem; opacity: .6; }
+  .paychips { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
 
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 12px; margin-top: 12px; }
   .card { background: var(--card); border-radius: 14px; border: 1px solid var(--line); padding: 14px; min-width: 0; }
@@ -775,7 +779,7 @@ async function load() {
   $("loading").classList.remove("hidden");
   const [f, t] = range();
   try {
-    const [days, items, hours, types, rets, exps, shifts, stock, sups, recent, sync] = await Promise.all([
+    const [days, items, hours, types, rets, exps, shifts, stock, sups, recent, sync, pays] = await Promise.all([
       all(() => sb.from("v_daily_summary").select("*").gte("business_date", f).lte("business_date", t).order("business_date")),
       all(() => sb.from("v_item_sales").select("*").gte("business_date", f).lte("business_date", t)),
       all(() => sb.from("v_hourly_sales").select("*").gte("business_date", f).lte("business_date", t)),
@@ -786,14 +790,15 @@ async function load() {
       all(() => sb.from("stock_snapshot").select("*").order("item_type").order("item_name")),
       all(() => sb.from("v_supplier_balances").select("*").order("balance", { ascending: false })),
       sb.from("orders").select("order_id,daily_no,business_date,order_date,customer_name,order_type,payment_type,total,cashier,edited_at").gte("business_date", f).lte("business_date", t).order("order_id", { ascending: false }).limit(60),
-      sb.from("sync_status").select("*").order("last_sync", { ascending: false }).limit(1)
+      sb.from("sync_status").select("*").order("last_sync", { ascending: false }).limit(1),
+      all(() => sb.from("orders").select("payment_type,total").gte("business_date", f).lte("business_date", t)).catch(() => [])
     ]);
     renderSync(sync.data && sync.data[0]);
     renderKpis(days, rets, exps);
     renderDays(days);
     renderHours(hours);
     renderItems(items);
-    renderPay(days, types);
+    renderPay(days, types, pays);
     renderOrders(recent.data || []);
     renderShifts(shifts);
     renderReturns(rets);
@@ -823,17 +828,18 @@ function renderSync(s) {
 function renderKpis(days, rets, exps) {
   const total = sum(days, "total"), orders = sum(days, "orders_count"), ret = sum(rets, "amount"), exp = sum(exps, "amount");
   const k = [
-    ["إجمالي المبيعات", fmt(total), "main"],
+    ["إجمالي المبيعات", fmt(total), "main", "*"],
     ["عدد الطلبات", orders.toLocaleString("en-US")],
     ["متوسط الطلب", fmt(orders ? total / orders : 0)],
-    ["💵 نقدي", fmt(sum(days, "cash"))],
-    ["💳 شبكة", fmt(sum(days, "network"))],
+    ["💵 نقدي", fmt(sum(days, "cash")), "", "نقدي"],
+    ["💳 شبكة", fmt(sum(days, "network")), "", "شبكة"],
     ["الخصومات", fmt(sum(days, "discounts"))],
     ["↩ المرتجعات", fmt(ret)],
     ["المصروفات", fmt(exp)],
     ["الصافي", fmt(total - ret - exp)]
   ];
-  $("kpis").innerHTML = k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+  $("kpis").innerHTML = k.map(([l, v, c, pay]) => `<div class="kpi ${c || ""}"${pay ? ` data-pay="${esc(pay)}" title="اضغط لعرض الطلبات"` : ""}><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+  $("kpis").querySelectorAll("[data-pay]").forEach(el => el.onclick = () => payOrders(el.dataset.pay));
 }
 
 function chartColors() {
@@ -874,28 +880,70 @@ function renderItems(items) {
   const cats = Object.entries(byCat).sort((a, b) => b[1].t - a[1].t), tot = cats.reduce((s, c) => s + c[1].t, 0) || 1;
   $("tblCats").innerHTML = table(["المجموعة", "المبلغ", "النسبة"], cats.map(([n, v]) => [esc(n), fmt(v.t), (v.t * 100 / tot).toFixed(1) + "%"]), [1, 2]);
 }
-function renderPay(days, types) {
+function renderPay(days, types, pays) {
   const cash = sum(days, "cash"), net = sum(days, "network"), other = sum(days, "other");
-  draw("chPay", { type: "doughnut", data: { labels: ["نقدي", "شبكة", "أخرى"], datasets: [{ data: [cash, net, other], backgroundColor: ["#46946c", "#467ca8", "#d4a048"] }] } });
+  const keys = ["نقدي", "شبكة", "__other"];
+  draw("chPay", { type: "doughnut", data: { labels: ["نقدي", "شبكة", "أخرى"], datasets: [{ data: [cash, net, other], backgroundColor: ["#46946c", "#467ca8", "#d4a048"] }] },
+    options: { onClick: (e, els) => { if (els.length) payOrders(keys[els[0].index]); }, onHover: (e, els) => { e.native.target.style.cursor = els.length ? "pointer" : "default"; } } });
+  // طرق الدفع بالتفصيل (اضغط على أي طريقة لعرض طلباتها)
+  const pm = {};
+  (pays || []).forEach(o => { const k = o.payment_type || "غير محدد"; const a = pm[k] ||= { c: 0, s: 0 }; a.c++; a.s += Number(o.total || 0); });
+  const pl = Object.entries(pm).sort((a, b) => b[1].s - a[1].s);
   const t = {};
   types.forEach(r => { const a = t[r.order_type] ||= { c: 0, s: 0 }; a.c += Number(r.orders_count); a.s += Number(r.total); });
-  $("tblTypes").innerHTML = table(["نوع الطلب", "العدد", "المبلغ"], Object.entries(t).map(([n, v]) => [esc(n), v.c, fmt(v.s)]), [1, 2]);
+  $("tblTypes").innerHTML = (pl.length ? "<table><tr><th>طريقة الدفع 🔍</th><th>العدد</th><th>المبلغ</th></tr>" +
+      pl.map(([n, v]) => `<tr class="click" data-pm="${esc(n)}" title="اضغط لعرض الطلبات"><td><b>${esc(n)}</b></td><td class="n">${v.c}</td><td class="n">${fmt(v.s)}</td></tr>`).join("") + "</table><br>" : "") +
+    table(["نوع الطلب", "العدد", "المبلغ"], Object.entries(t).map(([n, v]) => [esc(n), v.c, fmt(v.s)]), [1, 2]);
+  $("tblTypes").querySelectorAll("[data-pm]").forEach(tr => tr.onclick = () => payOrders(tr.dataset.pm));
+}
+
+// طلبات طريقة دفع محددة خلال الفترة المختارة — للمراجعة أو تغيير طريقة الدفع
+async function payOrders(pay) {
+  const [f, t] = range();
+  const label = pay === "*" ? "كل الطلبات" : pay === "__other" ? "طرق الدفع الأخرى" : pay;
+  openDlg(`🔍 ${label} • ${f === t ? f : f + " ← " + t}`, '<div class="wait"><span class="spin"></span>جاري التحميل…</div>');
+  let rows;
+  try {
+    rows = await all(() => {
+      let q = sb.from("orders").select("order_id,daily_no,business_date,order_date,customer_name,order_type,payment_type,total,cashier,edited_at")
+        .gte("business_date", f).lte("business_date", t).order("order_id", { ascending: false });
+      if (pay === "__other") q = q.not("payment_type", "in", '("نقدي","شبكة")');
+      else if (pay !== "*") q = q.eq("payment_type", pay);
+      return q;
+    });
+  } catch (e) { $("dlgBody").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(e.message)}</div>`; return; }
+  const types = [...new Set(rows.map(o => o.order_type || "—"))];
+  let typeF = "";
+  const paint = () => {
+    const list = typeF ? rows.filter(o => (o.order_type || "—") === typeF) : rows;
+    const tot = list.reduce((s, o) => s + Number(o.total || 0), 0);
+    $("dlgBody").innerHTML = `<div class="rep-sum">${list.length} طلب • الإجمالي ${fmt(tot)} ر.س • اضغط على أي طلب لمراجعته أو تغيير طريقة الدفع</div>` +
+      (types.length > 1 ? `<div class="paychips"><button class="chip ${typeF ? "" : "on"}" data-tf="">الكل</button>${types.map(x => `<button class="chip ${typeF === x ? "on" : ""}" data-tf="${esc(x)}">${esc(x)}</button>`).join("")}</div>` : "") +
+      (list.length ? `<div class="scroll" style="max-height:60vh"><table><tr><th>#</th><th>التاريخ والوقت</th><th>العميل</th><th>النوع</th><th>الدفع</th><th>المبلغ</th></tr>` +
+        list.map(o => `<tr class="click" data-oid="${o.order_id}"><td>${o.daily_no}${o.edited_at ? ' <span class="tag amber">معدّل</span>' : ""}</td>
+          <td class="n">${esc(String(o.order_date || "").replace("T", " ").slice(0, 16))}</td><td>${esc(o.customer_name)}</td><td>${esc(o.order_type)}</td><td>${esc(o.payment_type)}</td><td class="n">${fmt(o.total)}</td></tr>`).join("") + "</table></div>"
+        : '<div class="empty">لا توجد طلبات</div>');
+    $("dlgBody").querySelectorAll("[data-tf]").forEach(b => b.onclick = () => { typeF = b.dataset.tf; paint(); });
+    $("dlgBody").querySelectorAll("[data-oid]").forEach(tr => tr.onclick = () => showOrder(tr.dataset.oid, rows.find(o => o.order_id == tr.dataset.oid), () => { $("dlgTitle").textContent = `🔍 ${label} • ${f === t ? f : f + " ← " + t}`; paint(); }));
+  };
+  paint();
 }
 function renderOrders(rows) {
   if (!rows.length) { $("tblOrders").innerHTML = '<div class="empty">لا توجد طلبات في هذه الفترة</div>'; return; }
   $("tblOrders").innerHTML = `<table><tr><th>#</th><th>الوقت</th><th>العميل</th><th>الدفع</th><th>المبلغ</th></tr>` +
     rows.map(o => `<tr class="click" data-id="${o.order_id}"><td>${o.daily_no}${o.edited_at ? ' <span class="tag amber">معدّل</span>' : ""}</td>
-      <td class="n">${esc((o.order_date || "").slice(5, 16))}</td><td>${esc(o.customer_name)}</td><td>${esc(o.payment_type)}</td><td class="n">${fmt(o.total)}</td></tr>`).join("") + "</table>";
+      <td class="n">${esc(String(o.order_date || "").replace("T", " ").slice(5, 16))}</td><td>${esc(o.customer_name)}</td><td>${esc(o.payment_type)}</td><td class="n">${fmt(o.total)}</td></tr>`).join("") + "</table>";
   $("tblOrders").querySelectorAll("tr.click").forEach(tr => tr.onclick = () => showOrder(tr.dataset.id, rows.find(o => o.order_id == tr.dataset.id)));
 }
-async function showOrder(id, o) {
+async function showOrder(id, o, back) {
   const { data } = await sb.from("order_items").select("*").eq("order_id", id).order("line_no");
   $("dlgTitle").textContent = `طلب #${o.daily_no} • ${o.business_date}`;
   $("dlgBody").innerHTML = `<p>${esc(o.customer_name)} • ${esc(o.order_type || "")} • ${esc(o.payment_type)} • الكاشير: ${esc(o.cashier)}</p>` +
     table(["الصنف", "الكمية", "الطهي", "المبلغ"], (data || []).map(i => [esc(i.product_name), fmtQ(i.quantity), esc(i.notes), fmt(i.total)]), [1, 3]) +
     `<p style="font-weight:800;font-size:1.1rem">الإجمالي: ${fmt(o.total)} ر.س</p>` +
-    `<div class="actions"><button class="btn" id="odPay">💳 تغيير طريقة الدفع</button><button class="btn ghost" id="odHist">🕵 سجل تعديلات الطلب</button></div>`;
-  $("dlg").showModal();
+    `<div class="actions"><button class="btn" id="odPay">💳 تغيير طريقة الدفع</button><button class="btn ghost" id="odHist">🕵 سجل تعديلات الطلب</button>${back ? '<button class="btn gray" id="odBack">→ رجوع للقائمة</button>' : ""}</div>`;
+  if (!$("dlg").open) $("dlg").showModal();
+  if (back) $("odBack").onclick = back;
   $("odPay").onclick = () => orderPaymentForm(Number(id), o);
   $("odHist").onclick = () => { $("dlg").close(); showOrderEdits(Number(id), o.daily_no); };
 }
@@ -911,7 +959,7 @@ function renderReturns(rows) {
   $("tblReturns").innerHTML = table(["الطلب", "السبب", "الرد", "المبلغ"], rows.map(r => ["#" + esc(r.order_no), esc(r.reason), esc(r.refund_method), fmt(r.amount)]), [3]);
 }
 function renderExpenses(rows) {
-  $("tblExpenses").innerHTML = table(["البيان", "التاريخ", "المبلغ"], rows.map(e => [esc(e.description), esc((e.expense_date || "").slice(5, 16)), fmt(e.amount)]), [1, 2]);
+  $("tblExpenses").innerHTML = table(["البيان", "التاريخ", "المبلغ"], rows.map(e => [esc(e.description), esc(String(e.expense_date || "").replace("T", " ").slice(5, 16)), fmt(e.amount)]), [1, 2]);
 }
 function renderStock(rows) {
   rows.sort((a, b) => low(b) - low(a));
@@ -2004,7 +2052,7 @@ function cacheBanner(res) {
 
 // ----- حساب التقارير من البيانات المتزامنة -----
 const bday = ts => { const d = new Date(String(ts).replace(" ", "T")); d.setHours(d.getHours() - DAY_START_HOUR); return iso(d); };
-function table(cols, num, rows, styles) { return { title: "", cols, num, rows, styles: styles || rows.map(() => ""), keys: null }; }
+function ctable(cols, num, rows, styles) { return { title: "", cols, num, rows, styles: styles || rows.map(() => ""), keys: null }; }
 function groupSum(list, keyFn, valFns) {
   const m = new Map();
   list.forEach(x => { const k = keyFn(x); if (!m.has(k)) m.set(k, valFns.map(() => 0).concat([new Set()])); const a = m.get(k); valFns.forEach((f, i) => a[i] += f(x)); });
@@ -2032,7 +2080,7 @@ async function cloudCompute(kind, p) {
         ["الخصومات", fmt(disc)], ["الخصم والمرتجعات والمصروفات", null], ["↩ المرتجعات", fmt(ret)], ["💸 المصروفات", fmt(exp)], ["صافي النقدية المتوقع في الدرج", fmt(cash - exp - retCash)],
         ["الأصناف الأكثر مبيعاً", null], ...top.map(([n, v]) => [n, fmtQ(v[0]) + " • " + fmt(v[1])])];
       const st = rows.map(r => r[1] == null ? "H" : /إجمالي|صافي/.test(r[0]) ? "T" : "");
-      return R("تقرير المبيعات (من البيانات المتزامنة)", `الإجمالي ${fmt(total)} • الطلبات ${os.length}`, table(["البند", "القيمة"], [false, false], rows, st));
+      return R("تقرير المبيعات (من البيانات المتزامنة)", `الإجمالي ${fmt(total)} • الطلبات ${os.length}`, ctable(["البند", "القيمة"], [false, false], rows, st));
     }
     case "ItemSales": case "CategorySales": {
       const os = await ordersIn(f, t, true);
@@ -2043,13 +2091,13 @@ async function cloudCompute(kind, p) {
       const rows = [...m.entries()].map(([k, v]) => [k, r3(v[0]), v[2].size, r2(v[1])]).sort((a, b) => b[3] - a[3]);
       const tot = rows.reduce((s, r) => s + r[3], 0);
       rows.forEach(r => r.push(tot ? Math.round(r[3] / tot * 1000) / 10 : 0));
-      return R(byCat ? "مبيعات الفئات" : "مبيعات الأصناف", `${rows.length} ${byCat ? "فئة" : "صنف"} • الإجمالي ${fmt(tot)} ر.س`, table([byCat ? "الفئة" : "الصنف", "الكمية", "عدد الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true, true], rows));
+      return R(byCat ? "مبيعات الفئات" : "مبيعات الأصناف", `${rows.length} ${byCat ? "فئة" : "صنف"} • الإجمالي ${fmt(tot)} ر.س`, ctable([byCat ? "الفئة" : "الصنف", "الكمية", "عدد الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true, true], rows));
     }
     case "ByHour": {
       const os = await ordersIn(f, t);
       const m = groupSum(os, o => String(o.order_date).slice(11, 13), [() => 1, o => Number(o.total)]);
       const rows = [...m.entries()].sort().map(([h, v]) => [h + ":00", v[0], r2(v[1]), r2(v[1] / v[0])]);
-      return R("المبيعات حسب الساعة", `${os.length} طلب`, table(["الساعة", "الطلبات", "المبيعات", "متوسط الطلب"], [false, true, true, true], rows));
+      return R("المبيعات حسب الساعة", `${os.length} طلب`, ctable(["الساعة", "الطلبات", "المبيعات", "متوسط الطلب"], [false, true, true, true], rows));
     }
     case "DailySummary": {
       const [os, ex, rt] = await Promise.all([ordersIn(f, t), expIn(), retIn()]);
@@ -2060,7 +2108,7 @@ async function cloudCompute(kind, p) {
       rt.forEach(r => g(r.business_date)[5] += +r.amount);
       const rows = [...days.entries()].sort().map(([d, a]) => [d, a[0], r2(a[1]), r2(a[2]), r2(a[3]), r2(a[1] - a[2] - a[3]), r2(a[4]), r2(a[5])]);
       const tot = rows.reduce((s, r) => s + r[2], 0);
-      return R("ملخص الأيام", `${rows.length} يوم • الإجمالي ${fmt(tot)} ر.س`, table(["التاريخ", "الطلبات", "الإجمالي", "نقدي", "شبكة", "أخرى", "المصروفات", "المرتجعات"], [false, true, true, true, true, true, true, true], rows));
+      return R("ملخص الأيام", `${rows.length} يوم • الإجمالي ${fmt(tot)} ر.س`, ctable(["التاريخ", "الطلبات", "الإجمالي", "نقدي", "شبكة", "أخرى", "المصروفات", "المرتجعات"], [false, true, true, true, true, true, true, true], rows));
     }
     case "PaymentTypes": case "OrderTypes": {
       const os = await ordersIn(f, t);
@@ -2068,47 +2116,47 @@ async function cloudCompute(kind, p) {
       const m = groupSum(os, o => (pay ? o.payment_type : o.order_type) || "—", [() => 1, o => Number(o.total)]);
       const tot = os.reduce((s, o) => s + Number(o.total), 0);
       const rows = [...m.entries()].map(([k, v]) => [k, v[0], r2(v[1]), tot ? Math.round(v[1] / tot * 1000) / 10 : 0]).sort((a, b) => b[2] - a[2]);
-      return R(pay ? "طرق الدفع" : "أنواع الطلبات", `الإجمالي ${fmt(tot)} ر.س`, table([pay ? "طريقة الدفع" : "النوع", "الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true], rows));
+      return R(pay ? "طرق الدفع" : "أنواع الطلبات", `الإجمالي ${fmt(tot)} ر.س`, ctable([pay ? "طريقة الدفع" : "النوع", "الطلبات", "الإجمالي", "النسبة %"], [false, true, true, true], rows));
     }
     case "Discounts": {
       const os = (await ordersIn(f, t)).filter(o => Number(o.discount) > 0);
       const rows = os.map(o => [o.business_date, o.daily_no || o.order_id, o.customer_name || "", r2(+o.discount), o.discount_reason || "", o.cashier || ""]);
-      return R("الخصومات", `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, table(["التاريخ", "رقم الطلب", "العميل", "الخصم", "السبب", "الكاشير"], [false, false, false, true, false, false], rows));
+      return R("الخصومات", `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, ctable(["التاريخ", "رقم الطلب", "العميل", "الخصم", "السبب", "الكاشير"], [false, false, false, true, false, false], rows));
     }
     case "TopCustomers": {
       const os = (await ordersIn(f, t)).filter(o => o.customer_phone);
       const m = groupSum(os, o => o.customer_phone, [() => 1, o => Number(o.total)]);
       const names = {}; os.forEach(o => { if (o.customer_name && o.customer_name !== "عميل نقدي") names[o.customer_phone] = o.customer_name; });
       const rows = [...m.entries()].map(([ph, v]) => [names[ph] || "", ph, v[0], r2(v[1])]).sort((a, b) => b[3] - a[3]).slice(0, 200);
-      return R("العملاء الأكثر طلباً", `${rows.length} عميل`, table(["العميل", "الجوال", "الطلبات", "الإجمالي"], [false, false, true, true], rows));
+      return R("العملاء الأكثر طلباً", `${rows.length} عميل`, ctable(["العميل", "الجوال", "الطلبات", "الإجمالي"], [false, false, true, true], rows));
     }
     case "Returns": case "ReturnedItems": {
       const rt = await retIn();
       if (rep === "Returns") {
         const rows = rt.map(r => [r.business_date, r.order_no || r.order_id || "", r2(+r.amount), r.refund_method || "", r.reason || "", r.cashier || ""]);
-        return R("المرتجعات", `${rows.length} مرتجع • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, table(["التاريخ", "الطلب", "المبلغ", "طريقة الرد", "السبب", "الكاشير"], [false, false, true, false, false, false], rows));
+        return R("المرتجعات", `${rows.length} مرتجع • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, ctable(["التاريخ", "الطلب", "المبلغ", "طريقة الرد", "السبب", "الكاشير"], [false, false, true, false, false, false], rows));
       }
       const m = groupSum(rt.flatMap(r => r.return_items || []), i => i.product_name, [i => +i.quantity, i => +i.total]);
       const rows = [...m.entries()].map(([k, v]) => [k, r3(v[0]), r2(v[1])]).sort((a, b) => b[2] - a[2]);
-      return R("الأصناف المرتجعة", `${rows.length} صنف`, table(["الصنف", "الكمية", "الإجمالي"], [false, true, true], rows));
+      return R("الأصناف المرتجعة", `${rows.length} صنف`, ctable(["الصنف", "الكمية", "الإجمالي"], [false, true, true], rows));
     }
     case "Expenses": {
       const ex = await expIn();
       const rows = ex.map(e => [String(e.expense_date).slice(0, 16), e.description || "", r2(+e.amount), e.cashier || ""]);
-      return R("المصروفات", `${rows.length} مصروف • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, table(["التاريخ", "البيان", "المبلغ", "الكاشير"], [false, false, true, false], rows));
+      return R("المصروفات", `${rows.length} مصروف • ${fmt(rows.reduce((s, r) => s + r[2], 0))} ر.س`, ctable(["التاريخ", "البيان", "المبلغ", "الكاشير"], [false, false, true, false], rows));
     }
     case "Purchases": {
       const [pu, sups] = await Promise.all([all(() => sb.from("purchases").select("*").gte("purchase_date", f).lte("purchase_date", t).order("purchase_date")), all(() => sb.from("suppliers").select("supplier_id,name"))]);
       const nm = Object.fromEntries(sups.map(s => [s.supplier_id, s.name]));
       const rows = pu.map(x => [x.purchase_date, nm[x.supplier_id] || "", x.invoice_no || "", r2(+x.total), x.notes || ""]);
-      return R("المشتريات", `${rows.length} فاتورة • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, table(["التاريخ", "المورد", "الفاتورة", "الإجمالي", "ملاحظات"], [false, false, false, true, false], rows));
+      return R("المشتريات", `${rows.length} فاتورة • ${fmt(rows.reduce((s, r) => s + r[3], 0))} ر.س`, ctable(["التاريخ", "المورد", "الفاتورة", "الإجمالي", "ملاحظات"], [false, false, false, true, false], rows));
     }
     case "stock.fish": case "stock.materials": {
       const st = await all(() => sb.from("stock_snapshot").select("*").order("item_name"));
       const fish = kind === "stock.fish";
       const list = st.filter(s => s.item_key[0] === (fish ? "F" : "M"));
       const rows = list.map(s => [s.item_name, s.unit || "", r3(+s.balance), r3(+s.min_stock), Number(s.balance) < 0 ? "⚠ سالب" : Number(s.min_stock) > 0 && Number(s.balance) <= Number(s.min_stock) ? "⚠ منخفض" : "✔"]);
-      return Object.assign(R(fish ? "مخزون الأسماك (الرصيد الحالي)" : "المواد الخام والتغليف (الرصيد الحالي)", "حركة الفترة متاحة عند اتصال البرنامج", table(["الصنف", "الوحدة", "الرصيد الحالي", "الحد الأدنى", "الحالة"], [false, false, true, true, false], rows)), { sub: "آخر رصيد متزامن" });
+      return Object.assign(R(fish ? "مخزون الأسماك (الرصيد الحالي)" : "المواد الخام والتغليف (الرصيد الحالي)", "حركة الفترة متاحة عند اتصال البرنامج", ctable(["الصنف", "الوحدة", "الرصيد الحالي", "الحد الأدنى", "الحالة"], [false, false, true, true, false], rows)), { sub: "آخر رصيد متزامن" });
     }
     case "supplier.statement": {
       const id = p.supplier_id;
@@ -2122,12 +2170,12 @@ async function cloudCompute(kind, p) {
       mv.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0);
       let bal = 0;
       const rows = mv.map(m => { bal += m[2] - m[3]; return [m[0], m[1], r2(m[2]), r2(m[3]), r2(bal)]; });
-      return Object.assign(R("كشف حساب المورد: " + s.name, `الرصيد المستحق ${fmt(bal)} ر.س`, table(["التاريخ", "البيان", "مشتريات (له)", "سداد (عليه)", "الرصيد"], [false, false, true, true, true], rows)), { sub: "" });
+      return Object.assign(R("كشف حساب المورد: " + s.name, `الرصيد المستحق ${fmt(bal)} ر.س`, ctable(["التاريخ", "البيان", "مشتريات (له)", "سداد (عليه)", "الرصيد"], [false, false, true, true, true], rows)), { sub: "" });
     }
     case "customer.history": {
       const os = await all(() => sb.from("orders").select("*, order_items(product_name)").eq("customer_phone", p.phone).order("order_id", { ascending: false }));
       const rows = os.map(o => [o.business_date, String(o.order_date).slice(11, 16), o.daily_no || o.order_id, o.order_type || "", o.payment_type || "", r2(+o.total), (o.order_items || []).map(i => i.product_name).join("، ")]);
-      return Object.assign(R("سجل العميل: " + p.phone, `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[5], 0))} ر.س`, Object.assign(table(["التاريخ", "الوقت", "رقم الطلب", "النوع", "الدفع", "الإجمالي", "الأصناف"], [false, false, false, false, false, true, false], rows), { title: "🧾 الطلبات" })), { sub: "" });
+      return Object.assign(R("سجل العميل: " + p.phone, `${rows.length} طلب • ${fmt(rows.reduce((s, r) => s + r[5], 0))} ر.س`, Object.assign(ctable(["التاريخ", "الوقت", "رقم الطلب", "النوع", "الدفع", "الإجمالي", "الأصناف"], [false, false, false, false, false, true, false], rows), { title: "🧾 الطلبات" })), { sub: "" });
     }
     default: return null;
   }
