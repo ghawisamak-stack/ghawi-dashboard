@@ -2840,8 +2840,8 @@ async function prForm(r, preset) {
     if (r && r.status !== "مرسل") send({ kind: "pr.status", payload: { id: r.id, status: "مرسل" } });
   };
   $("prPrint").onclick = () => printReport(repFromRows("طلب شراء" + (r ? " رقم " + r.id : ""), $("prDay").value + (sup => sup ? " • " + sup.name : "")(suppliers.find(s => s.supplier_id === Number($("prSup").value))),
-    ["القسم", "م", "الصنف", "الكمية", "الوحدة"],
-    groups().filter(g => g.ls.length).flatMap(g => [...g.ls.map((l, i) => [g.c, i + 1, l.name, fmtQ(l.qty), l.unit]), [g.c, "", `مجموع ${g.c || "القسم"} (${g.ls.length} صنف)`, qtySum(g.ls), ""]])
+    ["م", "القسم", "الصنف", "الكمية", "الوحدة"],
+    groups().filter(g => g.ls.length).flatMap(g => [...g.ls.map((l, i) => [i + 1, g.c, l.name, fmtQ(l.qty), l.unit]), ["", g.c, `مجموع ${g.c || "القسم"} (${g.ls.length} صنف)`, qtySum(g.ls), ""]])
       .concat([["", "", `✅ إجمالي الأصناف: ${groups().reduce((a, g) => a + g.ls.length, 0)}`, "", ""]]), []));
   if ($("prSent")) $("prSent").onclick = async () => { if (await send({ kind: "pr.status", payload: { id: r.id, status: r.status === "مرسل" ? "مسودة" : "مرسل" } })) $("dlg").close(); };
   if ($("prDel")) $("prDel").onclick = async () => { if (confirm(`حذف طلب الشراء رقم ${r.id}؟`) && await send({ kind: "pr.delete", payload: { id: r.id } })) $("dlg").close(); };
