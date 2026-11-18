@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1c5596">
+<title>تتبع طلبك — غاوي سمك</title>
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --navy: #1c5596; --navy2: #123d6e; --green: #2f9e66; --orange: #e07b24; --blue: #2c7fb8; --ink: #1d2b3a; --muted: #6b7a8c; --line: #e3e9f0; --bg: #f2f5f9; --card: #fff; --gold: #f1b81c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: Tajawal, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  .hero { background: linear-gradient(160deg, var(--navy) 0%, var(--navy2) 100%); color: #fff; padding: 22px 16px 70px; text-align: center; }
+  .hero img { width: 58px; height: 58px; border-radius: 16px; background: #fff; padding: 6px; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+  .hero h1 { margin: 10px 0 2px; font-size: 1.25rem; font-weight: 800; }
+  .hero p { margin: 0; opacity: .85; font-size: .95rem; }
+  main { max-width: 520px; margin: -52px auto 30px; padding: 0 14px; }
+  .card { background: var(--card); border-radius: 20px; box-shadow: 0 8px 28px rgba(20,40,70,.08); padding: 20px 18px; margin-bottom: 14px; }
+  .no { display: flex; justify-content: space-between; align-items: center; }
+  .no b { font-size: 1.9rem; font-weight: 800; color: var(--navy); letter-spacing: .5px; }
+  .no span { font-size: .9rem; color: var(--muted); }
+  .type { display: inline-block; background: #eef4fb; color: var(--navy); border-radius: 30px; padding: 4px 12px; font-weight: 700; font-size: .85rem; }
+  .status { text-align: center; margin: 18px 0 6px; }
+  .status .big { font-size: 1.55rem; font-weight: 800; }
+  .status .sub { color: var(--muted); margin-top: 4px; }
+  .eta { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+  .eta div { background: #f6f8fb; border-radius: 12px; padding: 8px 14px; text-align: center; min-width: 96px; }
+  .eta small { display: block; color: var(--muted); font-size: .78rem; }
+  .eta strong { font-size: 1.1rem; }
+  .steps { position: relative; margin: 22px 4px 4px; }
+  .rail { position: absolute; right: 22px; top: 22px; bottom: 22px; width: 4px; background: var(--line); border-radius: 4px; }
+  .rail i { position: absolute; top: 0; right: 0; width: 100%; background: linear-gradient(var(--green), var(--blue)); border-radius: 4px; transition: height 1s ease; }
+  .step { position: relative; display: flex; align-items: center; gap: 14px; padding: 9px 0; }
+  .dot { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 1.35rem; background: #fff; border: 3px solid var(--line); z-index: 1; flex: none; transition: all .4s; }
+  .step.done .dot { border-color: var(--green); background: #eaf7f0; }
+  .step.now .dot { border-color: var(--orange); background: #fff4e8; animation: pulse 1.6s infinite; }
+  .step .t { font-weight: 800; font-size: 1.05rem; }
+  .step .d { color: var(--muted); font-size: .85rem; }
+  .step.wait .t { color: #9aa7b6; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(224,123,36,.45); } 70% { box-shadow: 0 0 0 14px rgba(224,123,36,0); } 100% { box-shadow: 0 0 0 0 rgba(224,123,36,0); } }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; border: 0; border-radius: 14px; padding: 14px; font: inherit; font-weight: 800; font-size: 1rem; cursor: pointer; text-decoration: none; }
+  .wa { background: #25d366; color: #fff; }
+  .call { background: #eef4fb; color: var(--navy); }
+  .stars { display: flex; justify-content: center; gap: 6px; direction: ltr; margin: 10px 0; }
+  .stars button { background: none; border: 0; font-size: 2.3rem; cursor: pointer; color: #d5dce5; transition: transform .1s; padding: 0 2px; }
+  .stars button.on { color: var(--gold); }
+  .stars button:active { transform: scale(1.2); }
+  textarea { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font: inherit; resize: vertical; min-height: 64px; }
+  .send { background: var(--navy); color: #fff; width: 100%; margin-top: 10px; }
+  .muted { color: var(--muted); text-align: center; font-size: .9rem; }
+  .center { text-align: center; }
+  .thanks { font-size: 1.15rem; font-weight: 800; color: var(--green); text-align: center; }
+  .google { background: #fff; border: 2px solid var(--line); color: var(--ink); margin-top: 10px; width: 100%; }
+  .hidden { display: none !important; }
+  footer { text-align: center; color: var(--muted); font-size: .8rem; padding-bottom: 24px; }
+  .skeleton { height: 18px; border-radius: 8px; background: linear-gradient(90deg, #eef2f6, #f8fafc, #eef2f6); background-size: 200% 100%; animation: sk 1.2s infinite; margin: 10px 0; }
+  @keyframes sk { to { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+  <div class="hero">
+    <img src="icon.png" alt="" onerror="this.style.display='none'">
+    <h1 id="store">غاوي سمك</h1>
+    <p>تابع طلبك لحظة بلحظة</p>
+  </div>
+  <main>
+    <div class="card" id="main">
+      <div class="skeleton" style="width:60%"></div><div class="skeleton"></div><div class="skeleton" style="width:80%"></div>
+    </div>
+    <div class="card hidden" id="contact">
+      <div class="actions">
+        <a class="btn wa" id="waBtn" target="_blank" rel="noopener">💬 واتساب</a>
+        <a class="btn call" id="callBtn">📞 اتصال</a>
+      </div>
+    </div>
+    <div class="card hidden" id="rateCard">
+      <div class="center" style="font-weight:800;font-size:1.1rem">كيف كانت تجربتك معنا؟</div>
+      <div class="stars" id="stars"></div>
+      <textarea id="note" placeholder="ملاحظتك تهمنا (اختياري)"></textarea>
+      <button class="btn send" id="sendRate">إرسال التقييم</button>
+    </div>
+    <div class="card hidden" id="thanksCard">
+      <div class="thanks">شكراً لتقييمك 🙏</div>
+      <p class="muted" id="thanksSub">رأيك يساعدنا نكون أفضل كل يوم</p>
+      <a class="btn google hidden" id="googleBtn" target="_blank" rel="noopener">⭐ قيّمنا على Google</a>
+    </div>
+  </main>
+  <footer id="foot">🐟 بالعافية مقدماً</footer>
+
+<script>
+const SUPABASE_URL = "https://lstoqvehywpgmguiztoh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_TIwmDPRK-MXnii2qHcpIMA_n1nzqlGt";
+const token = new URLSearchParams(location.search).get("t") || "";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let data = null, skew = 0, stars = 0, rated = false;
+
+async function rpc(fn, body) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, { method: "POST", headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("تعذر الاتصال");
+  return r.json();
+}
+
+function finalStage(type) { return type === "توصيل" ? ["🛵", "في الطريق إليك"] : type === "محلي" ? ["🍽", "جاهز على طاولتك"] : ["✅", "جاهز للاستلام"]; }
+
+function render() {
+  if (!data) return;
+  const now = Date.now() + skew;
+  const created = new Date(data.created_at).getTime();
+  const ready = data.ready_at ? new Date(data.ready_at).getTime() : 0;
+  const delivered = !!data.delivered_at;
+  const m = Math.max(3, data.stage_minutes || 10);
+  const mins = Math.max(0, (now - created) / 60000);
+  const stage = ready ? 3 : Math.min(2, Math.floor(mins / m));
+  const fin = finalStage(data.order_type);
+  const steps = [["📝", "استلمنا طلبك", "طلبك وصلنا وبدأنا ترتيبه"], ["🔪", "جاري التحضير", "الشيف يجهّز المكونات الطازجة"], ["🔥", "على النار", "طلبك يُطهى الآن بعناية"], [fin[0], fin[1], data.order_type === "توصيل" ? "المندوب في الطريق" : "بانتظارك 😋"]];
+  // التقدم داخل المرحلة الحالية (لا يصل 100% قبل الجاهزية)
+  const within = ready ? 1 : Math.min(0.92, (mins - stage * m) / m);
+  const railPct = ready ? 100 : ((stage + Math.max(0, within)) / 3) * 100;
+  const left = ready ? 0 : Math.max(1, Math.round(m * 3.5 - mins));
+  const statusText = delivered ? "تم تسليم طلبك 🎉" : ready ? fin[1] + " " + fin[0] : steps[stage][1] + " " + steps[stage][0];
+  $("main").innerHTML = `
+    <div class="no"><div><span>رقم الطلب</span><br><b>#${esc(data.daily_no)}</b></div><div class="type">${esc(data.order_type === "محلي" ? "داخل المطعم" : data.order_type === "توصيل" ? "توصيل" : "استلام من الفرع")}</div></div>
+    <div class="status"><div class="big">${esc(statusText)}</div>
+      <div class="sub">${data.customer ? "أهلاً " + esc(data.customer) + " — " : ""}${delivered ? "بالعافية!" : ready ? (data.order_type === "توصيل" ? "طلبك خرج للتوصيل" : "طلبك جاهز") : "نعمل على طلبك الآن"}</div>
+      ${!ready ? `<div class="eta"><div><small>منذ الطلب</small><strong>${Math.floor(mins)} د</strong></div><div><small>المتوقع خلال</small><strong>~${left} د</strong></div></div>` : ""}</div>
+    <div class="steps"><div class="rail"><i style="height:${railPct}%"></i></div>
+      ${steps.map((s, i) => `<div class="step ${i < stage || (ready && i <= 3) ? "done" : i === stage ? "now" : "wait"}"><div class="dot">${s[0]}</div><div><div class="t">${esc(s[1])}</div><div class="d">${esc(s[2])}</div></div></div>`).join("")}</div>`;
+  $("contact").classList.remove("hidden");
+  const showRate = (ready || delivered) && !rated && !data.rating;
+  $("rateCard").classList.toggle("hidden", !showRate);
+  if ((rated || data.rating) && !$("thanksCard").dataset.shown) { $("thanksCard").classList.remove("hidden"); $("thanksCard").dataset.shown = "1"; }
+}
+
+function paintStars() {
+  $("stars").innerHTML = [1, 2, 3, 4, 5].map(n => `<button aria-label="${n}" class="${n <= stars ? "on" : ""}" data-s="${n}">★</button>`).join("");
+  $("stars").querySelectorAll("button").forEach(b => b.onclick = () => { stars = Number(b.dataset.s); paintStars(); });
+}
+
+async function load() {
+  if (!token) { $("main").innerHTML = '<p class="muted">رابط التتبع غير صحيح</p>'; return; }
+  try {
+    const d = await rpc("track_get", { p_token: token });
+    if (!d) { $("main").innerHTML = '<p class="muted">لم نجد هذا الطلب — تأكد من الرابط أو تواصل معنا</p>'; return; }
+    data = d;
+    skew = new Date(d.now).getTime() - Date.now();
+    $("store").textContent = d.store_name || "غاوي سمك";
+    document.title = `طلب #${d.daily_no} — ${d.store_name || "غاوي سمك"}`;
+    const wa = String(d.wa_phone || "").replace(/\D/g, "");
+    $("waBtn").href = wa ? `https://wa.me/${wa}?text=${encodeURIComponent("استفسار عن طلبي رقم #" + d.daily_no)}` : "#";
+    $("waBtn").classList.toggle("hidden", !wa);
+    const tel = String(d.store_phone || "").replace(/[^\d+]/g, "");
+    $("callBtn").href = tel ? "tel:" + tel : "#";
+    $("callBtn").classList.toggle("hidden", !tel);
+    if (d.review_url) { $("googleBtn").href = d.review_url; }
+    render();
+  } catch (e) {
+    if (!data) $("main").innerHTML = '<p class="muted">تعذر تحميل حالة الطلب — تحقق من الإنترنت</p>';
+  }
+}
+
+$("sendRate").onclick = async () => {
+  if (!stars) { $("stars").animate([{ transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "none" }], 300); return; }
+  $("sendRate").disabled = true;
+  try {
+    await rpc("track_rate", { p_token: token, p_stars: stars, p_note: $("note").value.trim() });
+    rated = true;
+    $("rateCard").classList.add("hidden");
+    $("thanksCard").classList.remove("hidden");
+    $("thanksCard").dataset.shown = "1";
+    if (stars >= 4 && data && data.review_url) { $("googleBtn").classList.remove("hidden"); $("thanksSub").textContent = "سعداء إن الطلب عجبك! شاركنا رأيك على Google 💙"; }
+  } catch (e) { $("sendRate").disabled = false; alert("تعذر إرسال التقييم، حاول مرة أخرى"); }
+};
+
+paintStars();
+load();
+setInterval(load, 30000);
+setInterval(render, 5000);
+</script>
+</body>
+</html>

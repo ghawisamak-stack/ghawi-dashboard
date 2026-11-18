@@ -204,6 +204,7 @@
   <nav class="tabs" id="tabs">
     <button data-v="reports" class="on">📊 اللوحة</button>
     <button data-v="center">📑 مركز التقارير</button>
+    <button data-v="track">⏱ التجهيز</button>
     <button data-v="products">🍽 الأصناف والأسعار</button>
     <button data-v="offers">🎁 العروض والكوبونات</button>
     <button data-v="customers">👥 العملاء</button>
@@ -394,6 +395,25 @@
     </div>
   </main></section>
 
+  <!-- ================= تتبع وتجهيز الطلبات ================= -->
+  <section class="view" id="v-track"><main>
+    <div class="card">
+      <h2>⏱ تجهيز الطلبات — الوقت والمراحل وتقييم العملاء</h2>
+      <div class="toolbar">
+        <input type="date" class="fld" id="trFrom"> ← <input type="date" class="fld" id="trTo">
+        <button class="btn sm" id="trRun">عرض</button>
+        <button class="btn sm ghost" id="trPrint">🖨 طباعة</button><button class="btn sm ghost" id="trCsv">📤 Excel</button>
+      </div>
+      <div class="kpis" id="trKpis"></div>
+    </div>
+    <div class="card"><h2>🔥 الطلبات الجارية الآن</h2><div id="trLive"></div>
+      <p class="note">المراحل: 📝 استلمنا طلبك ← 🔪 جاري التحضير ← 🔥 على النار ← ✅ جاهز / 🛵 في الطريق. تتقدم تلقائياً كل مدة المرحلة، والأخيرة عند ضغط الكاشير (جاهز). يمكنك ضغط جاهز/تم التسليم من هنا أيضاً.</p></div>
+    <div class="card"><h2>📋 كل الطلبات وأوقاتها</h2><div class="scroll" style="max-height:none" id="trTable"></div></div>
+    <div class="card"><h2>⭐ تقييمات العملاء</h2><div id="trRates"></div></div>
+    <div class="card"><h2>🔳 طلبات الطاولات (QR)</h2><div id="trQr"></div>
+      <p class="note">العميل يمسح رمز طاولته ويطلب بنفسه. الاعتماد قبل المطبخ (أو الإرسال المباشر) وعدد الطاولات من الإعدادات ← طلب الطاولة QR.</p></div>
+  </main></section>
+
   <!-- ================= مصروف ================= -->
   <section class="view" id="v-expense"><main>
     <div class="card" style="max-width:640px">
@@ -530,6 +550,7 @@
           <select class="fld" id="rpStatus"><option value="">كل الطلبات</option><option value="مرسل">المرسلة</option><option value="مسودة">المسودات</option></select>
           <input type="search" id="rpItem" placeholder="🔍 صنف محدد">
           <button class="btn sm" id="rpRun">عرض</button>
+          <button class="btn sm green" id="rpSent" title="الأصناف المرسلة فقط خلال الفترة">📤 المرسل فقط</button>
           <button class="chip on" id="rpSumBtn">📦 ملخص الأصناف</button><button class="chip" id="rpDetBtn">🧾 التفاصيل</button>
           <button class="btn sm ghost" id="rpPrint">🖨 طباعة</button><button class="btn sm ghost" id="rpCsv">📤 Excel</button>
         </div>
@@ -554,10 +575,11 @@
           <div class="full"><label>القالب</label><select class="fld" id="soTpl"></select></div>
           <div class="full"><label>نص المنشور</label><textarea class="fld" id="soText" rows="6" style="width:100%;resize:vertical"></textarea></div>
           <div class="full"><label>الهاشتاقات (تُضاف لكل منشور)</label><input class="fld" id="soTags" placeholder="#غاوي_سمك #مأكولات_بحرية #الرياض"></div>
+          <div class="full"><label>الصورة أو الفيديو (اختياري)</label><input class="fld" type="file" id="soMedia" accept="image/*,video/*"><div id="soPrev" style="margin-top:6px"></div></div>
           <div class="full"><label>المنصات</label><div id="soTargets" class="so-targets"></div></div>
-          <div class="full"><button class="btn green" id="soPublish">🚀 نسخ النص وفتح صفحات النشر</button></div>
+          <div class="full"><button class="btn green" id="soPublish">🚀 النشر منصة بعد منصة</button></div>
         </div>
-        <p class="note">الصورة أو الفيديو تُرفع من صفحة النشر في كل منصة (من الجوال أسهل). إكس وثريدز يُفتح فيهما النص جاهزاً، والباقي يُلصق النص المنسوخ.</p>
+        <p class="note">تظهر نافذة تمر على المنصات بالترتيب: في كل خطوة زر يفتح صفحة النشر والنص منسوخ جاهز للصق. من الجوال: زر (📲 مشاركة للتطبيق) يرسل الصورة والنص مباشرة لتطبيق إنستقرام / سناب / تيك توك / واتساب.</p>
       </div>
       <div class="card"><h2>📜 سجل المنشورات <span class="tag" id="soCount"></span></h2><div class="scroll" id="tblSo"></div></div>
     </div>
@@ -755,8 +777,85 @@ async function start() {
   showView(v);
   updatePendingBadge();
   clearInterval(refreshTimer);
-  refreshTimer = setInterval(() => { if (view === "reports" && canView("reports")) load(); else if (view === "zid" && isOwner()) loadZid(); updatePendingBadge(); }, 60000);
+  refreshTimer = setInterval(() => { if (view === "reports" && canView("reports")) load(); else if (view === "track" && canView("track")) loadTrack(); else if (view === "zid" && isOwner()) loadZid(); updatePendingBadge(); }, 60000);
+  // رابط صفحة تتبع الطلبات للعملاء (نفس مكان هذا الموقع) يُحفظ في البرنامج تلقائياً مرة واحدة
+  if (isOwner() && /^https:/.test(location.protocol + "") && !window.GS_LOCAL) {
+    const dir = location.origin + location.pathname.replace(/[^/]*$/, ""), trackUrl = dir + "track.html";
+    // رابطا صفحة التتبع وصفحة طلب الطاولة (QR) تُحفظ في البرنامج تلقائياً
+    try { if (localStorage.getItem("gs-track-url") !== trackUrl) { send([{ kind: "admin.setting", payload: { key: "TrackPageUrl", value: trackUrl } }, { kind: "admin.setting", payload: { key: "QrPageUrl", value: dir + "menu.html" } }]).then(ok => { if (ok) localStorage.setItem("gs-track-url", trackUrl); }); } } catch (e) {}
+  }
 }
+
+// =====================================================================
+//  تجهيز الطلبات: الوقت المستغرق لكل مرحلة وتقييم العملاء (من جدول order_tracking)
+// =====================================================================
+let trRows = [];
+const trMin = (a, b) => a && b ? Math.round((new Date(b) - new Date(a)) / 60000) : null;
+const trTime = t => t ? new Date(t).toLocaleTimeString("en-GB", { timeZone: "Asia/Riyadh", hour: "2-digit", minute: "2-digit" }) : "—";
+async function loadTrack() {
+  if (!$("trFrom").value) { $("trFrom").value = $("trTo").value = iso(businessToday()); }
+  $("trLive").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  let rows;
+  try { rows = await all(() => sb.from("order_tracking").select("*").gte("business_date", $("trFrom").value).lte("business_date", $("trTo").value).order("order_id", { ascending: false })); }
+  catch (e) {
+    $("trLive").innerHTML = `<div class="empty">⚠ ${esc(e.message)}<br>شغّل ملف SQL رقم 08 (08_order_tracking.sql) مرة واحدة في Supabase ← SQL Editor</div>`;
+    return;
+  }
+  trRows = rows;
+  const prep = rows.map(r => trMin(r.created_at, r.ready_at)).filter(x => x != null);
+  const wait = rows.map(r => trMin(r.ready_at, r.delivered_at)).filter(x => x != null);
+  const m = rows[0] ? rows[0].stage_minutes || 10 : 10;
+  const late = prep.filter(x => x > m * 4).length;
+  const rated = rows.filter(r => r.rating);
+  const avg = a => a.length ? Math.round(a.reduce((x, y) => x + y, 0) / a.length) : 0;
+  $("trKpis").innerHTML = `<div class="kpi main"><div class="l">الطلبات</div><div class="v">${rows.length}</div></div>
+    <div class="kpi"><div class="l">⏱ متوسط التجهيز</div><div class="v">${avg(prep)} د</div></div>
+    <div class="kpi"><div class="l">🧍 متوسط انتظار العميل</div><div class="v">${avg(wait)} د</div></div>
+    <div class="kpi"><div class="l">⚠ متأخر (> ${m * 4} د)</div><div class="v" style="color:var(--red)">${late}</div></div>
+    <div class="kpi"><div class="l">⭐ التقييم</div><div class="v">${rated.length ? (rated.reduce((a, r) => a + r.rating, 0) / rated.length).toFixed(1) + " (" + rated.length + ")" : "—"}</div></div>
+    <div class="kpi"><div class="l">أسرع / أبطأ</div><div class="v">${prep.length ? Math.min(...prep) + " / " + Math.max(...prep) + " د" : "—"}</div></div>`;
+  // الجارية الآن
+  const now = Date.now();
+  const live = rows.filter(r => !r.delivered_at && now - new Date(r.created_at) < 12 * 3600000);
+  const stageOf = r => r.ready_at ? 3 : Math.min(2, Math.floor((now - new Date(r.created_at)) / 60000 / (r.stage_minutes || 10)));
+  const ST = ["📝 استلمنا الطلب", "🔪 جاري التحضير", "🔥 على النار"];
+  const fin = t => t === "توصيل" ? "🛵 في الطريق" : t === "محلي" ? "🍽 على الطاولة" : "✅ جاهز للاستلام";
+  $("trLive").innerHTML = live.length ? `<table><tr><th>الطلب</th><th>النوع</th><th>العميل</th><th>المرحلة</th><th>منذ</th><th></th></tr>` +
+    live.map(r => { const st = stageOf(r), mins = Math.floor((now - new Date(r.ready_at || r.created_at)) / 60000), lt = !r.ready_at && mins > (r.stage_minutes || 10) * 4;
+      return `<tr><td><b>#${r.daily_no}</b></td><td>${esc(r.order_type)}</td><td>${esc(r.customer || "—")}</td>
+        <td><span class="tag ${st === 3 ? "green" : lt ? "red" : "amber"}">${st === 3 ? fin(r.order_type) : ST[st]}</span></td>
+        <td class="n" style="${lt ? "color:var(--red);font-weight:800" : ""}">${mins} د${r.ready_at ? " (ينتظر)" : ""}</td>
+        <td><button class="btn sm ${r.ready_at ? "gray" : "green"}" data-tk="${r.order_id}" data-k="${r.ready_at ? "delivered" : "ready"}">${r.ready_at ? "✔ تم التسليم" : r.order_type === "توصيل" ? "🛵 خرج" : "📣 جاهز"}</button></td></tr>`; }).join("") + "</table>"
+    : '<div class="empty">لا توجد طلبات جارية الآن 👌</div>';
+  $("trLive").querySelectorAll("[data-tk]").forEach(b => b.onclick = async () => { if (await send({ kind: "order.track", payload: { order_id: Number(b.dataset.tk), action: b.dataset.k } })) setTimeout(loadTrack, 9000); });
+  // كل الطلبات
+  $("trTable").innerHTML = rows.length ? `<table><tr><th>اليوم</th><th>الطلب</th><th>النوع</th><th>وقت الطلب</th><th>جاهز</th><th>تسليم</th><th>التجهيز</th><th>الانتظار</th><th>الإجمالي</th><th>⭐</th></tr>` +
+    rows.map(r => { const p = trMin(r.created_at, r.ready_at); return `<tr><td class="n">${esc(r.business_date)}</td><td><b>#${r.daily_no}</b></td><td>${esc(r.order_type)}</td>
+      <td class="n">${trTime(r.created_at)}</td><td class="n">${trTime(r.ready_at)}</td><td class="n">${trTime(r.delivered_at)}</td>
+      <td class="n" style="${p > m * 4 ? "color:var(--red);font-weight:800" : ""}">${p ?? "—"}${p != null ? " د" : ""}</td><td class="n">${trMin(r.ready_at, r.delivered_at) ?? "—"}</td><td class="n">${trMin(r.created_at, r.delivered_at) ?? "—"}</td>
+      <td>${r.rating ? "⭐".repeat(r.rating) : ""}</td></tr>`; }).join("") + "</table>"
+    : '<div class="empty">لا توجد طلبات في هذه الفترة</div>';
+  loadQrOrders();
+  $("trRates").innerHTML = rated.length ? rated.sort((a, b) => new Date(b.rated_at) - new Date(a.rated_at)).map(r => `<div class="al-row" style="display:block"><b>${"⭐".repeat(r.rating)}</b> — طلب #${r.daily_no} (${esc(r.customer || "عميل")}) • ${esc(String(r.rated_at || "").slice(0, 16).replace("T", " "))}${r.rating_note ? `<div style="margin-top:4px">💬 ${esc(r.rating_note)}</div>` : ""}</div>`).join("")
+    : '<div class="empty">لا توجد تقييمات بعد</div>';
+}
+async function loadQrOrders() {
+  const st = { new: ["📨 جديد", "amber"], waiting: ["⏳ بانتظار الاعتماد", "amber"], accepted: ["✅ مقبول", "green"], rejected: ["✖ مرفوض", "red"] };
+  try {
+    const rows = await all(() => sb.from("qr_orders").select("id,table_no,status,created_at,daily_no,total,reason,payload,handled_at").gte("created_at", $("trFrom").value + "T00:00:00+03:00").lte("created_at", $("trTo").value + "T23:59:59+03:00").order("created_at", { ascending: false }));
+    $("trQr").innerHTML = rows.length ? `<table><tr><th>الوقت</th><th>الطاولة</th><th>الأصناف</th><th>الحالة</th><th>الطلب</th><th>الإجمالي</th><th>وقت الاعتماد</th></tr>` +
+      rows.map(r => { const s = st[r.status] || [r.status, ""], items = ((r.payload || {}).items || []).map(i => `${i.qty}× ${i.name || ""}`).join("، ");
+        return `<tr><td class="n">${trTime(r.created_at)}</td><td><b>${r.table_no}</b></td><td class="wrap">${esc(items)}${r.payload && r.payload.customer ? `<div class="note" style="margin:0">👤 ${esc(r.payload.customer)}</div>` : ""}</td>
+          <td><span class="tag ${s[1]}">${s[0]}</span>${r.reason ? `<div class="note" style="margin:0">${esc(r.reason)}</div>` : ""}</td><td>${r.daily_no ? "#" + r.daily_no : "—"}</td><td class="n">${r.total ? fmt(r.total) : "—"}</td>
+          <td class="n">${r.handled_at ? trMin(r.created_at, r.handled_at) + " د" : "—"}</td></tr>`; }).join("") + "</table>"
+      : '<div class="empty">لا توجد طلبات طاولات في هذه الفترة</div>';
+  } catch (e) { $("trQr").innerHTML = '<div class="empty">شغّل ملف SQL رقم 09 (09_qr_orders.sql) لتفعيل طلبات الطاولات</div>'; }
+}
+const trReport = () => repFromRows("تجهيز الطلبات", $("trFrom").value + " ← " + $("trTo").value, ["اليوم", "رقم الطلب", "النوع", "العميل", "وقت الطلب", "جاهز", "تسليم", "التجهيز (د)", "الانتظار (د)", "الإجمالي (د)", "التقييم", "ملاحظة العميل"],
+  trRows.map(r => [r.business_date, r.daily_no, r.order_type, r.customer, trTime(r.created_at), trTime(r.ready_at), trTime(r.delivered_at), trMin(r.created_at, r.ready_at) ?? "", trMin(r.ready_at, r.delivered_at) ?? "", trMin(r.created_at, r.delivered_at) ?? "", r.rating || "", r.rating_note || ""]), [7, 8, 9]);
+$("trRun").onclick = loadTrack;
+$("trPrint").onclick = () => printReport(trReport());
+$("trCsv").onclick = () => exportCsv(trReport());
 
 // ----- الفترات -----
 document.querySelectorAll("#periods .chip").forEach(b => b.onclick = () => {
@@ -1002,6 +1101,7 @@ function showView(v) {
   if (v === "inv") loadInv();
   if (v === "social") loadSocial();
   if (v === "admin") loadAdmin();
+  if (v === "track") loadTrack();
   try { localStorage.setItem("gs-view", v); } catch (e) {}
 }
 
@@ -1039,6 +1139,7 @@ function reloadView() {
   if (view === "products") loadProducts(); if (view === "offers") loadOffers(); if (view === "log") loadLog();
   if (view === "customers") loadCustomers(); if (view === "suppliers") loadSuppliers(); if (view === "stock") loadStockView(); if (view === "acc") loadAccounts();
   if (view === "hr") loadHr(); if (view === "inv") loadInv(); if (view === "social") loadSocial(); if (view === "admin") loadAdmin();
+  if (view === "track") loadTrack();
 }
 async function updatePendingBadge() {
   const { count } = await sb.from("pos_commands").select("id", { count: "exact", head: true }).eq("status", "pending");
@@ -1309,7 +1410,7 @@ async function loadLog() {
     "hr.pay.edit": "تعديل المسير", "hr.payroll.approve": "اعتماد رواتب", "hr.payroll.pay": "صرف رواتب", "hr.payroll.unapprove": "إلغاء اعتماد رواتب",
     "count.save": "جرد", "pr.save": "طلب شراء", "pr.status": "حالة طلب شراء", "pr.delete": "حذف طلب شراء", "material.delete": "حذف مادة",
     "social.link": "رابط منصة", "social.hashtags": "هاشتاقات", "social.post.add": "منشور", "social.post.delete": "حذف منشور", "user.update": "مستخدم", "admin.setting": "إعداد",
-    "perms.role": "صلاحيات المستوى", "perms.user": "صلاحيات مستخدم", "order.payment": "تغيير دفع طلب", "pr.report": "تقرير طلبات الشراء", "web.user.invite": "دعوة مستخدم للموقع" };
+    "perms.role": "صلاحيات المستوى", "perms.user": "صلاحيات مستخدم", "order.payment": "تغيير دفع طلب", "order.track": "تجهيز طلب (جاهز/تسليم)", "pr.report": "تقرير طلبات الشراء", "web.user.invite": "دعوة مستخدم للموقع" };
   $("tblLog").innerHTML = rows.length ? "<table><tr><th>الوقت</th><th>بواسطة</th><th>النوع</th><th>الحالة</th><th>النتيجة</th></tr>" + rows.map(c => `<tr>
       <td class="n">${esc(new Date(c.created_at).toLocaleString("en-GB", { timeZone: "Asia/Riyadh", hour12: false }).slice(0, 17))}</td>
       <td>${esc(c.created_by)}</td><td>${kinds[c.kind] || esc(c.kind)}</td><td>${st(c.status)}</td><td>${esc(c.result || "")}</td></tr>`).join("") + "</table>"
@@ -2693,15 +2794,21 @@ async function prForm(r, preset) {
     <div class="actions"><button class="btn green" id="prSave">💾 حفظ</button><button class="btn" id="prWa">📲 إرسال واتساب</button><button class="btn ghost" id="prPrint">🖨 طباعة / PDF</button>
       ${r ? `<button class="btn amber" id="prSent">${r.status === "مرسل" ? "✎ إرجاع لمسودة" : "✔ تمييز كمرسل"}</button><button class="btn red" id="prDel">🗑 حذف</button>` : ""}</div>
     <datalist id="dlMats">${mats.map(m => `<option value="${esc(m.name)}">${esc(m.category)}</option>`).join("")}</datalist>`);
+  // مجموع الكمية لكل وحدة: "12 كجم + 3 كرتون"
+  const qtySum = ls => { const m = {}; ls.forEach(l => { const u = (l.unit || "").trim(); m[u] = (m[u] || 0) + n2(l.qty); }); return Object.entries(m).map(([u, q]) => fmtQ(q) + (u ? " " + u : "")).join(" + "); };
+  const groups = () => [...new Set(lines.map(l => l.category))].map(c => ({ c, ls: lines.filter(l => l.category === c && n2(l.qty) > 0) }));
   const paint = () => {
     const byCat = [...new Set(lines.map(l => l.category))];
-    $("prLines").innerHTML = lines.length ? "<table><tr><th>الصنف</th><th class=\"hm\">الرصيد</th><th>الكمية</th><th>الوحدة</th><th></th></tr>" +
-      byCat.map(c => `<tr class="h"><td colspan="5"><b>${esc(c || "عام")}</b></td></tr>` + lines.map((l, i) => l.category !== c ? "" : `<tr><td>${esc(l.name)}</td><td class="n hm">${fmtQ(l.current)}</td>
+    let no = 0;
+    $("prLines").innerHTML = lines.length ? "<table><tr><th>م</th><th>الصنف</th><th class=\"hm\">الرصيد</th><th>الكمية</th><th>الوحدة</th><th></th></tr>" +
+      byCat.map(c => { no = 0; const ls = lines.filter(l => l.category === c); return `<tr class="h"><td colspan="6"><b>${esc(c || "عام")}</b> — ${ls.length} صنف • مجموع الكمية: <b data-sum="${esc(c)}">${qtySum(ls)}</b></td></tr>` + lines.map((l, i) => l.category !== c ? "" : `<tr><td class="n">${++no}</td><td>${esc(l.name)}</td><td class="n hm">${fmtQ(l.current)}</td>
         <td><input class="fld" type="number" step="0.5" min="0" style="width:90px" data-q="${i}" value="${n2(l.qty)}"></td>
-        <td><select class="fld" data-u="${i}" style="min-width:96px">${unitOpts(l.unit)}</select></td><td><button class="btn sm red" data-x="${i}">✕</button></td></tr>`).join("")).join("") + "</table>"
+        <td><select class="fld" data-u="${i}" style="min-width:96px">${unitOpts(l.unit)}</select></td><td><button class="btn sm red" data-x="${i}">✕</button></td></tr>`).join(""); }).join("") +
+        `<tr class="h"><td colspan="6"><b>✅ إجمالي الأصناف: <span id="prTotal">${lines.length}</span> صنف في ${byCat.length} قسم</b></td></tr></table>`
       : '<div class="empty">أضف الأصناف المطلوبة</div>';
-    $("prLines").querySelectorAll("[data-q]").forEach(inp => inp.oninput = () => lines[Number(inp.dataset.q)].qty = Number(inp.value || 0));
-    $("prLines").querySelectorAll("[data-u]").forEach(sel => sel.onchange = () => lines[Number(sel.dataset.u)].unit = sel.value);
+    const resum = () => $("prLines").querySelectorAll("[data-sum]").forEach(b => b.textContent = qtySum(lines.filter(l => l.category === b.dataset.sum)));
+    $("prLines").querySelectorAll("[data-q]").forEach(inp => inp.oninput = () => { lines[Number(inp.dataset.q)].qty = Number(inp.value || 0); resum(); });
+    $("prLines").querySelectorAll("[data-u]").forEach(sel => sel.onchange = () => { lines[Number(sel.dataset.u)].unit = sel.value; resum(); });
     $("prLines").querySelectorAll("[data-x]").forEach(b => b.onclick = () => { lines.splice(Number(b.dataset.x), 1); paint(); });
   };
   paint();
@@ -2712,8 +2819,11 @@ async function prForm(r, preset) {
     $("prAdd").value = ""; paint();
   };
   const text = () => {
-    const cats = [...new Set(lines.filter(l => n2(l.qty) > 0).map(l => l.category))];
-    return `🛒 طلب شراء${r ? " رقم " + r.id : ""} — مطعم غاوي سمك\n📅 ${$("prDay").value}\n` + cats.map(c => `\n▪ ${c || "عام"}\n` + lines.filter(l => l.category === c && n2(l.qty) > 0).map(l => `  • ${l.name}: ${n2(l.qty)} ${l.unit || ""}`).join("\n")).join("\n") + ($("prNote").value.trim() ? `\n\n📝 ${$("prNote").value.trim()}` : "");
+    const gs = groups().filter(g => g.ls.length), all = gs.reduce((a, g) => a + g.ls.length, 0);
+    return `🛒 *طلب شراء${r ? " رقم " + r.id : ""}* — مطعم غاوي سمك\n📅 ${$("prDay").value}\n` +
+      gs.map(g => `\n📦 *${g.c || "عام"}* — ${g.ls.length} صنف • مجموع الكمية: ${qtySum(g.ls)}\n` + g.ls.map((l, i) => `${i + 1}. ${l.name} — *${fmtQ(l.qty)}* ${l.unit || ""}`).join("\n")).join("\n") +
+      (gs.length > 1 ? "\n\n📋 *ملخص الأقسام*\n" + gs.map(g => `• ${g.c || "عام"}: ${g.ls.length} صنف — ${qtySum(g.ls)}`).join("\n") : "") +
+      `\n\n✅ *إجمالي الأصناف: ${all}* في ${gs.length} قسم` + ($("prNote").value.trim() ? `\n📝 ${$("prNote").value.trim()}` : "") + "\nنرجو التأكيد وموعد التوريد 🙏";
   };
   $("prSave").onclick = async () => {
     const payload = { id: r ? r.id : 0, day: $("prDay").value, supplier_id: Number($("prSup").value), note: $("prNote").value.trim(), lines: lines.filter(l => n2(l.qty) > 0) };
@@ -2730,7 +2840,9 @@ async function prForm(r, preset) {
     if (r && r.status !== "مرسل") send({ kind: "pr.status", payload: { id: r.id, status: "مرسل" } });
   };
   $("prPrint").onclick = () => printReport(repFromRows("طلب شراء" + (r ? " رقم " + r.id : ""), $("prDay").value + (sup => sup ? " • " + sup.name : "")(suppliers.find(s => s.supplier_id === Number($("prSup").value))),
-    ["القسم", "الصنف", "الكمية", "الوحدة", "الرصيد الحالي"], lines.filter(l => n2(l.qty) > 0).map(l => [l.category, l.name, n2(l.qty), l.unit, n2(l.current)]), [2, 4]));
+    ["القسم", "م", "الصنف", "الكمية", "الوحدة", "الرصيد الحالي"],
+    groups().filter(g => g.ls.length).flatMap(g => [...g.ls.map((l, i) => [g.c, i + 1, l.name, n2(l.qty), l.unit, n2(l.current)]), [g.c, "", `مجموع ${g.c || "القسم"} (${g.ls.length} صنف)`, qtySum(g.ls), "", ""]])
+      .concat([["", "", `✅ إجمالي الأصناف: ${groups().reduce((a, g) => a + g.ls.length, 0)}`, "", "", ""]]), [5]));
   if ($("prSent")) $("prSent").onclick = async () => { if (await send({ kind: "pr.status", payload: { id: r.id, status: r.status === "مرسل" ? "مسودة" : "مرسل" } })) $("dlg").close(); };
   if ($("prDel")) $("prDel").onclick = async () => { if (confirm(`حذف طلب الشراء رقم ${r.id}؟`) && await send({ kind: "pr.delete", payload: { id: r.id } })) $("dlg").close(); };
 }
@@ -2771,6 +2883,7 @@ function renderPrReport() {
 }
 function rpChips() { $("rpSumBtn").classList.toggle("on", rpMode === "sum"); $("rpDetBtn").classList.toggle("on", rpMode === "det"); }
 $("rpRun").onclick = loadPrReport;
+$("rpSent").onclick = () => { $("rpStatus").value = "مرسل"; rpMode = "sum"; rpChips(); loadPrReport(); };
 $("rpSumBtn").onclick = () => { rpMode = "sum"; rpChips(); renderPrReport(); };
 $("rpDetBtn").onclick = () => { rpMode = "det"; rpChips(); renderPrReport(); };
 $("rpPrint").onclick = () => rpData && printReport(rpMode === "sum" ? rpData.summary : rpData.detail);
@@ -2815,18 +2928,51 @@ function linkForm(p) {
   $("lfOk").onclick = async () => { if (await send({ kind: "social.link", payload: { key: p.key, url: $("lfUrl").value.trim() } })) $("dlg").close(); };
   if ($("lfDel")) $("lfDel").onclick = async () => { if (await send({ kind: "social.link", payload: { key: p.key, url: "" } })) $("dlg").close(); };
 }
+let soFile = null;
+$("soMedia").onchange = () => {
+  soFile = $("soMedia").files[0] || null;
+  $("soPrev").innerHTML = !soFile ? "" : soFile.type.startsWith("image/") ? `<img src="${URL.createObjectURL(soFile)}" style="max-width:100%;max-height:180px;border-radius:10px">` : `<span class="tag">🎬 ${esc(soFile.name)}</span>`;
+};
+// النشر خطوة بخطوة: المتصفح يسمح بفتح صفحة واحدة لكل ضغطة، لذلك كل منصة لها زرها
 $("soPublish").onclick = async () => {
   if (!so) return;
   const tags = $("soTags").value.trim(), text = $("soText").value.trim() + (tags ? "\n\n" + tags : "");
-  if (!$("soText").value.trim()) { toast("اكتب نص المنشور"); return; }
+  if (!$("soText").value.trim() && !soFile) { toast("اكتب نص المنشور أو اختر صورة"); return; }
   const keys = [...$("soTargets").querySelectorAll("input:checked")].map(i => i.value);
   if (!keys.length) { toast("اختر منصة واحدة على الأقل"); return; }
-  try { await navigator.clipboard.writeText(text); } catch (e) {}
-  keys.forEach(k => { const p = so.platforms.find(x => x.key === k); if (p && p.composer && !p.composer.startsWith("whatsapp")) window.open(p.composer.replace("{text}", encodeURIComponent(text)), "_blank"); });
-  const list = [{ kind: "social.post.add", payload: { caption: text, platforms: keys.map(k => so.platforms.find(x => x.key === k).name).join("، ") } }];
-  if (tags !== (so.hashtags || "")) list.push({ kind: "social.hashtags", payload: { value: tags } });
-  await send(list);
-  toast("✔ نُسخ النص — الصقه في صفحة كل منصة وأرفق الصورة", 6000);
+  const META = "https://business.facebook.com/latest/composer";
+  let steps = keys.map(k => so.platforms.find(x => x.key === k)).filter(Boolean);
+  if (steps.some(p => p.key === "facebook") && steps.some(p => p.key === "instagram"))
+    steps = steps.filter(p => p.key !== "instagram").map(p => p.key === "facebook" ? Object.assign({}, p, { name: "فيسبوك + إنستقرام", icon: "👍📸", meta2: true }) : p);
+  const urlOf = p => p.key === "facebook" || p.key === "instagram" ? META : p.composer.startsWith("whatsapp") ? "https://web.whatsapp.com/" : p.composer.replace("{text}", encodeURIComponent(text));
+  const helpOf = p => p.meta2 ? "اختر فيسبوك وإنستقرام معاً في (Post to)، أضف الصورة ثم الصق النص." : p.key === "x" || p.key === "threads" ? "النص مكتوب جاهز، أضف الصورة فقط." : p.key === "tiktok" ? "ارفع الفيديو ثم الصق النص في الوصف." : "أضف الصورة/الفيديو ثم الصق النص المنسوخ.";
+  const canShare = soFile && navigator.canShare && navigator.canShare({ files: [soFile] });
+  let i = 0;
+  const done = new Set();
+  const paint = () => {
+    const p = steps[i];
+    $("dlgBody").innerHTML = `<div class="kpis" style="margin-bottom:10px">${steps.map((x, j) => `<span class="tag ${done.has(j) ? "green" : j === i ? "amber" : ""}">${esc(x.icon)} ${esc(x.name)}</span>`).join(" ")}</div>
+      <div style="font-size:1.4rem;font-weight:800;margin:6px 0">${esc(p.icon)} ${esc(p.name)} <span class="note">(${i + 1} من ${steps.length})</span></div>
+      <p>${esc(helpOf(p))}</p>
+      <div class="actions" style="flex-wrap:wrap">
+        <button class="btn green" id="sgOpen">📤 نسخ النص وفتح ${esc(p.name)}</button>
+        ${canShare ? '<button class="btn" id="sgShare">📲 مشاركة للتطبيق (صورة + نص)</button>' : ""}
+        <button class="btn ghost" id="sgCopy">📋 نسخ النص</button>
+      </div>
+      <div class="actions"><button class="btn gray" id="sgPrev" ${i ? "" : "disabled"}>↩ السابق</button><button class="btn" id="sgNext">${i + 1 < steps.length ? "▶ التالي: " + esc(steps[i + 1].name) : "✔ إنهاء وحفظ في السجل"}</button></div>`;
+    $("sgOpen").onclick = async () => { try { await navigator.clipboard.writeText(text); } catch (e) {} window.open(urlOf(p), "_blank"); done.add(i); toast("📝 النص منسوخ — الصقه في صفحة النشر", 4000); };
+    if ($("sgShare")) $("sgShare").onclick = async () => { try { await navigator.clipboard.writeText(text); } catch (e) {} try { await navigator.share({ files: [soFile], text, title: so.store || "غاوي سمك" }); done.add(i); paint(); } catch (e) {} };
+    $("sgCopy").onclick = async () => { try { await navigator.clipboard.writeText(text); toast("📋 نُسخ النص"); } catch (e) { toast("انسخ النص يدوياً"); } };
+    $("sgPrev").onclick = () => { if (i) { i--; paint(); } };
+    $("sgNext").onclick = async () => {
+      if (i + 1 < steps.length) { i++; paint(); return; }
+      const list = [{ kind: "social.post.add", payload: { caption: text, platforms: steps.map(x => x.name).join("، ") } }];
+      if (tags !== (so.hashtags || "")) list.push({ kind: "social.hashtags", payload: { value: tags } });
+      if (await send(list)) $("dlg").close();
+    };
+  };
+  openDlg("🚀 النشر منصة بعد منصة", "");
+  paint();
 };
 
 // ---------------------------------------------------------------- الإدارة
@@ -2920,9 +3066,16 @@ async function loadEdits() {
     edData.rows.map(r => { const diff = r.action === "حذف" ? -n2(r.old_total) : n2(r.new_total) - n2(r.old_total); return `<tr class="click" data-h="${r.id}">
       <td class="n">${esc(String(r.time).slice(5, 16))}</td><td class="n"><b>#${r.no}</b><div class="note" style="margin:0">${esc(r.day)}</div></td><td>${tag(r)}</td><td>${esc(r.user)}</td>
       <td class="n hm">${fmt(r.old_total)}</td><td class="n hm">${r.action === "حذف" ? "—" : fmt(r.new_total)}</td><td class="n">${diff ? money(diff, true) : "0.00"}</td>
-      <td class="wrap">${esc(r.changes)}</td></tr>`; }).join("") + "</table>"
+      <td class="wrap">${chgList(r.changes, 4)}</td></tr>`; }).join("") + "</table>"
     : '<div class="empty">لا توجد طلبات معدلة في هذه الفترة</div>';
   $("tblEdits").querySelectorAll("tr[data-h]").forEach(tr => tr.onclick = () => editDetail(edData.rows.find(x => x.id === Number(tr.dataset.h))));
+}
+// تفاصيل التعديل سطراً سطراً (إضافة/حذف/زيادة/إنقاص/تغيير بيانات) بألوان واضحة
+function chgList(txt, max) {
+  const parts = String(txt || "").split("  •  ").filter(Boolean);
+  const color = x => /^(➖|🗑|🔽)/.test(x) ? "var(--red)" : /^(➕|🔼)/.test(x) ? "var(--green)" : "var(--blue)";
+  const shown = max ? parts.slice(0, max) : parts;
+  return shown.map(x => `<div style="color:${color(x)};margin:1px 0">${esc(x)}</div>`).join("") + (max && parts.length > max ? `<div class="note" style="margin:0">+ ${parts.length - max} تغيير آخر…</div>` : "");
 }
 function editDetail(r) {
   if (!r) return;
@@ -2931,7 +3084,7 @@ function editDetail(r) {
       <b>العميل</b><span>${esc(r.customer || "—")}</span><b>الدفع</b><span>${esc(r.payment || "—")}</span>
       <b>الإجمالي</b><span>${fmt(r.old_total)} ← ${r.action === "حذف" ? "محذوف" : fmt(r.new_total)}</span>
       <b>الطلب الآن</b><span>${r.exists_now ? "موجود" : '<span class="tag red">محذوف</span>'}</span></div>
-    <p style="font-weight:800;margin:12px 0 4px">ما الذي تغير</p><div class="al-row">${esc(r.changes)}</div>
+    <p style="font-weight:800;margin:12px 0 4px">ما الذي تغير بالتفصيل</p><div class="al-row" style="display:block">${chgList(r.changes)}</div>
     ${r.before || r.after ? `<div class="ed-cmp"><div><b>الأصناف قبل</b><pre>${esc(r.before || "—")}</pre></div><div><b>الأصناف بعد</b><pre>${esc(r.after || (r.action === "حذف" ? "🗑 حُذف الطلب" : "—"))}</pre></div></div>` : ""}
     <div class="actions"><button class="btn ghost" id="edAll">🕵 كل تعديلات هذا الطلب</button></div>`);
   $("edAll").onclick = () => { $("dlg").close(); showOrderEdits(r.order_id, r.no); };
@@ -3034,7 +3187,7 @@ const WEB_PERMS = [
   ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
   ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"]];
 // الشاشة ← الصلاحيات التي تفتحها
-const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
+const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], track: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
   stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], log: ["*"] };
 let me = { role: "owner", perms: [] };
 const isOwner = () => me.role !== "staff";
