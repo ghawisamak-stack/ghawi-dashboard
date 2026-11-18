@@ -548,7 +548,7 @@
         <div class="toolbar">
           <input type="date" class="fld" id="rpFrom"> ← <input type="date" class="fld" id="rpTo">
           <select class="fld" id="rpStatus"><option value="">كل الطلبات</option><option value="مرسل">المرسلة</option><option value="مسودة">المسودات</option></select>
-          <input type="search" id="rpItem" placeholder="🔍 صنف محدد">
+          <input type="search" id="rpItem" list="rpItems" placeholder="🔍 اختر صنفاً أو اكتب اسمه"><datalist id="rpItems"></datalist>
           <button class="btn sm" id="rpRun">عرض</button>
           <button class="btn sm green" id="rpSent" title="الأصناف المرسلة فقط خلال الفترة">📤 المرسل فقط</button>
           <button class="chip on" id="rpSumBtn">📦 ملخص الأصناف</button><button class="chip" id="rpDetBtn">🧾 التفاصيل</button>
@@ -2883,6 +2883,19 @@ function renderPrReport() {
 }
 function rpChips() { $("rpSumBtn").classList.toggle("on", rpMode === "sum"); $("rpDetBtn").classList.toggle("on", rpMode === "det"); }
 $("rpRun").onclick = loadPrReport;
+// قائمة الأصناف للاختيار في التقرير
+let rpItemsLoaded = false;
+$("rpItem").onfocus = async () => {
+  if (rpItemsLoaded) return;
+  rpItemsLoaded = true;
+  try {
+    const rows = await all(() => sb.from("stock_snapshot").select("item_name").order("item_name"));
+    const names = new Set(rows.map(r => r.item_name).filter(Boolean));
+    if (rpData) rpData.summary.tables[0].rows.forEach(r => names.add(r[rpData.summary.tables[0].cols.indexOf("الصنف")]));
+    $("rpItems").innerHTML = [...names].sort((a, b) => a.localeCompare(b, "ar")).map(n => `<option value="${esc(n)}">`).join("");
+  } catch (e) { rpItemsLoaded = false; }
+};
+$("rpItem").onchange = loadPrReport;
 $("rpSent").onclick = () => { $("rpStatus").value = "مرسل"; rpMode = "sum"; rpChips(); loadPrReport(); };
 $("rpSumBtn").onclick = () => { rpMode = "sum"; rpChips(); renderPrReport(); };
 $("rpDetBtn").onclick = () => { rpMode = "det"; rpChips(); renderPrReport(); };
