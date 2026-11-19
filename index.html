@@ -2657,7 +2657,7 @@ async function sgAddVideo(file) {
 async function sgAddProducts() {
   const { data, error } = await sb.from("qr_menu").select("menu").eq("id", 1).maybeSingle();
   const menu = data && data.menu, prods = (menu && menu.products) || [];
-  if (error || !prods.length) { toast("قائمة الأصناف لم تُرفع بعد — افتح البرنامج مع الإنترنت دقيقتين (يرفعها تلقائياً) ثم أعد المحاولة"); return; }
+  if (error || !prods.length) { toast(window.GS_LOCAL ? "قائمة الأصناف لم تُرفع بعد — انتظر دقيقتين مع الإنترنت ثم أعد المحاولة" : "قائمة الأصناف غير ظاهرة — شغّل ملف SQL رقم 13 في Supabase (مرة واحدة)، وتأكد أن البرنامج يعمل مع الإنترنت"); return; }
   const cats = Object.fromEntries((menu.categories || []).map(c => [c.id, c.name]));
   const chosen = new Set();
   const priceOf = p => (Number(p.price) > 0 ? String(+Number(p.price).toFixed(2)) + (p.weighted ? " / كجم" : "") : "");
