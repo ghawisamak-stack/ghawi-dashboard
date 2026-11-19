@@ -1,0 +1,25 @@
+{
+  "id": "ghawi-screen",
+  "name": "شاشة العرض — غاوي سمك",
+  "short_name": "شاشة العرض",
+  "start_url": "screen.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "screen-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "screen-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
