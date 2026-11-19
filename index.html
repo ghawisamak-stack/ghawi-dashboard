@@ -159,6 +159,13 @@
   @media (max-width: 640px) { .ed-cmp { grid-template-columns: 1fr; } }
   .so-targets { display: flex; flex-wrap: wrap; gap: 6px 14px; } .form label.so-t, .so-t { font-weight: 600; display: inline-flex; gap: 6px; align-items: center; }
   textarea.fld { font-family: inherit; font-size: 1rem; }
+  .sg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; margin-bottom: 8px; }
+  .sg-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: var(--bg); }
+  .sg-card.on { border-color: rgba(39,174,96,.45); background: rgba(39,174,96,.09); } .sg-card.off { border-color: rgba(231,76,60,.4); background: rgba(231,76,60,.07); }
+  .sg-h { display: flex; justify-content: space-between; gap: 8px; align-items: center; } .sg-h span { font-size: .85rem; font-weight: 700; }
+  .sg-m { margin-top: 6px; font-weight: 700; color: var(--navy); font-size: .9rem; } .sg-i { color: var(--muted); font-size: .8rem; margin: 4px 0 8px; min-height: 1em; }
+  .sg-b { display: flex; gap: 6px; flex-wrap: wrap; } .sg-b .btn { padding: 6px 10px; font-size: .85rem; }
+  .sg-th { width: 120px; height: 68px; object-fit: cover; border-radius: 8px; background: #0b2340; color: #fff; display: flex; align-items: center; justify-content: center; text-align: center; font-size: .72rem; font-weight: 700; padding: 4px; box-sizing: border-box; overflow: hidden; }
   .wait { text-align: center; padding: 30px 10px; color: var(--muted); font-weight: 700; }
   .spin { display: inline-block; width: 18px; height: 18px; border: 3px solid var(--line); border-top-color: var(--navy); border-radius: 50%; animation: sp 1s linear infinite; vertical-align: middle; margin-inline-end: 8px; }
   @keyframes sp { to { transform: rotate(360deg); } }
@@ -214,6 +221,7 @@
     <button data-v="hr">👥 الموظفين والرواتب</button>
     <button data-v="inv">📋 الجرد والطلبات</button>
     <button data-v="social">🎯 المنصات</button>
+    <button data-v="screens">📺 الشاشات</button>
     <button data-v="admin">🛡 الإدارة</button>
     <button data-v="expense">💸 مصروف</button>
     <button data-v="wa">📲 واتساب</button>
@@ -412,6 +420,38 @@
     <div class="card"><h2>⭐ تقييمات العملاء</h2><div id="trRates"></div></div>
     <div class="card"><h2>🔳 طلبات الطاولات (QR)</h2><div id="trQr"></div>
       <p class="note">العميل يمسح رمز طاولته ويطلب بنفسه. الاعتماد قبل المطبخ (أو الإرسال المباشر) وعدد الطاولات من الإعدادات ← طلب الطاولة QR.</p></div>
+  </main></section>
+
+  <!-- ================= 📺 شاشات العرض ================= -->
+  <section class="view" id="v-screens"><main>
+    <div class="card">
+      <h2>📺 شاشات العرض في المطعم <span class="tag" id="sgSummary"></span></h2>
+      <div class="toolbar">
+        <label>عدد الشاشات: <input type="number" class="fld" id="sgCount" min="1" max="20" style="width:80px"></label>
+        <button class="btn sm" id="sgCountBtn">✔ تطبيق العدد</button>
+        <span style="flex:1"></span>
+        <input class="fld" id="sgCode" placeholder="رمز الربط (6 أرقام)" inputmode="numeric" maxlength="6" style="width:170px;letter-spacing:4px;text-align:center;font-weight:800">
+        <select class="fld" id="sgPairScreen"></select>
+        <button class="btn sm green" id="sgPair">🔗 ربط الشاشة</button>
+        <button class="btn sm ghost" id="sgReload">⟳</button>
+      </div>
+      <div id="sgScreens" class="sg-grid"></div>
+      <p class="note">افتح على التلفزيون (أو جهاز Android TV / كمبيوتر موصول بالشاشة) الرابط: <b id="sgPageUrl" dir="ltr"></b> — يظهر رمز من 6 أرقام، اكتبه هنا واختر رقم الشاشة ثم (ربط). الشاشة تتذكر الربط، والتغييرات تظهر عليها خلال 20 ثانية.</p>
+    </div>
+    <div class="card">
+      <h2>🖼 المحتوى (الصور والعروض والأسعار)</h2>
+      <div class="toolbar">
+        <label class="btn sm green" style="cursor:pointer">🖼 رفع صور<input type="file" id="sgImgs" accept="image/*" multiple hidden></label>
+        <label class="btn sm" style="cursor:pointer;background:#8e44ad" id="sgVidBtn">🎬 فيديو<input type="file" id="sgVid" accept="video/mp4,video/webm" hidden></label>
+        <button class="btn sm" style="background:#e67e22" id="sgProd">🍽 أصناف بأسعارها</button>
+        <button class="btn sm" id="sgText">📝 إعلان نصي</button>
+        <span style="flex:1"></span>
+        <select class="fld" id="sgFilter"><option value="">كل الشرائح</option></select>
+      </div>
+      <div id="sgProgress" class="note"></div>
+      <div id="sgSlides"></div>
+      <p class="note">• الصور تُصغَّر تلقائياً لمقاس التلفزيون قبل الرفع. • سعر الصنف واسمه يتحدثان على الشاشة تلقائياً عند تعديلهما في البرنامج. • 📌 تثبيت = تعرض الشاشة هذه الشريحة فقط (عرض عاجل) حتى إلغاء التثبيت. • حدد (وقت العرض) لعروض الفطور أو الغداء أو عروض نهاية الأسبوع.</p>
+    </div>
   </main></section>
 
   <!-- ================= مصروف ================= -->
@@ -782,7 +822,7 @@ async function start() {
   if (isOwner() && /^https:/.test(location.protocol + "") && !window.GS_LOCAL) {
     const dir = location.origin + location.pathname.replace(/[^/]*$/, ""), trackUrl = dir + "track.html";
     // رابطا صفحة التتبع وصفحة طلب الطاولة (QR) تُحفظ في البرنامج تلقائياً
-    try { if (localStorage.getItem("gs-track-url") !== trackUrl) { send([{ kind: "admin.setting", payload: { key: "TrackPageUrl", value: trackUrl } }, { kind: "admin.setting", payload: { key: "QrPageUrl", value: dir + "menu.html" } }]).then(ok => { if (ok) localStorage.setItem("gs-track-url", trackUrl); }); } } catch (e) {}
+    try { if (localStorage.getItem("gs-track-url2") !== trackUrl) { send([{ kind: "admin.setting", payload: { key: "TrackPageUrl", value: trackUrl } }, { kind: "admin.setting", payload: { key: "QrPageUrl", value: dir + "menu.html" } }, { kind: "admin.setting", payload: { key: "SignagePageUrl", value: dir + "screen.html" } }]).then(ok => { if (ok) localStorage.setItem("gs-track-url2", trackUrl); }); } } catch (e) {}
   }
 }
 
@@ -1102,6 +1142,7 @@ function showView(v) {
   if (v === "social") loadSocial();
   if (v === "admin") loadAdmin();
   if (v === "track") loadTrack();
+  if (v === "screens") loadScreensView();
   try { localStorage.setItem("gs-view", v); } catch (e) {}
 }
 
@@ -2422,6 +2463,385 @@ function renderWaIds() {
 }
 $("waSearch").oninput = renderWaIds;
 
+// =====================================================================
+//  📺 شاشات العرض: الشاشات (الحالة والربط والإعدادات) والمحتوى (صور / فيديو / أصناف / إعلانات)
+//  الجداول signage_screens / signage_slides / signage_pairs (ملف SQL رقم 12)
+// =====================================================================
+let sgScreens = [], sgSlides = [], sgTimer = null;
+const SG_DAYS = [["", "كل الأيام"], ["0,1,2,3,4", "الأحد إلى الخميس"], ["5,6", "الجمعة والسبت"], ["4,5", "الخميس والجمعة"], ["5", "الجمعة فقط"]];
+const SG_COLORS = [["#0b2340", "أزرق المطعم"], ["#c0392b", "أحمر عروض"], ["#1e8449", "أخضر"], ["#d35400", "برتقالي"], ["#6c3483", "بنفسجي"], ["#9a7d0a", "ذهبي غامق"], ["#111111", "أسود"]];
+const sgKind = k => ({ video: "🎬 فيديو", product: "🍽 صنف", text: "📝 إعلان" }[k] || "🖼 صورة");
+const sgOnline = s => s.last_seen && (Date.now() - new Date(s.last_seen)) < 75000;
+const sgTitle = s => s.name || ("شاشة " + s.screen_no);
+const sgPageUrl = () => location.origin + location.pathname.replace(/[^/]*$/, "") + "screen.html";
+function sgCount() { let n = 2; try { n = Number(localStorage.getItem("gs-sg-count") || 0) || 0; } catch (e) {} return n || Math.max(2, ...sgScreens.filter(s => s.active).map(s => s.screen_no), 0); }
+function sgToken() { const a = new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, "0")).join(""); }
+const sgMissing = e => /signage_|does not exist|PGRST205|404/.test(String(e && e.message || e));
+function sgErr(e) { return sgMissing(e) ? "جداول الشاشات غير موجودة — شغّل ملف SQL رقم 12 (12_screens.sql) في Supabase ← SQL Editor" : (e && e.message || String(e)); }
+
+async function loadScreens(quiet) {
+  $("sgPageUrl").textContent = window.GS_LOCAL ? "(رابط screen.html في موقع المدراء على GitHub)" : sgPageUrl();
+  if (!quiet) $("sgScreens").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  try {
+    const [a, b] = await Promise.all([sb.from("signage_screens").select("*").order("screen_no"), sb.from("signage_slides").select("*").order("sort").order("created_at")]);
+    if (a.error) throw a.error;
+    if (b.error) throw b.error;
+    sgScreens = a.data || []; sgSlides = b.data || [];
+  } catch (e) { $("sgScreens").innerHTML = `<div class="empty">⚠ ${esc(sgErr(e))}</div>`; $("sgSlides").innerHTML = ""; return; }
+  if (!sgScreens.length && !quiet) { await sgEnsure(2, true); return; }
+  if (!$("sgCount").value) $("sgCount").value = Math.max(1, sgScreens.filter(s => s.active).length || sgScreens.length);
+  renderScreens(); if (!quiet) renderSlides();
+  clearInterval(sgTimer);
+  sgTimer = setInterval(() => { if (view === "screens") loadScreens(true); else clearInterval(sgTimer); }, 15000);
+}
+
+// إنشاء الشاشات الناقصة حتى العدد المطلوب (وإيقاف الزائدة) + إبلاغ البرنامج بالعدد
+async function sgEnsure(n, silent) {
+  n = Math.max(1, Math.min(20, Number(n) || 1));
+  const have = new Set(sgScreens.map(s => s.screen_no)), rows = [];
+  for (let i = 1; i <= n; i++) if (!have.has(i)) rows.push({ screen_no: i, name: "شاشة " + i, token: sgToken(), active: true, settings: { interval: 8, transition: "fade", fit: "cover", logo: true, clock: false, brand: "مطعم غاوي سمك" } });
+  if (rows.length) { const { error } = await sb.from("signage_screens").insert(rows); if (error) { toast("⚠ " + sgErr(error)); return; } }
+  for (const s of sgScreens.filter(s => s.screen_no > n && s.active)) await sb.from("signage_screens").update({ active: false, updated_at: new Date().toISOString() }).eq("screen_no", s.screen_no);
+  for (const s of sgScreens.filter(s => s.screen_no <= n && !s.active && silent === "reactivate")) await sb.from("signage_screens").update({ active: true }).eq("screen_no", s.screen_no);
+  try { localStorage.setItem("gs-sg-count", n); } catch (e) {}
+  send([{ kind: "admin.setting", payload: { key: "SignageCount", value: String(n) } }]).catch(() => {});
+  if (!silent) toast(`✔ عدد الشاشات: ${n}`);
+  $("sgCount").value = n;
+  await loadScreens();
+}
+
+function renderScreens() {
+  const n = Number($("sgCount").value) || sgCount();
+  const list = sgScreens.filter(s => s.screen_no <= n);
+  const on = list.filter(sgOnline).length;
+  $("sgSummary").textContent = `${list.length} شاشة • متصلة الآن ${on}`;
+  $("sgPairScreen").innerHTML = list.map(s => `<option value="${s.screen_no}">${s.screen_no} — ${esc(sgTitle(s))}</option>`).join("");
+  $("sgFilter").innerHTML = `<option value="">كل الشرائح</option>` + list.map(s => `<option value="${s.screen_no}">${esc(sgTitle(s))}</option>`).join("");
+  $("sgScreens").innerHTML = list.map(s => {
+    const st = s.settings || {}, pin = st.pin ? sgSlides.find(x => x.id === st.pin) : null;
+    const seen = s.last_seen ? Math.round((Date.now() - new Date(s.last_seen)) / 60000) : null;
+    const status = !s.last_seen ? "⚪ لم تُربط بعد" : sgOnline(s) ? "🟢 متصلة" : `🔴 غير متصلة منذ ${seen < 60 ? seen + " د" : seen < 2880 ? Math.round(seen / 60) + " س" : Math.round(seen / 1440) + " يوم"}`;
+    const mode = !s.active ? "⏸ متوقفة (شاشة سوداء)" : pin ? "📌 مثبتة على: " + esc(pin.title || sgKind(pin.kind)) : "▶ تعرض الشرائح بالتسلسل";
+    return `<div class="sg-card ${sgOnline(s) ? "on" : s.last_seen ? "off" : ""}">
+      <div class="sg-h"><b>📺 ${esc(sgTitle(s))}</b><span>${status}</span></div>
+      <div class="sg-m">${mode}</div>
+      <div class="sg-i">${esc(s.last_info || "")}${st.on_from && st.on_to ? ` • تعمل ${esc(st.on_from)}–${esc(st.on_to)}` : ""}${st.rotate ? ` • مدارة ${st.rotate}°` : ""}</div>
+      <div class="sg-b">
+        <button class="btn sm ${s.active ? "amber" : "green"}" data-sga="toggle" data-n="${s.screen_no}">${s.active ? "⏸ إيقاف" : "▶ تشغيل"}</button>
+        ${pin ? `<button class="btn sm" data-sga="unpin" data-n="${s.screen_no}">📌 إلغاء التثبيت</button>` : ""}
+        <button class="btn sm ghost" data-sga="settings" data-n="${s.screen_no}">⚙ إعدادات</button>
+        <button class="btn sm ghost" data-sga="reload" data-n="${s.screen_no}" title="إعادة تحميل الصفحة على التلفزيون">🔄</button>
+        <button class="btn sm ghost" data-sga="link" data-n="${s.screen_no}" title="نسخ رابط مباشر للشاشة">🔗</button>
+        <button class="btn sm ghost" data-sga="unlink" data-n="${s.screen_no}" title="فك الربط (رمز سري جديد)">🔑</button>
+      </div></div>`;
+  }).join("") || '<div class="empty">لا توجد شاشات</div>';
+}
+
+function sgSchedule(x) {
+  const p = [];
+  if (x.start_date || x.end_date) p.push(`${x.start_date || "…"} ← ${x.end_date || "…"}`);
+  if (x.time_from && x.time_to) p.push(`${x.time_from}–${x.time_to}`);
+  if (x.days && x.days.length && x.days.length < 7) p.push((SG_DAYS.find(d => d[0] === x.days.slice().sort().join(",")) || ["", x.days.join("،")])[1]);
+  return p.join(" • ") || "دائماً";
+}
+const sgScreensText = x => !x.screens || !x.screens.length ? "كل الشاشات" : x.screens.map(n => esc(sgTitle(sgScreens.find(s => s.screen_no === n) || { screen_no: n }))).join("، ");
+
+function renderSlides() {
+  const f = Number($("sgFilter").value || 0);
+  const rows = sgSlides.filter(x => !f || !x.screens || !x.screens.length || x.screens.includes(f));
+  const pins = new Set(sgScreens.map(s => (s.settings || {}).pin).filter(Boolean));
+  $("sgSlides").innerHTML = rows.length ? `<div class="scroll" style="max-height:none"><table><tr><th>المعاينة</th><th>النوع</th><th>العنوان</th><th>السعر</th><th>الشاشات</th><th>المدة</th><th>وقت العرض</th><th>الحالة</th><th></th></tr>` +
+    rows.map(x => {
+      const thumb = x.kind === "text" ? `<div class="sg-th" style="background:${esc(x.bg || "#0b2340")}">${esc((x.title || "").slice(0, 28))}</div>`
+        : x.kind === "video" ? `<video class="sg-th" src="${esc(x.media_url)}" muted preload="metadata"></video>`
+        : x.media_url ? `<img class="sg-th" src="${esc(x.media_url)}" loading="lazy" alt="">` : `<div class="sg-th">${esc(x.title || "")}</div>`;
+      return `<tr style="${x.active ? "" : "opacity:.55"}${pins.has(x.id) ? ";background:#fff6d6" : ""}"><td>${thumb}</td><td>${sgKind(x.kind)}</td>
+        <td class="wrap"><b>${esc(x.title || "")}</b>${x.subtitle ? `<br><span class="note">${esc(x.subtitle)}</span>` : ""}</td>
+        <td>${esc(x.price || "")}</td><td>${sgScreensText(x)}</td><td>${x.duration ? x.duration + " ث" : "تلقائي"}</td><td>${esc(sgSchedule(x))}</td>
+        <td>${x.active ? '<span class="tag green">✔ مفعّلة</span>' : '<span class="tag">⏸ موقوفة</span>'}${pins.has(x.id) ? ' <span class="tag amber">📌</span>' : ""}</td>
+        <td style="white-space:nowrap"><button class="btn sm ghost" data-sgs="up" data-id="${x.id}" title="تقديم">⬆</button><button class="btn sm ghost" data-sgs="down" data-id="${x.id}" title="تأخير">⬇</button>
+        <button class="btn sm ghost" data-sgs="edit" data-id="${x.id}">✏</button><button class="btn sm ghost" data-sgs="toggle" data-id="${x.id}" title="إيقاف/تفعيل">⏯</button>
+        <button class="btn sm ghost" data-sgs="pin" data-id="${x.id}" title="تثبيت على شاشة (عرض عاجل)">📌</button><button class="btn sm ghost" data-sgs="del" data-id="${x.id}" title="حذف" style="color:var(--red)">🗑</button></td></tr>`;
+    }).join("") + "</table></div>" : '<div class="empty">لا يوجد محتوى بعد — ارفع صوراً أو أضف أصنافاً أو إعلاناً</div>';
+}
+
+async function sgUpdateScreen(n, fields) {
+  fields.updated_at = new Date().toISOString();
+  const { error } = await sb.from("signage_screens").update(fields).eq("screen_no", n);
+  if (error) { toast("⚠ " + sgErr(error)); return false; }
+  return true;
+}
+async function sgUpdateSlide(id, fields) {
+  fields.updated_at = new Date().toISOString();
+  const { error } = await sb.from("signage_slides").update(fields).eq("id", id);
+  if (error) { toast("⚠ " + sgErr(error)); return false; }
+  return true;
+}
+const sgNextSort = () => (sgSlides.reduce((m, x) => Math.max(m, x.sort || 0), 0) + 10);
+
+// ----- الرفع -----
+function sgResize(file, max = 1920) {
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+      const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(b => b ? res(b) : rej(new Error("تعذر تجهيز الصورة")), "image/jpeg", 0.86);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("صورة غير مدعومة: " + file.name)); };
+    img.src = url;
+  });
+}
+async function sgUpload(blob, ext, type) {
+  const d = new Date(), path = (type.startsWith("video") ? "video/" : "img/") + d.toISOString().slice(0, 10).replace(/-/g, "") + "_" + sgToken().slice(0, 12) + ext;
+  if (window.GS_LOCAL) {
+    // التابلت: الرفع عبر جهاز الكاشير
+    if (type.startsWith("video")) throw new Error("رفع الفيديو من موقع المدراء أو البرنامج (غير متاح في التابلت)");
+    const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(",")[1]); fr.readAsDataURL(blob); });
+    const j = await GS_LOCAL.api("/admin/api/upload", { name: path, type, data: b64 });
+    return { url: j.url, path };
+  }
+  const { error } = await sb.storage.from("signage").upload(path, blob, { contentType: type, cacheControl: "31536000", upsert: false });
+  if (error) throw new Error(/bucket|not found/i.test(error.message) ? "مخزن الصور غير موجود — شغّل ملف SQL رقم 12" : error.message);
+  return { url: `${SUPABASE_URL}/storage/v1/object/public/signage/${path}`, path };
+}
+function sgScreenSelect(id, val) {
+  return `<select class="fld" id="${id}"><option value="">كل الشاشات</option>${sgScreens.filter(s => s.screen_no <= (Number($("sgCount").value) || 20)).map(s => `<option value="${s.screen_no}" ${String(val) === String(s.screen_no) ? "selected" : ""}>${s.screen_no} — ${esc(sgTitle(s))}</option>`).join("")}</select>`;
+}
+const sgScreensOf = v => v ? [Number(v)] : [];
+
+function sgAskCommon(title, extra, onOk) {
+  openDlg(title, `<div class="form">${extra || ""}
+    <div><label>تعرض على</label>${sgScreenSelect("sgaScr", "")}</div>
+    <div><label>المدة (ثانية) — 0 = إعداد الشاشة</label><input type="number" class="fld" id="sgaDur" value="0" min="0" max="600"></div>
+    <div class="full"><button class="btn green full" id="sgaOk">✔ إضافة</button></div></div>`);
+  $("sgaOk").onclick = async () => { $("sgaOk").disabled = true; try { await onOk({ screens: sgScreensOf($("sgaScr").value), duration: Number($("sgaDur").value) || 0 }); } finally { $("dlg").close(); } };
+}
+
+async function sgAddImages(files) {
+  if (!files.length) return;
+  sgAskCommon(`🖼 ${files.length} صورة`, `<div class="full"><label>عنوان على الصورة (اختياري)</label><input class="fld" id="sgaTitle"></div>`, async o => {
+    const title = ($("sgaTitle") || {}).value || "";
+    let sort = sgNextSort(), done = 0;
+    for (const f of files) {
+      $("sgProgress").textContent = `⏳ رفع ${done + 1} من ${files.length}: ${f.name}`;
+      try {
+        const blob = await sgResize(f), up = await sgUpload(blob, ".jpg", "image/jpeg");
+        const { error } = await sb.from("signage_slides").insert({ kind: "image", media_url: up.url, media_path: up.path, title: title.trim(), screens: o.screens, duration: o.duration, sort });
+        if (error) throw error;
+        sort += 10; done++;
+      } catch (e) { toast("⚠ " + sgErr(e)); }
+    }
+    $("sgProgress").textContent = done ? `✔ أُضيفت ${done} صورة — تظهر على الشاشات خلال 20 ثانية` : "";
+    loadScreens();
+  });
+}
+
+async function sgAddVideo(file) {
+  if (!file) return;
+  if (file.size > 49 * 1024 * 1024) { toast("حجم الفيديو أكبر من 50 ميجا — صغّره ثم أعد المحاولة"); return; }
+  sgAskCommon("🎬 " + file.name, "", async o => {
+    $("sgProgress").textContent = `⏳ رفع الفيديو (${Math.round(file.size / 1048576)} ميجا)…`;
+    try {
+      const webm = /\.webm$/i.test(file.name), up = await sgUpload(file, webm ? ".webm" : ".mp4", webm ? "video/webm" : "video/mp4");
+      const { error } = await sb.from("signage_slides").insert({ kind: "video", media_url: up.url, media_path: up.path, title: file.name.replace(/\.[^.]+$/, ""), screens: o.screens, sort: sgNextSort() });
+      if (error) throw error;
+      $("sgProgress").textContent = "✔ أُضيف الفيديو";
+    } catch (e) { $("sgProgress").textContent = ""; toast("⚠ " + sgErr(e)); }
+    loadScreens();
+  });
+}
+
+async function sgAddProducts() {
+  const { data, error } = await sb.from("qr_menu").select("menu").eq("id", 1).maybeSingle();
+  const menu = data && data.menu, prods = (menu && menu.products) || [];
+  if (error || !prods.length) { toast("قائمة الأصناف لم تُرفع بعد — افتح البرنامج مع الإنترنت دقيقتين (يرفعها تلقائياً) ثم أعد المحاولة"); return; }
+  const cats = Object.fromEntries((menu.categories || []).map(c => [c.id, c.name]));
+  const chosen = new Set();
+  const priceOf = p => (Number(p.price) > 0 ? String(+Number(p.price).toFixed(2)) + (p.weighted ? " / كجم" : "") : "");
+  openDlg("🍽 اختر الأصناف للعرض", `<div class="toolbar"><input type="search" class="fld" id="sgpQ" placeholder="🔍 بحث…" style="flex:1"></div>
+    <div id="sgpList" style="max-height:52vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:6px"></div>
+    <div class="form" style="margin-top:10px"><div><label>تعرض على</label>${sgScreenSelect("sgaScr", "")}</div>
+    <div><label>المدة (ثانية) — 0 = إعداد الشاشة</label><input type="number" class="fld" id="sgaDur" value="0" min="0"></div>
+    <div class="full"><button class="btn green full" id="sgaOk">✔ إضافة المحدد</button></div></div>`);
+  const draw = () => {
+    const q = $("sgpQ").value.trim();
+    $("sgpList").innerHTML = prods.filter(p => !q || p.name.includes(q) || String(cats[p.cat] || "").includes(q)).map(p =>
+      `<label style="display:flex;gap:10px;align-items:center;padding:6px;border-bottom:1px solid var(--line);cursor:pointer"><input type="checkbox" data-pid="${p.id}" ${chosen.has(p.id) ? "checked" : ""}>
+       ${p.img ? `<img src="${esc(p.img)}" style="width:56px;height:38px;object-fit:cover;border-radius:6px">` : '<span style="width:56px;text-align:center">—</span>'}
+       <span style="flex:1"><b>${esc(p.name)}</b> <span class="note">${esc(cats[p.cat] || "")}</span></span><b>${esc(priceOf(p))} ر.س</b></label>`).join("") || '<div class="empty">لا نتائج</div>';
+  };
+  draw();
+  $("sgpQ").oninput = draw;
+  $("sgpList").onchange = e => { const id = Number(e.target.dataset.pid); if (e.target.checked) chosen.add(id); else chosen.delete(id); };
+  $("sgaOk").onclick = async () => {
+    if (!chosen.size) { toast("اختر صنفاً واحداً على الأقل"); return; }
+    const screens = sgScreensOf($("sgaScr").value), duration = Number($("sgaDur").value) || 0;
+    let sort = sgNextSort();
+    const rows = prods.filter(p => chosen.has(p.id)).map(p => ({ kind: "product", product_id: p.id, title: p.name, price: priceOf(p), media_url: p.img || null, screens, duration, sort: (sort += 10) }));
+    const { error } = await sb.from("signage_slides").insert(rows);
+    $("dlg").close();
+    if (error) { toast("⚠ " + sgErr(error)); return; }
+    toast(`✔ أُضيف ${rows.length} صنف — البرنامج يرفع صورها بجودة الشاشة خلال دقائق`);
+    loadScreens();
+  };
+}
+
+function sgAddText() {
+  openDlg("📝 إعلان نصي", `<div class="form">
+    <div class="full"><label>النص الرئيسي (كبير)</label><input class="fld" id="sgtT" placeholder="مثال: خصم 20% على كل الوجبات"></div>
+    <div class="full"><label>سطر تحته (اختياري)</label><input class="fld" id="sgtS" placeholder="كل يوم خميس من 1 ظهراً إلى 5 مساءً"></div>
+    <div><label>شارة صغيرة (اختياري)</label><input class="fld" id="sgtP" placeholder="عرض محدود / 49 ر.س"></div>
+    <div><label>لون الخلفية</label><select class="fld" id="sgtB">${SG_COLORS.map((c, i) => `<option value="${c[0]}" ${i === 1 ? "selected" : ""}>${c[1]}</option>`).join("")}</select></div>
+    <div><label>يعرض على</label>${sgScreenSelect("sgaScr", "")}</div>
+    <div><label>المدة (ثانية) — 0 = إعداد الشاشة</label><input type="number" class="fld" id="sgaDur" value="0" min="0"></div>
+    <div class="full"><button class="btn green full" id="sgaOk">✔ إضافة</button></div></div>`);
+  $("sgaOk").onclick = async () => {
+    const t = $("sgtT").value.trim();
+    if (!t) { toast("اكتب النص"); return; }
+    const { error } = await sb.from("signage_slides").insert({ kind: "text", title: t, subtitle: $("sgtS").value.trim(), price: $("sgtP").value.trim(), bg: $("sgtB").value, screens: sgScreensOf($("sgaScr").value), duration: Number($("sgaDur").value) || 0, sort: sgNextSort() });
+    $("dlg").close();
+    if (error) toast("⚠ " + sgErr(error)); else { toast("✔ أُضيف الإعلان"); loadScreens(); }
+  };
+}
+
+function sgEditSlide(x) {
+  const dKey = x.days && x.days.length ? x.days.slice().sort().join(",") : "";
+  openDlg("✏ تعديل الشريحة — " + sgKind(x.kind), `<div class="form">
+    <div class="full"><label>${x.kind === "text" ? "النص الرئيسي" : "العنوان (فارغ = بدون)"}</label><input class="fld" id="sgeT" value="${esc(x.title || "")}"></div>
+    <div class="full"><label>الوصف / السطر الثاني</label><input class="fld" id="sgeS" value="${esc(x.subtitle || "")}"></div>
+    ${x.kind === "product" || x.kind === "text" ? `<div><label>${x.kind === "product" ? "السعر (يتحدث تلقائياً من البرنامج)" : "الشارة الصغيرة"}</label><input class="fld" id="sgeP" value="${esc(x.price || "")}"></div>` : ""}
+    ${x.kind === "text" ? `<div><label>لون الخلفية</label><select class="fld" id="sgeB">${SG_COLORS.map(c => `<option value="${c[0]}" ${c[0] === x.bg ? "selected" : ""}>${c[1]}</option>`).join("")}</select></div>` : ""}
+    <div><label>تعرض على</label>${sgScreenSelect("sgeScr", x.screens && x.screens.length ? x.screens[0] : "")}</div>
+    ${x.kind !== "video" ? `<div><label>المدة (ثانية) — 0 = إعداد الشاشة</label><input type="number" class="fld" id="sgeD" value="${x.duration || 0}" min="0"></div>` : ""}
+    <div><label>يبدأ من تاريخ</label><input type="date" class="fld" id="sgeF" value="${esc(x.start_date || "")}"></div>
+    <div><label>ينتهي بتاريخ (يختفي بعده)</label><input type="date" class="fld" id="sgeE" value="${esc(x.end_date || "")}"></div>
+    <div><label>من الساعة</label><input type="time" class="fld" id="sgeTf" value="${esc(x.time_from || "")}"></div>
+    <div><label>إلى الساعة</label><input type="time" class="fld" id="sgeTt" value="${esc(x.time_to || "")}"></div>
+    <div class="full"><label>الأيام</label><select class="fld" id="sgeDays">${SG_DAYS.map(d => `<option value="${d[0]}" ${d[0] === dKey ? "selected" : ""}>${d[1]}</option>`).join("")}</select></div>
+    <div class="full"><button class="btn green full" id="sgeOk">💾 حفظ</button></div></div>`);
+  $("sgeOk").onclick = async () => {
+    const f = { title: $("sgeT").value.trim(), subtitle: $("sgeS").value.trim(), screens: sgScreensOf($("sgeScr").value),
+      start_date: $("sgeF").value || null, end_date: $("sgeE").value || null, time_from: $("sgeTf").value || null, time_to: $("sgeTt").value || null,
+      days: $("sgeDays").value ? $("sgeDays").value.split(",").map(Number) : null };
+    if ($("sgeP")) f.price = $("sgeP").value.trim();
+    if ($("sgeB")) f.bg = $("sgeB").value;
+    if ($("sgeD")) f.duration = Number($("sgeD").value) || 0;
+    if (await sgUpdateSlide(x.id, f)) { $("dlg").close(); toast("✔ تم الحفظ"); loadScreens(); }
+  };
+}
+
+function sgScreenSettings(s) {
+  const st = s.settings || {}, yes = (k, d) => (st[k] === undefined ? d : !!st[k]);
+  const sel = (id, opts, v) => `<select class="fld" id="${id}">${opts.map(o => `<option value="${o[0]}" ${String(o[0]) === String(v) ? "selected" : ""}>${o[1]}</option>`).join("")}</select>`;
+  openDlg("⚙ إعدادات " + sgTitle(s), `<div class="form">
+    <div><label>اسم الشاشة</label><input class="fld" id="sssName" value="${esc(s.name || "")}"></div>
+    <div><label>مدة كل صورة (ثانية)</label><input type="number" class="fld" id="sssInt" min="3" max="120" value="${st.interval || 8}"></div>
+    <div><label>الانتقال بين الصور</label>${sel("sssTr", [["fade", "تلاشي ناعم"], ["slide", "انزلاق"], ["zoom", "تكبير"], ["none", "بدون"]], st.transition || "fade")}</div>
+    <div><label>عرض الصور</label>${sel("sssFit", [["cover", "ملء الشاشة (قص الأطراف)"], ["contain", "الصورة كاملة (بخلفية ضبابية)"]], st.fit || "cover")}</div>
+    <div><label>اتجاه الشاشة</label>${sel("sssRot", [[0, "عادي (بالعرض)"], [90, "مدارة 90° (معلقة بالطول)"], [270, "مدارة 270°"], [180, "مقلوبة 180°"]], st.rotate || 0)}</div>
+    <div><label>النص بجوار الشعار</label><input class="fld" id="sssBrand" value="${esc(st.brand || "مطعم غاوي سمك")}"></div>
+    <div class="full" style="display:flex;gap:18px;flex-wrap:wrap">
+      <label><input type="checkbox" id="sssLogo" ${yes("logo", true) ? "checked" : ""}> شعار واسم المطعم</label>
+      <label><input type="checkbox" id="sssClock" ${yes("clock", false) ? "checked" : ""}> الساعة</label>
+      <label><input type="checkbox" id="sssKb" ${yes("kenburns", true) ? "checked" : ""}> حركة تقريب بطيئة للصور</label></div>
+    <div class="full"><label>شريط إعلان متحرك أسفل الشاشة (فارغ = بدون)</label><input class="fld" id="sssTick" value="${esc(st.ticker || "")}"></div>
+    <div><label>تعمل من الساعة (فارغ = دائماً)</label><input type="time" class="fld" id="sssFrom" value="${esc(st.on_from || "")}"></div>
+    <div><label>إلى الساعة (خارجها شاشة سوداء)</label><input type="time" class="fld" id="sssTo" value="${esc(st.on_to || "")}"></div>
+    <div class="full"><button class="btn green full" id="sssOk">💾 حفظ — يظهر على الشاشة خلال 20 ثانية</button></div></div>`);
+  $("sssOk").onclick = async () => {
+    const ns = Object.assign({}, st, { interval: Math.max(3, Number($("sssInt").value) || 8), transition: $("sssTr").value, fit: $("sssFit").value, rotate: Number($("sssRot").value),
+      brand: $("sssBrand").value.trim(), logo: $("sssLogo").checked, clock: $("sssClock").checked, kenburns: $("sssKb").checked, ticker: $("sssTick").value.trim(),
+      on_from: $("sssFrom").value || "", on_to: $("sssTo").value || "" });
+    if (await sgUpdateScreen(s.screen_no, { name: $("sssName").value.trim() || ("شاشة " + s.screen_no), settings: ns })) { $("dlg").close(); toast("✔ تم الحفظ"); loadScreens(true); }
+  };
+}
+
+async function sgScreenAction(a, n) {
+  const s = sgScreens.find(x => x.screen_no === n);
+  if (!s) return;
+  if (a === "toggle") { if (await sgUpdateScreen(n, { active: !s.active })) toast(s.active ? "⏸ أُوقفت الشاشة" : "▶ تعمل الشاشة"); }
+  else if (a === "unpin") { const st = Object.assign({}, s.settings || {}); delete st.pin; if (await sgUpdateScreen(n, { settings: st })) toast("✔ أُلغي التثبيت"); }
+  else if (a === "settings") { sgScreenSettings(s); return; }
+  else if (a === "reload") { if (await sgUpdateScreen(n, { rev: (s.rev || 1) + 1 })) toast("🔄 ستُعاد تحميل الشاشة خلال 20 ثانية"); }
+  else if (a === "link") {
+    const link = sgPageUrl() + `?s=${n}&k=${s.token}`;
+    try { await navigator.clipboard.writeText(link); toast("✔ نُسخ الرابط المباشر للشاشة"); } catch (e) { prompt("انسخ الرابط:", link); }
+    return;
+  }
+  else if (a === "unlink") {
+    if (!confirm(`فك ربط ${sgTitle(s)}؟ يتغير رمزها السري وتعود أجهزتها لشاشة رمز الربط.`)) return;
+    if (await sgUpdateScreen(n, { token: sgToken(), rev: (s.rev || 1) + 1 })) toast("✔ تم فك الربط — اربط الجهاز بالرمز الجديد");
+  }
+  loadScreens(true);
+}
+
+async function sgSlideAction(a, id) {
+  const x = sgSlides.find(s => s.id === id);
+  if (!x) return;
+  if (a === "edit") { sgEditSlide(x); return; }
+  if (a === "toggle") await sgUpdateSlide(id, { active: !x.active });
+  else if (a === "del") {
+    if (!confirm("حذف الشريحة نهائياً؟")) return;
+    const { error } = await sb.from("signage_slides").delete().eq("id", id);
+    if (error) { toast("⚠ " + sgErr(error)); return; }
+    if (x.media_path && sb.storage) sb.storage.from("signage").remove([x.media_path]).catch(() => {});
+    for (const s of sgScreens.filter(s => (s.settings || {}).pin === id)) { const st = Object.assign({}, s.settings); delete st.pin; await sgUpdateScreen(s.screen_no, { settings: st }); }
+  }
+  else if (a === "up" || a === "down") {
+    const list = sgSlides.slice(), i = list.indexOf(x), j = i + (a === "up" ? -1 : 1);
+    if (j < 0 || j >= list.length) return;
+    list.splice(i, 1); list.splice(j, 0, x);
+    for (let k = 0; k < list.length; k++) if (list[k].sort !== (k + 1) * 10) { list[k].sort = (k + 1) * 10; await sgUpdateSlide(list[k].id, { sort: list[k].sort }); }
+  }
+  else if (a === "pin") {
+    const n = Number($("sgCount").value) || 20;
+    openDlg("📌 تثبيت على شاشة", `<p class="note">تعرض الشاشة هذه الشريحة فقط (عرض عاجل) حتى تضغط (إلغاء التثبيت).</p><div class="form">
+      <div class="full"><label>الشاشة</label><select class="fld" id="sgpinS">${sgScreens.filter(s => s.screen_no <= n).map(s => `<option value="${s.screen_no}">${s.screen_no} — ${esc(sgTitle(s))}</option>`).join("")}<option value="all">كل الشاشات</option></select></div>
+      <div class="full"><button class="btn green full" id="sgpinOk">📌 تثبيت</button></div></div>`);
+    $("sgpinOk").onclick = async () => {
+      const v = $("sgpinS").value, targets = v === "all" ? sgScreens.filter(s => s.screen_no <= n) : sgScreens.filter(s => String(s.screen_no) === v);
+      for (const s of targets) await sgUpdateScreen(s.screen_no, { settings: Object.assign({}, s.settings || {}, { pin: id }) });
+      $("dlg").close(); toast("📌 تم التثبيت"); loadScreens(true).then(renderSlides);
+    };
+    return;
+  }
+  loadScreens();
+}
+
+async function sgPair() {
+  const code = $("sgCode").value.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g, "");
+  if (code.length !== 6) { toast("الرمز 6 أرقام كما يظهر على الشاشة"); return; }
+  const n = Number($("sgPairScreen").value);
+  const since = new Date(Date.now() - 30 * 60000).toISOString();
+  const { data, error } = await sb.from("signage_pairs").update({ screen_no: n }).eq("code", code).gte("created_at", since).select();
+  if (error) { toast("⚠ " + sgErr(error)); return; }
+  if (!data || !data.length) { toast("الرمز غير صحيح أو انتهت صلاحيته (30 دقيقة) — حدّث صفحة الشاشة واكتب الرمز الجديد"); return; }
+  $("sgCode").value = "";
+  toast(`✔ تم ربط الشاشة ${n} — تبدأ العرض خلال ثوانٍ`);
+  setTimeout(() => loadScreens(true), 6000);
+}
+
+function initScreensView() {
+  if (initScreensView.done) return;
+  initScreensView.done = true;
+  $("sgCountBtn").onclick = () => sgEnsure($("sgCount").value, "reactivate");
+  $("sgPair").onclick = sgPair;
+  $("sgCode").onkeydown = e => { if (e.key === "Enter") sgPair(); };
+  $("sgReload").onclick = () => loadScreens();
+  $("sgFilter").onchange = renderSlides;
+  $("sgImgs").onchange = e => { const f = Array.from(e.target.files || []); e.target.value = ""; sgAddImages(f); };
+  $("sgVid").onchange = e => { const f = (e.target.files || [])[0]; e.target.value = ""; sgAddVideo(f); };
+  if (window.GS_LOCAL) $("sgVidBtn").classList.add("hidden");
+  $("sgProd").onclick = sgAddProducts;
+  $("sgText").onclick = sgAddText;
+  $("sgScreens").onclick = e => { const b = e.target.closest("[data-sga]"); if (b) sgScreenAction(b.dataset.sga, Number(b.dataset.n)); };
+  $("sgSlides").onclick = e => { const b = e.target.closest("[data-sgs]"); if (b) sgSlideAction(b.dataset.sgs, b.dataset.id); };
+}
+function loadScreensView() { initScreensView(); loadScreens(); }
+
 function openDlg(title, html) { $("dlgTitle").textContent = title; $("dlgBody").innerHTML = html; $("dlg").showModal(); }
 
 // =====================================================================
@@ -3210,10 +3630,10 @@ function userPermForm(u) {
 const WEB_PERMS = [
   ["web.sales", "📊 المبيعات والتقارير والطلبات"], ["web.purchase", "🛒 طلبات الشراء"], ["web.count", "⚖ الجرد"], ["web.stock", "📦 المخزون والمواد الخام"],
   ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
-  ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"]];
+  ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"], ["web.screens", "📺 شاشات العرض"]];
 // الشاشة ← الصلاحيات التي تفتحها
 const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], track: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
-  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], log: ["*"] };
+  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], log: ["*"] };
 let me = { role: "owner", perms: [] };
 const isOwner = () => me.role !== "staff";
 const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
