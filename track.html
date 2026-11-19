@@ -135,14 +135,14 @@ const T = {
         eta: m => `⏳ جاهز خلال ~${m} دقيقة تقريباً`, etaLate: "⏳ اللمسات الأخيرة… لحظات ويكون جاهزاً", details: "🧾 تفاصيل الطلب", pay: "💰 الدفع", total: "إجمالي الطلب", paidOk: "💚 تم الدفع — شكراً لك",
         paidNo: "💳 الدفع عند الاستلام (نقداً أو شبكة)", wa: "💬 تواصل واتساب", call: "📞 اتصل بنا", live: "تتحدث هذه الصفحة تلقائياً", rate: "⭐ كيف كانت تجربتك معنا؟", note: "ملاحظتك تهمنا (اختياري)",
         send: "إرسال التقييم", thanks: "شكراً لتقييمك 🙏", thanksSub: "رأيك يساعدنا نكون أفضل كل يوم", thanksGood: "سعداء إن الطلب عجبك! شاركنا رأيك على Google 💙", google: "⭐ قيّمنا على Google",
-        notFound: "لم نجد هذا الطلب — تأكد من الرابط أو تواصل معنا", bad: "رابط التتبع غير صحيح", offline: "تعذر تحميل حالة الطلب — تحقق من الإنترنت", types: { "توصيل": "توصيل", "محلي": "داخل المطعم", x: "استلام من الفرع" }, ask: "استفسار عن طلبي رقم #" },
+        cancelled: "تم إلغاء هذا الطلب", cancelledSub: "نعتذر منك — أُلغي الطلب من المطعم. للاستفسار تواصل معنا عبر الأزرار أدناه.", reason: "السبب", notFound: "لم نجد هذا الطلب — تأكد من الرابط أو تواصل معنا", bad: "رابط التتبع غير صحيح", offline: "تعذر تحميل حالة الطلب — تحقق من الإنترنت", types: { "توصيل": "توصيل", "محلي": "داخل المطعم", x: "استلام من الفرع" }, ask: "استفسار عن طلبي رقم #" },
   en: { tag: "Seafood Restaurant", hello: n => `Hello, ${n} 👋`, helloAnon: "Hello 👋", head: "Here is your order and where it is now", order: "Order", journey: "🧭 Your order journey", here: "Your order is here now",
         s: ["Order received", "Preparing", "On the fire", { "توصيل": "On the way to you", "محلي": "Ready at your table", x: "Ready for pickup" }, "Delivered"],
         d: ["We received your order", "Our chef is preparing fresh ingredients", "Your order is being cooked with care", { "توصيل": "The driver is on the way", "محلي": "Enjoy your meal 😋", x: "Waiting for you at the branch 🐟" }, "Enjoy! We hope you love it"],
         eta: m => `⏳ Ready in about ${m} min`, etaLate: "⏳ Final touches… almost ready", details: "🧾 Order details", pay: "💰 Payment", total: "Order total", paidOk: "💚 Fully paid — thank you",
         paidNo: "💳 Pay on pickup (cash or card)", wa: "💬 Chat on WhatsApp", call: "📞 Call us", live: "This page updates automatically", rate: "⭐ How was your experience?", note: "Your feedback matters (optional)",
         send: "Send rating", thanks: "Thanks for your rating 🙏", thanksSub: "Your feedback helps us improve every day", thanksGood: "Glad you liked it! Share it on Google 💙", google: "⭐ Rate us on Google",
-        notFound: "Order not found — check the link or contact us", bad: "Invalid tracking link", offline: "Couldn't load your order — check your connection", types: { "توصيل": "Delivery", "محلي": "Dine-in", x: "Pickup" }, ask: "Question about my order #" }
+        cancelled: "This order was cancelled", cancelledSub: "Sorry — the restaurant cancelled this order. Contact us below for any questions.", reason: "Reason", notFound: "Order not found — check the link or contact us", bad: "Invalid tracking link", offline: "Couldn't load your order — check your connection", types: { "توصيل": "Delivery", "محلي": "Dine-in", x: "Pickup" }, ask: "Question about my order #" }
 };
 const L = () => T[lang];
 const pick = (v, type) => typeof v === "object" ? (v[type] || v.x) : v;
@@ -182,6 +182,20 @@ function render() {
   $("orderPill").textContent = `${t.order} #${data.daily_no} • ${pick(t.types, type)}`;
   $("orderPill").classList.remove("hidden");
   const ic = i => typeof icons[i] === "function" ? icons[i](type) : icons[i];
+  if (data.cancelled_at) {
+    // أُلغي الطلب (مرتجع من المطعم): لا مراحل ولا تقييم
+    const why = String(data.cancel_reason || "").replace(/^[^\p{L}\d]+/u, "").trim();
+    $("nowCard").innerHTML = `<div class="now"><div class="ring" style="--p:100;filter:grayscale(1)"><div><div><div class="ic">↩</div></div></div></div>
+      <div><h2 style="color:#c0392b">${esc(t.cancelled)}</h2><p>${esc(t.cancelledSub)}</p>${why ? `<span class="eta">${esc(t.reason)}: ${esc(why)}</span>` : ""}<div class="d" style="margin-top:6px;opacity:.75">${esc(fmtTime(data.cancelled_at))}</div></div></div>`;
+    $("journey").classList.add("hidden"); $("details").classList.add("hidden"); $("payment").classList.add("hidden");
+    $("rateCard").classList.add("hidden"); $("thanksCard").classList.add("hidden");
+    const wa0 = String(data.wa_phone || "").replace(/\D/g, ""), tel0 = String(data.store_phone || "").replace(/[^\d+]/g, "");
+    $("waBtn").textContent = t.wa; $("waBtn").href = wa0 ? `https://wa.me/${wa0}?text=${encodeURIComponent(t.ask + data.daily_no)}` : "#"; $("waBtn").classList.toggle("hidden", !wa0);
+    $("callBtn").textContent = t.call; $("callBtn").href = tel0 ? "tel:" + tel0 : "#"; $("callBtn").classList.toggle("hidden", !tel0);
+    $("addr").innerHTML = `<b>${esc(data.store_name || "")}</b>`; $("live").textContent = "";
+    $("contact").classList.remove("hidden");
+    return;
+  }
   const left = Math.max(1, Math.round(m * 3.5 - mins));
   $("nowCard").innerHTML = `<div class="now"><div class="ring" style="--p:${pct}"><div><div><div class="ic">${ic(stage)}</div><small>${pct}%</small></div></div></div>
     <div><h2>${esc(pick(t.s[stage], type))}</h2><p>${esc(pick(t.d[stage], type))}</p>${stage < 3 ? `<span class="eta">${mins < m * 3.5 ? t.eta(left) : t.etaLate}</span>` : ""}</div></div>`;

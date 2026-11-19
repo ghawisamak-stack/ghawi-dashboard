@@ -81,7 +81,7 @@
   td.n { direction: ltr; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .scroll { max-height: 360px; overflow: auto; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; background: var(--bg); }
-  .tag.red { background: #f5e4e2; color: #9e4840; } .tag.green { background: #e2f0e8; color: #3a7656; } .tag.amber { background: #f6eddb; color: #85622a; }
+  .tag.blue { background: #e1ecf8; color: #2c5d8f; } .tag.red { background: #f5e4e2; color: #9e4840; } .tag.green { background: #e2f0e8; color: #3a7656; } .tag.amber { background: #f6eddb; color: #85622a; }
   tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
   .empty { color: var(--muted); text-align: center; padding: 18px 0; }
   .loading { position: fixed; bottom: 16px; left: 16px; background: var(--navy); color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: 700; }
@@ -547,7 +547,7 @@
       <div class="ipane hidden" id="i-rep">
         <div class="toolbar">
           <input type="date" class="fld" id="rpFrom"> ← <input type="date" class="fld" id="rpTo">
-          <select class="fld" id="rpStatus"><option value="">كل الطلبات</option><option value="مرسل">المرسلة</option><option value="مسودة">المسودات</option></select>
+          <select class="fld" id="rpStatus"><option value="">كل الطلبات</option><option value="مرسل">المرسلة</option><option value="مسودة">غير المرسلة (مسودة / محفوظ)</option></select>
           <input type="search" id="rpItem" list="rpItems" placeholder="🔍 اختر صنفاً أو اكتب اسمه"><datalist id="rpItems"></datalist>
           <button class="btn sm" id="rpRun">عرض</button>
           <button class="btn sm green" id="rpSent" title="الأصناف المرسلة فقط خلال الفترة">📤 المرسل فقط</button>
@@ -816,7 +816,7 @@ async function loadTrack() {
     <div class="kpi"><div class="l">أسرع / أبطأ</div><div class="v">${prep.length ? Math.min(...prep) + " / " + Math.max(...prep) + " د" : "—"}</div></div>`;
   // الجارية الآن
   const now = Date.now();
-  const live = rows.filter(r => !r.delivered_at && now - new Date(r.created_at) < 12 * 3600000);
+  const live = rows.filter(r => !r.delivered_at && !r.cancelled_at && now - new Date(r.created_at) < 12 * 3600000);
   const stageOf = r => r.ready_at ? 3 : Math.min(2, Math.floor((now - new Date(r.created_at)) / 60000 / (r.stage_minutes || 10)));
   const ST = ["📝 استلمنا الطلب", "🔪 جاري التحضير", "🔥 على النار"];
   const fin = t => t === "توصيل" ? "🛵 في الطريق" : t === "محلي" ? "🍽 على الطاولة" : "✅ جاهز للاستلام";
@@ -831,7 +831,7 @@ async function loadTrack() {
   // كل الطلبات
   $("trTable").innerHTML = rows.length ? `<table><tr><th>اليوم</th><th>الطلب</th><th>النوع</th><th>وقت الطلب</th><th>جاهز</th><th>تسليم</th><th>التجهيز</th><th>الانتظار</th><th>الإجمالي</th><th>⭐</th></tr>` +
     rows.map(r => { const p = trMin(r.created_at, r.ready_at); return `<tr><td class="n">${esc(r.business_date)}</td><td><b>#${r.daily_no}</b></td><td>${esc(r.order_type)}</td>
-      <td class="n">${trTime(r.created_at)}</td><td class="n">${trTime(r.ready_at)}</td><td class="n">${trTime(r.delivered_at)}</td>
+      <td class="n">${trTime(r.created_at)}</td><td class="n">${trTime(r.ready_at)}</td><td class="n">${r.cancelled_at ? '<span class="tag red">↩ ملغي</span>' : trTime(r.delivered_at)}</td>
       <td class="n" style="${p > m * 4 ? "color:var(--red);font-weight:800" : ""}">${p ?? "—"}${p != null ? " د" : ""}</td><td class="n">${trMin(r.ready_at, r.delivered_at) ?? "—"}</td><td class="n">${trMin(r.created_at, r.delivered_at) ?? "—"}</td>
       <td>${r.rating ? "⭐".repeat(r.rating) : ""}</td></tr>`; }).join("") + "</table>"
     : '<div class="empty">لا توجد طلبات في هذه الفترة</div>';
@@ -2767,11 +2767,20 @@ function renderCountHist() {
     : '<div class="empty">لا توجد عمليات جرد محفوظة</div>';
   $("tblIh").querySelectorAll("tr[data-c]").forEach(tr => tr.onclick = () => openReport("count.detail", { id: Number(tr.dataset.c) }, {}, "تفاصيل الجرد"));
 }
+// حالة طلب الشراء: مسودة / محفوظ / مرسل (لمن) / تم الاستلام
+function prTag(x) {
+  const st = x.status || "مسودة";
+  if (st === "مرسل") return `<span class="tag green">✔ مرسل${x.sent_to ? " — " + esc(x.sent_to) : ""}</span>`;
+  if (st === "مستلم") return '<span class="tag blue">📦 تم الاستلام</span>';
+  if (st === "محفوظ") return '<span class="tag">💾 محفوظ</span>';
+  return '<span class="tag amber">✎ مسودة</span>';
+}
+
 function renderPr() {
   const r = prData ? prData.requests : [];
   $("tblPr").innerHTML = r.length ? `<table><tr><th>رقم</th><th>التاريخ</th><th>المورد</th><th>الأصناف</th><th>الحالة</th><th class="hm">بواسطة</th></tr>` +
     r.map(x => `<tr class="click" data-r="${x.id}"><td class="n">${x.id}</td><td class="n">${esc(x.day)}</td><td>${esc(x.supplier || "—")}</td><td class="n">${x.lines}</td>
-      <td>${x.status === "مرسل" ? '<span class="tag green">✔ مرسل</span>' : '<span class="tag amber">✎ مسودة</span>'}</td><td class="hm">${esc(x.user)}</td></tr>`).join("") + "</table>"
+      <td>${prTag(x)}</td><td class="hm">${esc(x.user)}</td></tr>`).join("") + "</table>"
     : '<div class="empty">لا توجد طلبات شراء</div>';
   $("tblPr").querySelectorAll("tr[data-r]").forEach(tr => tr.onclick = () => prForm(prData.requests.find(x => x.id === Number(tr.dataset.r))));
 }
@@ -2792,7 +2801,7 @@ async function prForm(r, preset) {
     <div class="full"><div class="scroll" id="prLines"></div></div>
     <div class="full"><label>ملاحظات</label><input class="fld" id="prNote" value="${esc(r ? r.note : "")}"></div></div>
     <div class="actions"><button class="btn green" id="prSave">💾 حفظ</button><button class="btn" id="prWa">📲 إرسال واتساب</button><button class="btn ghost" id="prPrint">🖨 طباعة / PDF</button>
-      ${r ? `<button class="btn amber" id="prSent">${r.status === "مرسل" ? "✎ إرجاع لمسودة" : "✔ تمييز كمرسل"}</button><button class="btn red" id="prDel">🗑 حذف</button>` : ""}</div>
+      ${r ? `<select class="fld" id="prStatus" style="max-width:220px" title="حالة الطلب">${[["محفوظ", "💾 محفوظ"], ["مرسل", "✔ مرسل"], ["مستلم", "📦 تم الاستلام"], ["مسودة", "✎ مسودة"]].map(([v, t]) => `<option value="${v}" ${(r.status || "مسودة") === v ? "selected" : ""}>${t}</option>`).join("")}</select><button class="btn red" id="prDel">🗑 حذف</button>` : ""}</div>
     <datalist id="dlMats">${mats.map(m => `<option value="${esc(m.name)}">${esc(m.category)}</option>`).join("")}</datalist>`);
   // مجموع الكمية لكل وحدة: "12 كجم + 3 كرتون"
   const qtySum = ls => { const m = {}; ls.forEach(l => { const u = (l.unit || "").trim(); m[u] = (m[u] || 0) + n2(l.qty); }); return Object.entries(m).map(([u, q]) => fmtQ(q) + (u ? " " + u : "")).join(" + "); };
@@ -2837,13 +2846,16 @@ async function prForm(r, preset) {
     else phone = (prData && prData.manager_phone) || "";
     phone = String(phone).replace(/\D/g, "").replace(/^0/, "966");
     window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(text()), "_blank");
-    if (r && r.status !== "مرسل") send({ kind: "pr.status", payload: { id: r.id, status: "مرسل" } });
+    if (r && r.status !== "مرسل") send({ kind: "pr.status", payload: { id: r.id, status: "مرسل", sent_to: sup && sup.phone ? sup.name : "مسئول المشتريات" } });
   };
   $("prPrint").onclick = () => printReport(repFromRows("طلب شراء" + (r ? " رقم " + r.id : ""), $("prDay").value + (sup => sup ? " • " + sup.name : "")(suppliers.find(s => s.supplier_id === Number($("prSup").value))),
     ["م", "القسم", "الصنف", "الكمية", "الوحدة"],
     groups().filter(g => g.ls.length).flatMap(g => [...g.ls.map((l, i) => [i + 1, g.c, l.name, fmtQ(l.qty), l.unit]), ["", g.c, `مجموع ${g.c || "القسم"} (${g.ls.length} صنف)`, qtySum(g.ls), ""]])
       .concat([["", "", `✅ إجمالي الأصناف: ${groups().reduce((a, g) => a + g.ls.length, 0)}`, "", ""]]), []));
-  if ($("prSent")) $("prSent").onclick = async () => { if (await send({ kind: "pr.status", payload: { id: r.id, status: r.status === "مرسل" ? "مسودة" : "مرسل" } })) $("dlg").close(); };
+  if ($("prStatus")) $("prStatus").onchange = async () => {
+    const st = $("prStatus").value, sup = suppliers.find(s => s.supplier_id === Number($("prSup").value));
+    if (await send({ kind: "pr.status", payload: { id: r.id, status: st, sent_to: st === "مرسل" ? (sup ? sup.name : "مسئول المشتريات") : "" } })) $("dlg").close();
+  };
   if ($("prDel")) $("prDel").onclick = async () => { if (confirm(`حذف طلب الشراء رقم ${r.id}؟`) && await send({ kind: "pr.delete", payload: { id: r.id } })) $("dlg").close(); };
 }
 
