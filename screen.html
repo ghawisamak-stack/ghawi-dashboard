@@ -30,7 +30,9 @@
   .fill { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; }
   .media { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
   .fit-contain .media { object-fit: contain; }
-  .blurbg { position: absolute; left: -5%; top: -5%; width: 110%; height: 110%; background-size: cover; background-position: center; filter: blur(38px) brightness(.55); }
+  .blurbg { position: absolute; left: -12%; top: -12%; width: 124%; height: 124%; background-size: cover; background-position: center; filter: blur(26px) brightness(.95) saturate(1.35); }
+  .blurbg::after { content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.35) 100%); }
+  .fit-contain .media.sharp { filter: drop-shadow(0 0 3vmin rgba(0,0,0,.55)); }
   .kb { animation: kb 14s ease-out forwards; }
   @keyframes kb { from { transform: scale(1); } to { transform: scale(1.07); } }
 
@@ -256,7 +258,7 @@ function render(s, el, done) {
   var h = "";
   if (s.kind === "image") {
     h = (fit ? '<div class="blurbg" style="background-image:url(\'' + esc(s.url) + '\')"></div>' : "") +
-        '<img class="media' + (fit || settings.kenburns === false ? "" : " kb") + '" alt="">' +
+        '<img class="media' + (fit ? " sharp" : "") + (fit || settings.kenburns === false ? "" : " kb") + '" alt="">' +
         (s.title ? '<div class="fill prod"><div class="shade"></div><div class="info"><div><h2>' + esc(s.title) + '</h2>' + (s.subtitle ? '<p>' + esc(s.subtitle) + '</p>' : "") + '</div></div></div>' : "");
   } else if (s.kind === "video") {
     h = '<video class="media" muted playsinline preload="auto"></video>';
@@ -274,7 +276,15 @@ function render(s, el, done) {
   var img = el.querySelector("img.media"), vid = el.querySelector("video");
   if (img) {
     var ok = false;
-    img.onload = function () { ok = true; done(true); };
+    img.onload = function () {
+      ok = true;
+      if (fit && img.naturalWidth) {
+        var rot = $("rot"), sw = rot.clientWidth || innerWidth, sh = rot.clientHeight || innerHeight;
+        var ir = img.naturalWidth / img.naturalHeight, sr = sw / sh;
+        if (Math.abs(ir - sr) / sr < 0.15) { img.style.objectFit = "cover"; var bb = el.querySelector(".blurbg"); if (bb) bb.style.display = "none"; }
+      }
+      done(true);
+    };
     img.onerror = function () { done(false); };
     img.src = s.url;
     setTimeout(function () { if (!ok) done(img.complete && img.naturalWidth > 0); }, 15000);
