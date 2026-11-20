@@ -2586,9 +2586,9 @@ function sgResize(file, max = 1920) {
     img.onload = () => {
       const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-      const g = c.getContext("2d"); g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+      const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.fillStyle = "#000"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
-      c.toBlob(b => b ? res(b) : rej(new Error("تعذر تجهيز الصورة")), "image/jpeg", 0.86);
+      c.toBlob(b => b ? res(b) : rej(new Error("تعذر تجهيز الصورة")), "image/jpeg", 0.93);
     };
     img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("صورة غير مدعومة: " + file.name)); };
     img.src = url;
@@ -2720,6 +2720,7 @@ function sgEditSlide(x) {
     <div><label>ينتهي بتاريخ (يختفي بعده)</label><input type="date" class="fld" id="sgeE" value="${esc(x.end_date || "")}"></div>
     <div><label>من الساعة</label><input type="time" class="fld" id="sgeTf" value="${esc(x.time_from || "")}"></div>
     <div><label>إلى الساعة</label><input type="time" class="fld" id="sgeTt" value="${esc(x.time_to || "")}"></div>
+    ${x.kind === "image" || x.kind === "product" ? `<div class="full"><label>🖼 تغيير الصورة (اختياري — الأفضل 1920×1080 من فوتوشوب)</label><input type="file" accept="image/*" class="fld" id="sgeImg"></div>` : ""}
     <div class="full"><label>الأيام</label><select class="fld" id="sgeDays">${SG_DAYS.map(d => `<option value="${d[0]}" ${d[0] === dKey ? "selected" : ""}>${d[1]}</option>`).join("")}</select></div>
     <div class="full"><button class="btn green full" id="sgeOk">💾 حفظ</button></div></div>`);
   $("sgeOk").onclick = async () => {
@@ -2729,6 +2730,15 @@ function sgEditSlide(x) {
     if ($("sgeP")) f.price = $("sgeP").value.trim();
     if ($("sgeB")) f.bg = $("sgeB").value;
     if ($("sgeD")) f.duration = Number($("sgeD").value) || 0;
+    const file = $("sgeImg") && $("sgeImg").files && $("sgeImg").files[0];
+    if (file) {
+      $("sgeOk").disabled = true; $("sgeOk").textContent = "⏳ رفع الصورة…";
+      try {
+        const up = await sgUpload(await sgResize(file), ".jpg", "image/jpeg");
+        f.media_url = up.url; f.media_path = up.path;
+        if (x.media_path && sb.storage) sb.storage.from("signage").remove([x.media_path]).catch(() => {});
+      } catch (e) { toast("⚠ " + sgErr(e)); $("sgeOk").disabled = false; $("sgeOk").textContent = "💾 حفظ"; return; }
+    }
     if (await sgUpdateSlide(x.id, f)) { $("dlg").close(); toast("✔ تم الحفظ"); loadScreens(); }
   };
 }

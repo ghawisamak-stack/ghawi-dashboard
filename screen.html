@@ -31,6 +31,9 @@
   .media { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; }
   .fit-contain .media { object-fit: contain; }
   .blurbg { position: absolute; left: -12%; top: -12%; width: 124%; height: 124%; background-size: cover; background-position: center; filter: blur(26px) brightness(.95) saturate(1.35); }
+  /* الخلفية المضبّبة بالرسم المصغّر (تعمل على كل متصفحات التلفزيونات حتى بدون دعم الفلاتر) */
+  .blurcv { position: absolute; left: -3%; top: -3%; width: 106%; height: 106%; filter: blur(10px) saturate(1.3); }
+  .blurshade { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,.05) 35%, rgba(0,0,0,.4) 100%); }
   .blurbg::after { content: ""; position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: radial-gradient(ellipse at center, rgba(0,0,0,0) 40%, rgba(0,0,0,.35) 100%); }
   .fit-contain .media.sharp { filter: drop-shadow(0 0 3vmin rgba(0,0,0,.55)); }
   .kb { animation: kb 14s ease-out forwards; }
@@ -43,6 +46,12 @@
   .prod p { margin: 1.2vh 0 0; font-size: 3.4vmin; opacity: .85; font-weight: 500; }
   .price { flex: none; margin-right: 3vw; background: linear-gradient(135deg, #f7c548, #f08a24); color: #1b1305; border-radius: 3vmin; padding: 1.6vmin 3.4vmin; font-size: 7.5vmin; font-weight: 800; box-shadow: 0 1.5vmin 5vmin rgba(240,138,36,.35); white-space: nowrap; }
   .price small { font-size: .45em; font-weight: 700; margin-right: .3em; }
+  /* صورة صنف صغيرة (مثل صور المنيو): بطاقة أنيقة بحجمها المناسب بدل تمديدها فتصبح ضبابية */
+  .prod.small .shade { display: none; }
+  .prod.small img.media { border-radius: 3vmin; box-shadow: 0 3vmin 8vmin rgba(0,0,0,.55); border: .5vmin solid rgba(255,255,255,.85); animation: none; }
+  .prod.small .info { left: auto; right: 5vw; bottom: auto; top: 50%; transform: translateY(-50%); flex-direction: column; align-items: flex-start; justify-content: center; }
+  .prod.small h2 { font-size: 8.5vmin; }
+  .prod.small .price { margin: 4vh 0 0; }
   .prod.noimg { background: radial-gradient(circle at 70% 20%, #1f8fd6 0%, #0b2340 55%, #050d18 100%); }
 
   /* شريحة نص (إعلان) */
@@ -281,7 +290,48 @@ function render(s, el, done) {
       if (fit && img.naturalWidth) {
         var rot = $("rot"), sw = rot.clientWidth || innerWidth, sh = rot.clientHeight || innerHeight;
         var ir = img.naturalWidth / img.naturalHeight, sr = sw / sh;
-        if (Math.abs(ir - sr) / sr < 0.15) { img.style.objectFit = "cover"; var bb = el.querySelector(".blurbg"); if (bb) bb.style.display = "none"; }
+        var bb = el.querySelector(".blurbg");
+        if (Math.abs(ir - sr) / sr < 0.15) { img.style.objectFit = "cover"; if (bb) bb.style.display = "none"; }
+        else {
+          // تعبئة الأطراف: نسخة مصغّرة جداً من الصورة تُكبَّر على كامل الشاشة فتظهر مضبّبة بألوانها
+          try {
+            var cv = document.createElement("canvas");
+            cv.width = 48; cv.height = Math.max(8, Math.round(48 * sh / sw));
+            var cx = cv.getContext("2d"), k = Math.max(cv.width / img.naturalWidth, cv.height / img.naturalHeight);
+            var dw = img.naturalWidth * k, dh = img.naturalHeight * k;
+            cx.drawImage(img, (cv.width - dw) / 2, (cv.height - dh) / 2, dw, dh);
+            cv.className = "blurcv";
+            var shade = document.createElement("div"); shade.className = "blurshade";
+            el.insertBefore(shade, el.firstChild);
+            el.insertBefore(cv, el.firstChild);
+            if (bb) bb.style.display = "none";
+          } catch (e) { }
+        }
+      }
+      // صنف بصورة صغيرة: بطاقة على اليسار + الاسم والسعر على اليمين + خلفية مضبّبة من نفس الصورة
+      var pr = el.querySelector(".prod");
+      if (pr && img.naturalWidth) {
+        var R = $("rot"), W = R.clientWidth || innerWidth, H = R.clientHeight || innerHeight, dpr = window.devicePixelRatio || 1;
+        var nw = img.naturalWidth, nh = img.naturalHeight;
+        if (nw < W * dpr * 0.7) {
+          pr.classList.add("small");
+          var bw = Math.min(Math.max(nw * 1.6 / dpr, W * 0.34), W * 0.46), bh = bw * nh / nw;
+          if (bh > H * 0.72) { bh = H * 0.72; bw = bh * nw / nh; }
+          img.className = "media";
+          img.style.cssText = "left:" + Math.round(W * 0.06) + "px;top:" + Math.round((H - bh) / 2) + "px;width:" + Math.round(bw) + "px;height:" + Math.round(bh) + "px;object-fit:cover";
+          var info = pr.querySelector(".info");
+          if (info) info.style.width = Math.round(W - bw - W * 0.17) + "px";
+          try {
+            var cv2 = document.createElement("canvas");
+            cv2.width = 48; cv2.height = Math.max(8, Math.round(48 * H / W));
+            var c2 = cv2.getContext("2d"), k2 = Math.max(cv2.width / nw, cv2.height / nh);
+            c2.drawImage(img, (cv2.width - nw * k2) / 2, (cv2.height - nh * k2) / 2, nw * k2, nh * k2);
+            cv2.className = "blurcv";
+            var sh2 = document.createElement("div"); sh2.className = "blurshade"; sh2.style.background = "linear-gradient(to left, rgba(4,14,28,.75), rgba(4,14,28,.35))";
+            pr.insertBefore(sh2, pr.firstChild);
+            pr.insertBefore(cv2, pr.firstChild);
+          } catch (e) { pr.style.background = "radial-gradient(circle at 70% 20%, #1f8fd6 0%, #0b2340 55%, #050d18 100%)"; }
+        }
       }
       done(true);
     };
