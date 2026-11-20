@@ -80,6 +80,7 @@
   td { padding: 7px 4px; border-bottom: 1px solid var(--line); }
   td.n { direction: ltr; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .scroll { max-height: 360px; overflow: auto; }
+  .tag:empty { display: none; }
   .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: .78rem; font-weight: 700; background: var(--bg); }
   .tag.blue { background: #e1ecf8; color: #2c5d8f; } .tag.red { background: #f5e4e2; color: #9e4840; } .tag.green { background: #e2f0e8; color: #3a7656; } .tag.amber { background: #f6eddb; color: #85622a; }
   tr.click { cursor: pointer; } tr.click:hover td { background: var(--bg); }
@@ -210,7 +211,9 @@
 
   <nav class="tabs" id="tabs">
     <button data-v="reports" class="on">📊 اللوحة</button>
+    <button data-v="total">🧮 الإجمالي العام</button>
     <button data-v="center">📑 مركز التقارير</button>
+    <button data-v="apex">🏪 مبيعات Apex</button>
     <button data-v="track">⏱ التجهيز</button>
     <button data-v="products">🍽 الأصناف والأسعار</button>
     <button data-v="offers">🎁 العروض والكوبونات</button>
@@ -453,6 +456,110 @@
       <p class="note">• الصور تُصغَّر تلقائياً لمقاس التلفزيون قبل الرفع. • سعر الصنف واسمه يتحدثان على الشاشة تلقائياً عند تعديلهما في البرنامج. • 📌 تثبيت = تعرض الشاشة هذه الشريحة فقط (عرض عاجل) حتى إلغاء التثبيت. • حدد (وقت العرض) لعروض الفطور أو الغداء أو عروض نهاية الأسبوع.</p>
     </div>
   </main></section>
+
+  <!-- ================= الإجمالي العام (غاوي سمك + Apex) ================= -->
+  <section class="view" id="v-total">
+  <div class="bar" id="ttPeriods">
+    <button class="chip on" data-p="today">اليوم</button>
+    <button class="chip" data-p="yesterday">أمس</button>
+    <button class="chip" data-p="week">آخر 7 أيام</button>
+    <button class="chip" data-p="month">هذا الشهر</button>
+    <button class="chip" data-p="lastmonth">الشهر الماضي</button>
+    <button class="chip" data-p="custom">فترة / يوم</button>
+    <span id="ttCustom" class="hidden"><input type="date" id="ttFrom"> ← <input type="date" id="ttTo"></span>
+    <span style="flex:1"></span>
+    <span class="tag" id="ttNote"></span>
+    <button class="btn sm ghost" id="ttExport">📥 تصدير</button>
+    <button class="btn sm ghost" id="ttReload">⟳</button>
+  </div>
+  <main>
+    <div class="kpis" id="ttKpis"></div>
+    <div class="grid">
+      <div class="card"><h2 id="ttTimeTitle">المبيعات حسب اليوم</h2><div class="chart"><canvas id="ttChDays"></canvas></div></div>
+      <div class="card"><h2>نصيب كل برنامج</h2><div class="chart"><canvas id="ttChShare"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>المقارنة بين البرنامجين</h2><div id="ttCompare"></div></div>
+      <div class="card"><h2>طرق الدفع (الإجمالي)</h2><div class="chart"><canvas id="ttChPay"></canvas></div><div id="ttPay" style="margin-top:10px"></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>ساعات الذروة (البرنامجين)</h2><div class="chart"><canvas id="ttChHours"></canvas></div></div>
+      <div class="card"><h2>نوع الطلب وشركات التوصيل</h2><div class="scroll" id="ttTypes"></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>الأصناف (البرنامجين) <span class="tag" id="ttItemsCount"></span></h2>
+        <div class="toolbar"><input type="search" class="fld" id="ttItemQ" placeholder="🔍 بحث عن صنف" style="flex:1"></div>
+        <div class="scroll" id="ttItems"></div></div>
+      <div class="card"><h2>المجموعات (البرنامجين)</h2><div class="scroll" id="ttCats"></div></div>
+    </div>
+    <div class="grid">
+      <div class="card" style="grid-column:1/-1"><h2>الأيام</h2><div class="scroll" id="ttDays" style="max-height:480px"></div></div>
+    </div>
+    <p class="note">• «غاوي سمك» = برنامج الكاشير الجديد، «Apex» = البرنامج القديم. • يوم غاوي سمك يبدأ الساعة 4 فجراً، ويوم Apex حسب تاريخ الفاتورة في Apex. • الأصناف تُجمع بالاسم — لو الاسم مختلف بين البرنامجين يظهر سطرين. • المبالغ شاملة الضريبة.</p>
+  </main>
+  </section>
+
+  <!-- ================= مبيعات Apex (البرنامج القديم في المطعم) ================= -->
+  <section class="view" id="v-apex">
+  <div class="bar" id="apPeriods">
+    <button class="chip on" data-p="today">اليوم</button>
+    <button class="chip" data-p="yesterday">أمس</button>
+    <button class="chip" data-p="week">آخر 7 أيام</button>
+    <button class="chip" data-p="month">هذا الشهر</button>
+    <button class="chip" data-p="lastmonth">الشهر الماضي</button>
+    <button class="chip" data-p="custom">فترة / يوم</button>
+    <span id="apCustom" class="hidden"><input type="date" id="apFrom"> ← <input type="date" id="apTo"></span>
+    <span style="flex:1"></span>
+    <span class="tag" id="apStatus">…</span>
+    <button class="btn sm ghost" id="apExport" title="تصدير Excel / CSV">📥 تصدير</button>
+    <button class="btn sm ghost" id="apReload">⟳</button>
+  </div>
+  <main>
+    <div class="card hidden" id="apLink">
+      <h2>🔗 ربط جهاز Apex</h2>
+      <div class="toolbar">
+        <input class="fld" id="apCode" placeholder="رمز الربط (6 أرقام)" inputmode="numeric" maxlength="7" style="width:190px;letter-spacing:4px;text-align:center;font-weight:800">
+        <button class="btn sm green" id="apPair">🔗 ربط</button>
+        <span style="flex:1"></span>
+        <button class="btn sm red hidden" id="apUnlink">⛔ فك الربط</button>
+      </div>
+      <p class="note" id="apLinkNote">على جهاز الكاشير الذي عليه برنامج Apex شغّل (1- ربط وتشغيل) من أداة الربط، يظهر رمز من 6 أرقام — اكتبه هنا واضغط (ربط). الأداة تقرأ من Apex فقط ولا تعدّل أي شيء، وترسل المبيعات كل دقيقتين.</p>
+    </div>
+
+    <div class="kpis" id="apKpis"></div>
+
+    <div class="grid">
+      <div class="card"><h2 id="apTimeTitle">المبيعات حسب الساعة</h2><div class="chart"><canvas id="apChTime"></canvas></div></div>
+      <div class="card"><h2>طرق الدفع</h2><div class="chart"><canvas id="apChPay"></canvas></div><div id="apPayTbl" style="margin-top:10px"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>الأصناف <span class="tag" id="apItemsCount"></span></h2>
+        <div class="toolbar"><input type="search" class="fld" id="apItemQ" placeholder="🔍 بحث عن صنف" style="flex:1"><select class="fld" id="apItemCat"><option value="">كل المجموعات</option></select></div>
+        <div class="scroll" id="apItems"></div></div>
+      <div class="card"><h2>المجموعات</h2><div class="scroll" id="apCats"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>نوع الطلب وشركات التوصيل</h2><div class="scroll" id="apChan"></div></div>
+      <div class="card"><h2>الكاشير</h2><div class="scroll" id="apCash"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card" style="grid-column:1/-1"><h2 id="apListTitle">الفواتير <span class="tag" id="apInvCount"></span></h2>
+        <div class="toolbar" id="apInvBar"><input type="search" class="fld" id="apInvQ" placeholder="🔍 رقم الفاتورة أو رقم الطلب أو الصنف" style="flex:1">
+          <select class="fld" id="apInvCh"><option value="">كل الأنواع</option></select><select class="fld" id="apInvPay"><option value="">كل طرق الدفع</option></select></div>
+        <div class="scroll" id="apInv" style="max-height:480px"></div></div>
+    </div>
+
+    <div class="grid">
+      <div class="card"><h2>↩ المرتجعات <span class="tag red" id="apRetCount"></span></h2><div class="scroll" id="apRet"></div></div>
+      <div class="card"><h2>🗑 الفواتير المحذوفة <span class="tag red" id="apDelCount"></span></h2><div class="scroll" id="apDel"></div></div>
+      <div class="card"><h2>🛒 المشتريات <span class="tag" id="apPurCount"></span></h2><div class="scroll" id="apPur"></div></div>
+    </div>
+    <p class="note">• البيانات من برنامج Apex على جهاز الكاشير — تُرسل تلقائياً كل دقيقتين (للقراءة فقط). • المبالغ شاملة الضريبة. • «آجل» = طلبات شركات التوصيل (تُحصَّل من الشركة).</p>
+  </main>
+  </section>
 
   <!-- ================= مصروف ================= -->
   <section class="view" id="v-expense"><main>
@@ -1143,6 +1250,8 @@ function showView(v) {
   if (v === "admin") loadAdmin();
   if (v === "track") loadTrack();
   if (v === "screens") loadScreensView();
+  if (v === "apex") loadApex();
+  if (v === "total") loadTotal();
   try { localStorage.setItem("gs-view", v); } catch (e) {}
 }
 
@@ -3637,13 +3746,494 @@ function userPermForm(u) {
 
 
 // ---------------------------------------------------------------- مستخدمو الموقع وصلاحيات الشاشات
+// =====================================================================
+//  🏪 مبيعات Apex — البرنامج القديم في المطعم (ملف SQL رقم 14)
+//  أداة على جهاز الكاشير تقرأ قاعدة Apex (قراءة فقط) وترسل ملخص كل يوم إلى apex_daily
+// =====================================================================
+let apPeriod = "today", apRows = [], apStatusInfo = null, apTimer = null, apLast = null, apInited = false;
+const apMissing = e => e && (e.code === "42P01" || e.code === "PGRST205" || e.code === "42883" || e.code === "PGRST202" || /apex_/.test(e.message || "") && /exist|find/.test(e.message || ""));
+const apErr = e => apMissing(e) ? "جداول Apex غير موجودة — شغّل ملف SQL رقم 14 (14_apex.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
+const apSum = o => Object.values(o || {}).reduce((a, v) => a + Number(Array.isArray(v) ? v[1] : v || 0), 0);
+const apAdd = (o, k, v) => { o[k] = (o[k] || 0) + Number(v || 0); };
+const apAdd2 = (o, k, v) => { const x = o[k] || (o[k] = [0, 0]); x[0] += Number(v[0] || 0); x[1] += Number(v[1] || 0); };
+const apPct = (v, t) => t ? (100 * v / t).toFixed(1) + "%" : "—";
+const apPayColor = n => /نقد|كاش/.test(n) ? "#3d8160" : /شبك|مدى|بطاق/.test(n) ? "#467ca8" : /آجل/.test(n) ? "#e67e22" : /طيار|توصيل/.test(n) ? "#8e44ad" : "#9aa5ad";
+const fmtQ3 = n => Number(n || 0).toLocaleString("en-US", { maximumFractionDigits: 3 });
+
+// احتياط: بعض نسخ Windows PowerShell ترسل المصفوفة بشكل {"value":[...],"Count":n}
+function apFix(x) {
+  if (Array.isArray(x)) return x.map(apFix);
+  if (x && typeof x === "object") {
+    const k = Object.keys(x);
+    if (k.length === 2 && Array.isArray(x.value) && "Count" in x) return x.value.map(apFix);
+    const o = {}; k.forEach(n => o[n] = apFix(x[n])); return o;
+  }
+  return x;
+}
+function apRange() {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const d = n => { const x = new Date(t); x.setDate(x.getDate() + n); return iso(x); };
+  switch (apPeriod) {
+    case "yesterday": return [d(-1), d(-1)];
+    case "week": return [d(-6), d(0)];
+    case "month": return [iso(new Date(t.getFullYear(), t.getMonth(), 1)), d(0)];
+    case "lastmonth": return [iso(new Date(t.getFullYear(), t.getMonth() - 1, 1)), iso(new Date(t.getFullYear(), t.getMonth(), 0))];
+    case "custom": { const a = $("apFrom").value || d(0), b = $("apTo").value || a; return a <= b ? [a, b] : [b, a]; }
+    default: return [d(0), d(0)];
+  }
+}
+
+function initApexView() {
+  if (apInited) return; apInited = true;
+  document.querySelectorAll("#apPeriods .chip").forEach(b => b.onclick = () => {
+    apPeriod = b.dataset.p;
+    document.querySelectorAll("#apPeriods .chip").forEach(x => x.classList.toggle("on", x === b));
+    $("apCustom").classList.toggle("hidden", apPeriod !== "custom");
+    if (apPeriod === "custom" && !$("apFrom").value) { $("apFrom").value = $("apTo").value = iso(new Date()); }
+    loadApex();
+  });
+  $("apFrom").onchange = $("apTo").onchange = () => loadApex();
+  $("apReload").onclick = () => loadApex();
+  $("apExport").onclick = apExport;
+  $("apPair").onclick = apPair;
+  $("apCode").onkeydown = e => { if (e.key === "Enter") apPair(); };
+  $("apUnlink").onclick = apUnlink;
+  $("apStatus").onclick = () => { if (isOwner()) $("apLink").classList.toggle("hidden"); };
+  ["apItemQ", "apItemCat"].forEach(id => $(id).oninput = () => apRenderItems());
+  ["apInvQ", "apInvCh", "apInvPay"].forEach(id => $(id).oninput = () => apRenderList());
+}
+
+async function loadApex(silent) {
+  initApexView();
+  clearInterval(apTimer);
+  apTimer = setInterval(() => { if (view === "apex") loadApex(true); else clearInterval(apTimer); }, 60000);
+  const [a, b] = apRange();
+  const single = a === b;
+  try {
+    const st = sb.rpc("apex_status");
+    const q = single ? sb.from("apex_daily").select("day,summary,data,updated_at").eq("day", a)
+                     : sb.from("apex_daily").select("day,summary,updated_at").gte("day", a).lte("day", b).order("day");
+    const [s, r] = await Promise.all([st, q]);
+    if (r.error) throw r.error;
+    if (s.error) throw s.error;
+    apStatusInfo = s.data || {};
+    apRows = (r.data || []).map(apFix);
+  } catch (e) {
+    $("apStatus").textContent = "⚠ " + apErr(e); $("apStatus").className = "tag red";
+    if (!silent) toast("⚠ " + apErr(e), 7000);
+    return;
+  }
+  apRenderStatus();
+  apLast = apAggregate(a, b, single);
+  apRender();
+}
+
+function apRenderStatus() {
+  const s = apStatusInfo || {}, el = $("apStatus");
+  const owner = isOwner();
+  if (!s.linked) {
+    el.textContent = "⚪ جهاز Apex غير مربوط"; el.className = "tag amber";
+    $("apLink").classList.toggle("hidden", !owner);
+    $("apUnlink").classList.add("hidden");
+    if (!owner) $("apLinkNote").textContent = "";
+    return;
+  }
+  $("apUnlink").classList.toggle("hidden", !owner);
+  if (!s.last_seen) { el.textContent = "🟡 مربوط — في انتظار أول إرسال"; el.className = "tag amber"; return; }
+  const mins = Math.max(0, Math.round((new Date(s.now || Date.now()) - new Date(s.last_seen)) / 60000));
+  const ago = mins < 1 ? "الآن" : mins < 60 ? `منذ ${mins} د` : mins < 1440 ? `منذ ${Math.floor(mins / 60)} س` : `منذ ${Math.floor(mins / 1440)} يوم`;
+  el.textContent = (mins <= 15 ? "🟢 متصل" : "🔴 متوقف") + " • آخر إرسال " + ago;
+  el.className = "tag " + (mins <= 15 ? "green" : "red");
+  el.title = (s.last_info || "") + (s.first_day ? `\nالبيانات من ${s.first_day} إلى ${s.last_day} (${s.days} يوم)` : "") + (owner ? "\nاضغط لإدارة الربط" : "");
+}
+
+function apAggregate(a, b, single) {
+  const A = { a, b, single, sales: 0, vat: 0, disc: 0, count: 0, ret: 0, retCount: 0, pur: 0, purCount: 0, del: 0, delCount: 0,
+    pay: {}, chan: {}, cash: {}, cats: {}, items: {}, hours: new Array(24).fill(0), days: [], data: null, updated: null, first: "", last: "" };
+  apRows.forEach(r => {
+    const s = r.summary || {};
+    ["sales", "vat", "disc", "count", "ret", "retCount", "pur", "purCount", "del", "delCount"].forEach(k => A[k] += Number(s[k] || 0));
+    Object.entries(s.pay || {}).forEach(([k, v]) => apAdd(A.pay, k, v));
+    Object.entries(s.chan || {}).forEach(([k, v]) => apAdd2(A.chan, k, v));
+    Object.entries(s.cash || {}).forEach(([k, v]) => apAdd2(A.cash, k, v));
+    Object.entries(s.cats || {}).forEach(([k, v]) => apAdd(A.cats, k, v));
+    (s.items || []).forEach(([n, u, q, v, c]) => { const k = n + "|" + u, x = A.items[k] || (A.items[k] = [n, u, 0, 0, c]); x[2] += Number(q || 0); x[3] += Number(v || 0); });
+    (s.hours || []).forEach((v, i) => A.hours[i] += Number(v || 0));
+    A.days.push({ day: r.day, sales: Number(s.sales || 0), count: Number(s.count || 0), ret: Number(s.ret || 0), pay: s.pay || {}, pur: Number(s.pur || 0) });
+    if (!A.updated || r.updated_at > A.updated) A.updated = r.updated_at;
+    if (single) { A.data = r.data || {}; A.first = s.first || ""; A.last = s.last || ""; }
+  });
+  A.net = A.sales - A.ret;
+  A.items = Object.values(A.items).sort((x, y) => y[3] - x[3]);
+  return A;
+}
+
+function apRender() {
+  const A = apLast; if (!A) return;
+  const credit = Object.entries(A.pay).filter(([k]) => /آجل/.test(k)).reduce((s, [, v]) => s + v, 0);
+  const cash = Object.entries(A.pay).filter(([k]) => /نقد/.test(k)).reduce((s, [, v]) => s + v, 0);
+  const card = Object.entries(A.pay).filter(([k]) => /شبك|مدى/.test(k)).reduce((s, [, v]) => s + v, 0);
+  const k = [
+    ["💰 المبيعات (شامل الضريبة)", fmt(A.sales), "main"],
+    ["🧾 عدد الفواتير", A.count],
+    ["متوسط الفاتورة", fmt(A.count ? A.sales / A.count : 0)],
+    ["💵 نقدي", fmt(cash)], ["💳 شبكة", fmt(card)], ["🛵 آجل (شركات التوصيل)", fmt(credit)],
+    ["↩ المرتجعات" + (A.retCount ? ` (${A.retCount})` : ""), fmt(A.ret)],
+    ["✅ الصافي بعد المرتجع", fmt(A.net)],
+    ["🏛 الضريبة", fmt(A.vat)], ["المبيعات بدون ضريبة", fmt(A.sales - A.vat)],
+    ["🏷 الخصومات", fmt(A.disc)], ["🛒 المشتريات", fmt(A.pur)]];
+  if (A.delCount) k.push(["🗑 فواتير محذوفة", `${A.delCount} • ${fmt(A.del)}`]);
+  if (A.single && A.first) k.push(["⏰ أول / آخر فاتورة", `${A.first.slice(0, 5)} / ${A.last.slice(0, 5)}`]);
+  $("apKpis").innerHTML = k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("") +
+    (!apRows.length ? `<div class="kpi" style="grid-column:1/-1"><div class="l">لا توجد بيانات لهذه الفترة</div><div class="v" style="font-size:.95rem;direction:rtl">${apStatusInfo && apStatusInfo.linked ? "لم تصل مبيعات من جهاز Apex لهذه الأيام بعد" : "اربط جهاز Apex أولاً (أداة الربط على جهاز الكاشير)"}</div></div>` : "");
+
+  // الرسم: الساعات ليوم واحد، والأيام لفترة
+  if (A.single) {
+    $("apTimeTitle").textContent = "المبيعات حسب الساعة";
+    const hs = A.hours.map((v, i) => [i, v]).filter(([, v]) => v > 0);
+    const lo = hs.length ? Math.min(...hs.map(x => x[0])) : 10, hi = hs.length ? Math.max(...hs.map(x => x[0])) : 23;
+    const idx = []; for (let i = lo; i <= hi; i++) idx.push(i);
+    draw("apChTime", { type: "bar", data: { labels: idx.map(i => String(i).padStart(2, "0") + ":00"), datasets: [{ label: "المبيعات", data: idx.map(i => +A.hours[i].toFixed(2)), backgroundColor: "#467ca8", borderRadius: 6 }] },
+      options: { plugins: { legend: { display: false } } } });
+  } else {
+    $("apTimeTitle").textContent = "المبيعات حسب اليوم";
+    draw("apChTime", { type: "bar", data: { labels: A.days.map(d => d.day.slice(5)), datasets: [
+      { label: "المبيعات", data: A.days.map(d => +d.sales.toFixed(2)), backgroundColor: "#467ca8", borderRadius: 6 },
+      { label: "المرتجعات", data: A.days.map(d => +d.ret.toFixed(2)), backgroundColor: "#c0392b", borderRadius: 6 }] } });
+  }
+  const pays = Object.entries(A.pay).sort((x, y) => y[1] - x[1]);
+  draw("apChPay", { type: "doughnut", data: { labels: pays.map(p => p[0]), datasets: [{ data: pays.map(p => +p[1].toFixed(2)), backgroundColor: pays.map(p => apPayColor(p[0])) }] } });
+  $("apPayTbl").innerHTML = table(["طريقة الدفع", "المبلغ", "النسبة"], pays.map(([n, v]) => [esc(n), fmt(v), apPct(v, A.sales)]), [1, 2]);
+
+  $("apCats").innerHTML = table(["المجموعة", "المبيعات", "النسبة"], Object.entries(A.cats).sort((x, y) => y[1] - x[1]).map(([n, v]) => [esc(n), fmt(v), apPct(v, A.sales)]), [1, 2]);
+  $("apChan").innerHTML = table(["النوع / الشركة", "الفواتير", "المبيعات", "النسبة"], Object.entries(A.chan).sort((x, y) => y[1][1] - x[1][1]).map(([n, v]) => [esc(n), v[0], fmt(v[1]), apPct(v[1], A.sales)]), [1, 2, 3]);
+  $("apCash").innerHTML = table(["الكاشير", "الفواتير", "المبيعات"], Object.entries(A.cash).sort((x, y) => y[1][1] - x[1][1]).map(([n, v]) => [esc(n), v[0], fmt(v[1])]), [1, 2]);
+
+  const cats = [...new Set(A.items.map(i => i[4]).filter(Boolean))];
+  const cv = $("apItemCat").value;
+  $("apItemCat").innerHTML = '<option value="">كل المجموعات</option>' + cats.map(c => `<option${c === cv ? " selected" : ""}>${esc(c)}</option>`).join("");
+  apRenderItems();
+
+  // القوائم
+  const d = A.data || {};
+  const inv = d.inv || [];
+  const chs = [...new Set(inv.map(i => i.ch))], pms = [...new Set(inv.flatMap(i => Object.keys(i.p || {})))];
+  const c1 = $("apInvCh").value, p1 = $("apInvPay").value;
+  $("apInvCh").innerHTML = '<option value="">كل الأنواع</option>' + chs.map(c => `<option${c === c1 ? " selected" : ""}>${esc(c)}</option>`).join("");
+  $("apInvPay").innerHTML = '<option value="">كل طرق الدفع</option>' + pms.map(c => `<option${c === p1 ? " selected" : ""}>${esc(c)}</option>`).join("");
+  $("apInvBar").classList.toggle("hidden", !A.single);
+  apRenderList();
+
+  const ret = d.ret || [], del = d.del || [], pur = d.pur || [];
+  $("apRetCount").textContent = A.retCount ? `${A.retCount} • ${fmt(A.ret)}` : "";
+  $("apDelCount").textContent = A.delCount ? `${A.delCount} • ${fmt(A.del)}` : "";
+  $("apPurCount").textContent = A.purCount ? `${A.purCount} • ${fmt(A.pur)}` : "";
+  if (A.single) {
+    $("apRet").innerHTML = table(["المرتجع", "الوقت", "الفاتورة الأصلية", "الأصناف", "المبلغ"], ret.map(r => [esc(r.c), esc((r.t || "").slice(0, 5)), esc(r.o),
+      esc((r.l || []).map(l => `${l[0]} ×${fmtQ3(l[1])}`).join("، ")), fmt(r.n)]), [4]);
+    $("apDel").innerHTML = table(["الفاتورة", "الوقت", "حذفها", "المبلغ"], del.map(r => [esc(r.c), esc((r.t || "").slice(0, 5)), esc(r.by || r.k), fmt(r.n)]), [3]);
+    $("apPur").innerHTML = table(["المستند", "المورد", "المبلغ"], pur.map(r => [esc(r.c) + (r.n < 0 ? ' <span class="tag red">مرتجع</span>' : ""), esc(r.sup), fmt(r.n)]), [2]);
+  } else {
+    const msg = '<div class="empty">التفاصيل تظهر عند اختيار يوم واحد — اضغط على اليوم في القائمة</div>';
+    $("apRet").innerHTML = A.retCount ? table(["اليوم", "المرتجعات"], A.days.filter(x => x.ret).map(x => [x.day, fmt(x.ret)]), [1]) : msg;
+    $("apDel").innerHTML = msg;
+    $("apPur").innerHTML = A.purCount ? table(["اليوم", "المشتريات"], A.days.filter(x => x.pur).map(x => [x.day, fmt(x.pur)]), [1]) : msg;
+  }
+}
+
+function apRenderItems() {
+  const A = apLast; if (!A) return;
+  const q = $("apItemQ").value.trim(), c = $("apItemCat").value;
+  const rows = A.items.filter(i => (!q || i[0].includes(q)) && (!c || i[4] === c));
+  $("apItemsCount").textContent = A.items.length ? A.items.length + " صنف" : "";
+  $("apItems").innerHTML = table(["الصنف", "الكمية", "المبيعات", "النسبة"], rows.map(i => [esc(i[0]), fmtQ3(i[2]) + " " + esc(i[1] || ""), fmt(i[3]), apPct(i[3], A.sales)]), [1, 2, 3]);
+}
+
+function apRenderList() {
+  const A = apLast; if (!A) return;
+  if (!A.single) {
+    $("apListTitle").firstChild.textContent = "الأيام ";
+    $("apInvCount").textContent = A.days.length ? A.days.length + " يوم" : "";
+    $("apInv").innerHTML = table(["اليوم", "الفواتير", "المبيعات", "نقدي", "شبكة", "آجل", "المرتجعات", "الصافي"], A.days.slice().reverse().map(d => {
+      const by = re => Object.entries(d.pay).filter(([k]) => re.test(k)).reduce((s, [, v]) => s + Number(v), 0);
+      return [`<a href="#" data-apday="${d.day}">${d.day} <span class="tag">${new Date(d.day + "T12:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { weekday: "short" })}</span></a>`,
+        d.count, fmt(d.sales), fmt(by(/نقد/)), fmt(by(/شبك|مدى/)), fmt(by(/آجل/)), fmt(d.ret), fmt(d.sales - d.ret)];
+    }), [1, 2, 3, 4, 5, 6, 7]);
+    $("apInv").querySelectorAll("[data-apday]").forEach(a => a.onclick = e => { e.preventDefault(); apOpenDay(a.dataset.apday); });
+    return;
+  }
+  $("apListTitle").firstChild.textContent = "الفواتير ";
+  const inv = (A.data && A.data.inv) || [];
+  const q = $("apInvQ").value.trim(), ch = $("apInvCh").value, pm = $("apInvPay").value;
+  const rows = inv.filter(i => (!ch || i.ch === ch) && (!pm || (i.p && i.p[pm])) &&
+    (!q || String(i.c).includes(q) || String(i.o) === q || (i.l || []).some(l => String(l[0]).includes(q)))).slice().reverse();
+  $("apInvCount").textContent = inv.length ? (rows.length !== inv.length ? rows.length + " / " : "") + inv.length : "";
+  $("apInv").innerHTML = table(["الفاتورة", "الطلب", "الوقت", "النوع", "الدفع", "الكاشير", "الأصناف", "المبلغ"], rows.map(i => [
+    `<a href="#" data-apinv="${esc(i.c)}">${esc(i.c)}</a>`, i.o || "", esc((i.t || "").slice(0, 5)), esc(i.ch),
+    Object.entries(i.p || {}).map(([k, v]) => `<span class="tag" style="background:${apPayColor(k)}22">${esc(k)}${Object.keys(i.p).length > 1 ? " " + fmt(v) : ""}</span>`).join(" "),
+    esc(i.k), esc((i.l || []).map(l => l[0]).join("، ")).slice(0, 80), fmt(i.n)]), [1, 7]);
+  $("apInv").querySelectorAll("[data-apinv]").forEach(a => a.onclick = e => { e.preventDefault(); apShowInvoice(inv.find(x => x.c === a.dataset.apinv)); });
+}
+
+function apOpenDay(day) {
+  apPeriod = "custom";
+  document.querySelectorAll("#apPeriods .chip").forEach(x => x.classList.toggle("on", x.dataset.p === "custom"));
+  $("apCustom").classList.remove("hidden");
+  $("apFrom").value = $("apTo").value = day;
+  loadApex();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function apShowInvoice(i) {
+  if (!i) return;
+  $("dlgTitle").textContent = `فاتورة ${i.c} • طلب ${i.o || "—"} • ${apLast.a}`;
+  $("dlgBody").innerHTML = `<p>${esc(i.ch)} • الكاشير: ${esc(i.k)} • الوقت: ${esc(i.t)}${i.tb ? " • " + esc(i.tb) : ""}</p>` +
+    table(["الصنف", "الكمية", "المبلغ"], (i.l || []).map(l => [esc(l[0]), fmtQ3(l[1]) + " " + esc(l[4] || ""), fmt(l[2])]), [1, 2]) +
+    `<p>${Object.entries(i.p || {}).map(([k, v]) => `<span class="tag" style="background:${apPayColor(k)}22">${esc(k)}: ${fmt(v)}</span>`).join(" ")}</p>` +
+    (i.d ? `<p>الخصم: ${fmt(i.d)}</p>` : "") +
+    `<p>الضريبة: ${fmt(i.v)}</p><p style="font-weight:800;font-size:1.1rem">الإجمالي: ${fmt(i.n)} ر.س</p><p class="note">من برنامج Apex — للعرض فقط</p>`;
+  if (!$("dlg").open) $("dlg").showModal();
+}
+
+async function apPair() {
+  const code = $("apCode").value.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).replace(/\D/g, "");
+  if (code.length !== 6) { toast("اكتب رمز الربط الظاهر على جهاز الكاشير (6 أرقام)"); return; }
+  $("apPair").disabled = true;
+  try {
+    const { data, error } = await sb.rpc("apex_pair_approve", { p_code: code });
+    if (error) throw error;
+    if (!data || !data.ok) { toast("⚠ " + ((data && data.error) || "تعذر الربط"), 6000); return; }
+    $("apCode").value = "";
+    toast("✔ تم الربط — الأداة على جهاز الكاشير ستبدأ إرسال المبيعات خلال ثوانٍ", 6000);
+    setTimeout(() => loadApex(true), 8000);
+    loadApex(true);
+  } catch (e) { toast("⚠ " + apErr(e), 7000); }
+  finally { $("apPair").disabled = false; }
+}
+
+async function apUnlink() {
+  if (!confirm("فك ربط جهاز Apex؟ سيتوقف إرسال المبيعات (البيانات السابقة تبقى).")) return;
+  const { data, error } = await sb.rpc("apex_unlink");
+  if (error || !data || !data.ok) { toast("⚠ " + (error ? apErr(error) : (data && data.error) || "تعذر")); return; }
+  toast("✔ تم فك الربط"); loadApex(true);
+}
+
+function apExport() {
+  const A = apLast; if (!A) return;
+  const title = "مبيعات Apex " + (A.single ? A.a : A.a + " إلى " + A.b);
+  const tables = [
+    { title: "الملخص", cols: ["البند", "القيمة"], rows: [["المبيعات شامل الضريبة", +A.sales.toFixed(2)], ["عدد الفواتير", A.count], ["الضريبة", +A.vat.toFixed(2)],
+      ["الخصومات", +A.disc.toFixed(2)], ["المرتجعات", +A.ret.toFixed(2)], ["الصافي", +A.net.toFixed(2)], ["المشتريات", +A.pur.toFixed(2)]] },
+    { title: "طرق الدفع", cols: ["طريقة الدفع", "المبلغ"], rows: Object.entries(A.pay).map(([k, v]) => [k, +v.toFixed(2)]) },
+    { title: "نوع الطلب وشركات التوصيل", cols: ["النوع", "الفواتير", "المبلغ"], rows: Object.entries(A.chan).map(([k, v]) => [k, v[0], +v[1].toFixed(2)]) },
+    { title: "المجموعات", cols: ["المجموعة", "المبيعات"], rows: Object.entries(A.cats).map(([k, v]) => [k, +v.toFixed(2)]) },
+    { title: "الأصناف", cols: ["الصنف", "الوحدة", "الكمية", "المبيعات", "المجموعة"], rows: A.items.map(i => [i[0], i[1], +Number(i[2]).toFixed(3), +i[3].toFixed(2), i[4]]) },
+    { title: "الكاشير", cols: ["الكاشير", "الفواتير", "المبيعات"], rows: Object.entries(A.cash).map(([k, v]) => [k, v[0], +v[1].toFixed(2)]) }];
+  if (A.single) {
+    tables.push({ title: "الفواتير", cols: ["الفاتورة", "الطلب", "الوقت", "النوع", "الدفع", "الكاشير", "الضريبة", "المبلغ"],
+      rows: ((A.data && A.data.inv) || []).map(i => [i.c, i.o, i.t, i.ch, Object.entries(i.p || {}).map(([k, v]) => k + " " + v).join(" + "), i.k, i.v, i.n]) });
+    tables.push({ title: "المرتجعات", cols: ["المرتجع", "الوقت", "الفاتورة الأصلية", "المبلغ"], rows: ((A.data && A.data.ret) || []).map(r => [r.c, r.t, r.o, r.n]) });
+  } else {
+    tables.push({ title: "الأيام", cols: ["اليوم", "الفواتير", "المبيعات", "المرتجعات", "المشتريات"], rows: A.days.map(d => [d.day, d.count, +d.sales.toFixed(2), +d.ret.toFixed(2), +d.pur.toFixed(2)]) });
+  }
+  exportCsv({ title, sub: "من برنامج Apex — المبالغ شاملة الضريبة", tables });
+}
+
+// =====================================================================
+//  📊 الإجمالي العام — غاوي سمك (البرنامج الجديد) + Apex (البرنامج القديم)
+// =====================================================================
+let ttPeriod = "today", ttInited = false, ttLast = null, ttBusy = false;
+const TT_POS = "#2c7a5b", TT_APEX = "#467ca8";
+const ttKey = s => String(s || "").normalize("NFKC").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/\s+/g, " ").trim();
+
+function ttRange() {
+  const t = businessToday(); t.setHours(0, 0, 0, 0);
+  const d = n => { const x = new Date(t); x.setDate(x.getDate() + n); return iso(x); };
+  switch (ttPeriod) {
+    case "yesterday": return [d(-1), d(-1)];
+    case "week": return [d(-6), d(0)];
+    case "month": return [iso(new Date(t.getFullYear(), t.getMonth(), 1)), d(0)];
+    case "lastmonth": return [iso(new Date(t.getFullYear(), t.getMonth() - 1, 1)), iso(new Date(t.getFullYear(), t.getMonth(), 0))];
+    case "custom": { const a = $("ttFrom").value || d(0), b = $("ttTo").value || a; return a <= b ? [a, b] : [b, a]; }
+    default: return [d(0), d(0)];
+  }
+}
+
+function initTotalView() {
+  if (ttInited) return; ttInited = true;
+  document.querySelectorAll("#ttPeriods .chip").forEach(b => b.onclick = () => {
+    ttPeriod = b.dataset.p;
+    document.querySelectorAll("#ttPeriods .chip").forEach(x => x.classList.toggle("on", x === b));
+    $("ttCustom").classList.toggle("hidden", ttPeriod !== "custom");
+    if (ttPeriod === "custom" && !$("ttFrom").value) $("ttFrom").value = $("ttTo").value = iso(businessToday());
+    loadTotal();
+  });
+  $("ttFrom").onchange = $("ttTo").onchange = () => loadTotal();
+  $("ttReload").onclick = () => loadTotal();
+  $("ttExport").onclick = ttExport;
+  $("ttItemQ").oninput = ttRenderItems;
+  setInterval(() => { if (view === "total") loadTotal(true); }, 120000);
+}
+
+async function loadTotal(silent) {
+  initTotalView();
+  if (ttBusy) return; ttBusy = true;
+  const [f, t] = ttRange();
+  let apexOk = true;
+  try {
+    const [days, items, hours, types, rets, exps, apex] = await Promise.all([
+      all(() => sb.from("v_daily_summary").select("*").gte("business_date", f).lte("business_date", t).order("business_date")),
+      all(() => sb.from("v_item_sales").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("v_hourly_sales").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("v_order_types").select("*").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("returns").select("amount,business_date").gte("business_date", f).lte("business_date", t)),
+      all(() => sb.from("expenses").select("amount,expense_date").gte("expense_date", f).lt("expense_date", nextDay(t))),
+      all(() => sb.from("apex_daily").select("day,summary").gte("day", f).lte("day", t).order("day")).catch(e => { apexOk = false; return []; })
+    ]);
+    ttLast = ttBuild(f, t, days, items, hours, types, rets, exps, (apex || []).map(r => ({ day: r.day, summary: apFix(r.summary || {}) })));
+    ttLast.apexOk = apexOk;
+    ttRender();
+  } catch (e) {
+    console.error(e);
+    if (!silent) toast("⚠ تعذر تحميل الإجمالي: " + (e.message || e), 6000);
+  } finally { ttBusy = false; }
+}
+
+function ttBuild(f, t, days, items, hours, types, rets, exps, apex) {
+  const P = { sales: 0, count: 0, cash: 0, card: 0, other: 0, disc: 0, ret: 0, exp: 0 };
+  const A = { sales: 0, count: 0, cash: 0, card: 0, other: 0, disc: 0, ret: 0, vat: 0, pur: 0 };
+  const byDay = {}, dayOf = d => byDay[d] || (byDay[d] = { day: d, pos: 0, posN: 0, apex: 0, apexN: 0, ret: 0 });
+  days.forEach(r => {
+    const s = Number(r.total || 0);
+    P.sales += s; P.count += Number(r.orders_count || 0); P.cash += Number(r.cash || 0); P.card += Number(r.network || 0);
+    P.other += Number(r.other || 0); P.disc += Number(r.discounts || 0);
+    const x = dayOf(r.business_date); x.pos += s; x.posN += Number(r.orders_count || 0);
+  });
+  rets.forEach(r => { P.ret += Number(r.amount || 0); dayOf(r.business_date).ret += Number(r.amount || 0); });
+  exps.forEach(r => P.exp += Number(r.amount || 0));
+  const pay = { "نقدي": 0, "شبكة": 0 }, types2 = {}, cats = {}, itemMap = {}, hrs = { pos: new Array(24).fill(0), apex: new Array(24).fill(0) };
+  apex.forEach(r => {
+    const s = r.summary;
+    A.sales += Number(s.sales || 0); A.count += Number(s.count || 0); A.disc += Number(s.disc || 0); A.ret += Number(s.ret || 0);
+    A.vat += Number(s.vat || 0); A.pur += Number(s.pur || 0);
+    Object.entries(s.pay || {}).forEach(([k, v]) => {
+      v = Number(v || 0);
+      if (/نقد/.test(k)) A.cash += v; else if (/شبك|مدى/.test(k)) A.card += v; else A.other += v;
+      pay[/نقد/.test(k) ? "نقدي" : /شبك|مدى/.test(k) ? "شبكة" : k] = (pay[/نقد/.test(k) ? "نقدي" : /شبك|مدى/.test(k) ? "شبكة" : k] || 0) + v;
+    });
+    Object.entries(s.chan || {}).forEach(([k, v]) => { const x = types2[k] || (types2[k] = { pos: [0, 0], apex: [0, 0] }); x.apex[0] += Number(v[0] || 0); x.apex[1] += Number(v[1] || 0); });
+    Object.entries(s.cats || {}).forEach(([k, v]) => { const x = cats[ttKey(k)] || (cats[ttKey(k)] = { name: k, pos: 0, apex: 0 }); x.apex += Number(v || 0); });
+    (s.items || []).forEach(([n, u, q, v]) => { const x = itemMap[ttKey(n)] || (itemMap[ttKey(n)] = { name: n, pos: 0, apex: 0, pq: 0, aq: 0, u: u || "" }); x.apex += Number(v || 0); x.aq += Number(q || 0); });
+    (s.hours || []).forEach((v, i) => hrs.apex[i] += Number(v || 0));
+    const x = dayOf(r.day); x.apex += Number(s.sales || 0); x.apexN += Number(s.count || 0); x.ret += Number(s.ret || 0);
+  });
+  pay["نقدي"] += P.cash; pay["شبكة"] += P.card; if (P.other) pay["أخرى (غاوي سمك)"] = (pay["أخرى (غاوي سمك)"] || 0) + P.other;
+  types.forEach(r => { const k = r.order_type || "غير محدد"; const x = types2[k] || (types2[k] = { pos: [0, 0], apex: [0, 0] }); x.pos[0] += Number(r.orders_count || 0); x.pos[1] += Number(r.total || 0); });
+  items.forEach(r => {
+    const k = ttKey(r.product_name), x = itemMap[k] || (itemMap[k] = { name: r.product_name, pos: 0, apex: 0, pq: 0, aq: 0, u: "" });
+    x.pos += Number(r.total || 0); x.pq += Number(r.quantity || 0);
+    const c = r.category || "غير مصنف", cx = cats[ttKey(c)] || (cats[ttKey(c)] = { name: c, pos: 0, apex: 0 }); cx.pos += Number(r.total || 0);
+  });
+  hours.forEach(r => { const h = Number(r.hour); if (h >= 0 && h < 24) hrs.pos[h] += Number(r.total || 0); });
+  const T = { sales: P.sales + A.sales, count: P.count + A.count, ret: P.ret + A.ret };
+  return { f, t, single: f === t, P, A, T, pay, types: types2, cats: Object.values(cats), items: Object.values(itemMap).sort((x, y) => (y.pos + y.apex) - (x.pos + x.apex)),
+    hours: hrs, days: Object.values(byDay).sort((x, y) => x.day < y.day ? -1 : 1), apexDays: apex.length };
+}
+
+function ttRender() {
+  const L = ttLast; if (!L) return;
+  const { P, A, T } = L, pct = (v, t) => t ? Math.round(100 * v / t) + "%" : "—";
+  $("ttNote").textContent = !L.apexOk ? "⚠ بيانات Apex غير متاحة (ملف SQL رقم 14)" : !L.apexDays ? "لا توجد بيانات Apex لهذه الفترة" : "";
+  $("ttNote").className = "tag " + (!L.apexOk ? "red" : "amber");
+  const k = [
+    ["💰 الإجمالي العام (البرنامجين)", fmt(T.sales), "main"],
+    [`🐟 غاوي سمك <span class="tag">${pct(P.sales, T.sales)}</span>`, fmt(P.sales)],
+    [`🏪 Apex <span class="tag">${pct(A.sales, T.sales)}</span>`, fmt(A.sales)],
+    ["🧾 عدد الطلبات", T.count.toLocaleString("en-US")],
+    ["متوسط الطلب", fmt(T.count ? T.sales / T.count : 0)],
+    ["💵 نقدي", fmt(P.cash + A.cash)], ["💳 شبكة", fmt(P.card + A.card)], ["🛵 آجل / أخرى", fmt(P.other + A.other)],
+    ["↩ المرتجعات", fmt(T.ret)], ["✅ الصافي بعد المرتجع", fmt(T.sales - T.ret)],
+    ["💸 المصروفات (غاوي سمك)", fmt(P.exp)], ["الصافي بعد المصروفات", fmt(T.sales - T.ret - P.exp)]];
+  $("ttKpis").innerHTML = k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+
+  if (L.single) {
+    $("ttTimeTitle").textContent = "المبيعات — " + L.f;
+    draw("ttChDays", { type: "bar", data: { labels: ["غاوي سمك", "Apex"], datasets: [{ label: "المبيعات", data: [+P.sales.toFixed(2), +A.sales.toFixed(2)], backgroundColor: [TT_POS, TT_APEX], borderRadius: 6 }] },
+      options: { plugins: { legend: { display: false } } } });
+  } else {
+    $("ttTimeTitle").textContent = "المبيعات حسب اليوم";
+    draw("ttChDays", { type: "bar", data: { labels: L.days.map(d => d.day.slice(5)), datasets: [
+      { label: "غاوي سمك", data: L.days.map(d => +d.pos.toFixed(2)), backgroundColor: TT_POS, borderRadius: 4, stack: "s" },
+      { label: "Apex", data: L.days.map(d => +d.apex.toFixed(2)), backgroundColor: TT_APEX, borderRadius: 4, stack: "s" }] },
+      options: { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } });
+  }
+  draw("ttChShare", { type: "doughnut", data: { labels: ["غاوي سمك", "Apex"], datasets: [{ data: [+P.sales.toFixed(2), +A.sales.toFixed(2)], backgroundColor: [TT_POS, TT_APEX] }] } });
+
+  const row = (l, p, a, tot, n) => [l, n ? p : fmt(p), n ? a : fmt(a), `<b>${n ? tot : fmt(tot)}</b>`];
+  $("ttCompare").innerHTML = table(["البند", "🐟 غاوي سمك", "🏪 Apex", "الإجمالي"], [
+    row("المبيعات", P.sales, A.sales, T.sales),
+    row("عدد الطلبات", P.count, A.count, T.count, true),
+    row("متوسط الطلب", P.count ? P.sales / P.count : 0, A.count ? A.sales / A.count : 0, T.count ? T.sales / T.count : 0),
+    row("نقدي", P.cash, A.cash, P.cash + A.cash), row("شبكة", P.card, A.card, P.card + A.card), row("آجل / أخرى", P.other, A.other, P.other + A.other),
+    row("الخصومات", P.disc, A.disc, P.disc + A.disc), row("المرتجعات", P.ret, A.ret, T.ret),
+    row("الصافي بعد المرتجع", P.sales - P.ret, A.sales - A.ret, T.sales - T.ret),
+    ["النسبة من الإجمالي", pct(P.sales, T.sales), pct(A.sales, T.sales), "100%"]], [1, 2, 3]);
+
+  const pays = Object.entries(L.pay).filter(([, v]) => v > 0).sort((x, y) => y[1] - x[1]);
+  draw("ttChPay", { type: "doughnut", data: { labels: pays.map(p => p[0]), datasets: [{ data: pays.map(p => +p[1].toFixed(2)), backgroundColor: pays.map(p => apPayColor(p[0])) }] } });
+  $("ttPay").innerHTML = table(["طريقة الدفع", "المبلغ", "النسبة"], pays.map(([n, v]) => [esc(n), fmt(v), pct(v, T.sales)]), [1, 2]);
+
+  const hp = L.hours.pos, ha = L.hours.apex, idx = [];
+  const nz = [...Array(24).keys()].filter(i => hp[i] + ha[i] > 0), lo = nz.length ? nz[0] : 10, hi = nz.length ? nz[nz.length - 1] : 23;
+  for (let i = lo; i <= hi; i++) idx.push(i);
+  draw("ttChHours", { type: "bar", data: { labels: idx.map(i => String(i).padStart(2, "0") + ":00"), datasets: [
+    { label: "غاوي سمك", data: idx.map(i => +hp[i].toFixed(2)), backgroundColor: TT_POS, stack: "h" },
+    { label: "Apex", data: idx.map(i => +ha[i].toFixed(2)), backgroundColor: TT_APEX, stack: "h" }] },
+    options: { scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } });
+
+  $("ttTypes").innerHTML = table(["النوع / الشركة", "غاوي سمك", "Apex", "الإجمالي", "الطلبات"],
+    Object.entries(L.types).sort((x, y) => (y[1].pos[1] + y[1].apex[1]) - (x[1].pos[1] + x[1].apex[1]))
+      .map(([n, v]) => [esc(n), v.pos[1] ? fmt(v.pos[1]) : "—", v.apex[1] ? fmt(v.apex[1]) : "—", `<b>${fmt(v.pos[1] + v.apex[1])}</b>`, v.pos[0] + v.apex[0]]), [1, 2, 3, 4]);
+  $("ttCats").innerHTML = table(["المجموعة", "غاوي سمك", "Apex", "الإجمالي", "النسبة"],
+    L.cats.slice().sort((x, y) => (y.pos + y.apex) - (x.pos + x.apex)).map(c => [esc(c.name), c.pos ? fmt(c.pos) : "—", c.apex ? fmt(c.apex) : "—", `<b>${fmt(c.pos + c.apex)}</b>`, pct(c.pos + c.apex, T.sales)]), [1, 2, 3, 4]);
+  ttRenderItems();
+
+  $("ttDays").innerHTML = table(["اليوم", "🐟 غاوي سمك", "🏪 Apex", "الإجمالي", "الطلبات", "المرتجعات", "الصافي"], L.days.slice().reverse().map(d => [
+    `${d.day} <span class="tag">${new Date(d.day + "T12:00").toLocaleDateString("ar-SA-u-ca-gregory-nu-latn", { weekday: "short" })}</span>`,
+    fmt(d.pos), fmt(d.apex), `<b>${fmt(d.pos + d.apex)}</b>`, d.posN + d.apexN, fmt(d.ret), fmt(d.pos + d.apex - d.ret)]), [1, 2, 3, 4, 5, 6]);
+}
+
+function ttRenderItems() {
+  const L = ttLast; if (!L) return;
+  const q = ttKey($("ttItemQ").value);
+  const rows = L.items.filter(i => !q || ttKey(i.name).includes(q));
+  $("ttItemsCount").textContent = L.items.length ? L.items.length + " صنف" : "";
+  $("ttItems").innerHTML = table(["الصنف", "غاوي سمك", "Apex", "الكمية", "الإجمالي"], rows.map(i => [esc(i.name),
+    i.pos ? fmt(i.pos) : "—", i.apex ? fmt(i.apex) : "—", fmtQ3(i.pq + i.aq) + (i.u ? " " + esc(i.u) : ""), `<b>${fmt(i.pos + i.apex)}</b>`]), [1, 2, 3, 4]);
+}
+
+function ttExport() {
+  const L = ttLast; if (!L) return;
+  const { P, A, T } = L, r2 = v => +Number(v || 0).toFixed(2);
+  exportCsv({ title: "الإجمالي العام " + (L.single ? L.f : L.f + " إلى " + L.t), sub: "غاوي سمك + Apex — المبالغ شاملة الضريبة", tables: [
+    { title: "المقارنة", cols: ["البند", "غاوي سمك", "Apex", "الإجمالي"], rows: [
+      ["المبيعات", r2(P.sales), r2(A.sales), r2(T.sales)], ["عدد الطلبات", P.count, A.count, T.count],
+      ["نقدي", r2(P.cash), r2(A.cash), r2(P.cash + A.cash)], ["شبكة", r2(P.card), r2(A.card), r2(P.card + A.card)], ["آجل / أخرى", r2(P.other), r2(A.other), r2(P.other + A.other)],
+      ["الخصومات", r2(P.disc), r2(A.disc), r2(P.disc + A.disc)], ["المرتجعات", r2(P.ret), r2(A.ret), r2(T.ret)], ["الصافي بعد المرتجع", r2(P.sales - P.ret), r2(A.sales - A.ret), r2(T.sales - T.ret)],
+      ["المصروفات", r2(P.exp), "", r2(P.exp)]] },
+    { title: "الأيام", cols: ["اليوم", "غاوي سمك", "Apex", "الإجمالي", "الطلبات", "المرتجعات"], rows: L.days.map(d => [d.day, r2(d.pos), r2(d.apex), r2(d.pos + d.apex), d.posN + d.apexN, r2(d.ret)]) },
+    { title: "نوع الطلب", cols: ["النوع", "غاوي سمك", "Apex", "الإجمالي"], rows: Object.entries(L.types).map(([n, v]) => [n, r2(v.pos[1]), r2(v.apex[1]), r2(v.pos[1] + v.apex[1])]) },
+    { title: "المجموعات", cols: ["المجموعة", "غاوي سمك", "Apex", "الإجمالي"], rows: L.cats.map(c => [c.name, r2(c.pos), r2(c.apex), r2(c.pos + c.apex)]) },
+    { title: "الأصناف", cols: ["الصنف", "غاوي سمك", "Apex", "الكمية", "الإجمالي"], rows: L.items.map(i => [i.name, r2(i.pos), r2(i.apex), +(i.pq + i.aq).toFixed(3), r2(i.pos + i.apex)]) }] });
+}
+
 const WEB_PERMS = [
   ["web.sales", "📊 المبيعات والتقارير والطلبات"], ["web.purchase", "🛒 طلبات الشراء"], ["web.count", "⚖ الجرد"], ["web.stock", "📦 المخزون والمواد الخام"],
   ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
   ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"], ["web.screens", "📺 شاشات العرض"]];
 // الشاشة ← الصلاحيات التي تفتحها
 const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], track: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
-  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], log: ["*"] };
+  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], apex: ["web.sales"], total: ["web.sales"], log: ["*"] };
 let me = { role: "owner", perms: [] };
 const isOwner = () => me.role !== "staff";
 const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
