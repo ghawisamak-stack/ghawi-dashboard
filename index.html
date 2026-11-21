@@ -17,13 +17,14 @@
 <style>
   :root {
     /* ألوان هادئة مريحة للعين */
-    --navy: #2e547e; --navy-dark: #223e5e; --bg: #eef0f3; --card: #fbfbfc; --text: #2c3a4c; --muted: #75828f;
+    /* ألوان البحر: أزرق محيطي عميق + فيروزي هادئ */
+    --navy: #1f5a7a; --navy-dark: #0e3550; --sea: #17808f; --foam: #e3f2f4; --bg: #eef3f5; --card: #fbfcfd; --text: #26394a; --muted: #6f8290;
     --green: #46946c; --red: #c05c52; --amber: #d4a048; --blue: #467ca8; --purple: #7c62a3; --line: #e1e5ea;
   }
   @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --bg: #141b24; --card: #1c2532; --text: #dbe2ea; --muted: #8d9bab; --line: #2a3544; }
+    :root:not([data-theme="light"]) { --bg: #0f1a22; --card: #17252f; --text: #dbe6ec; --muted: #8ea2ae; --line: #253744; --foam: #15303a; --navy: #2b7396; }
   }
-  :root[data-theme="dark"] { --bg: #141b24; --card: #1c2532; --text: #dbe2ea; --muted: #8d9bab; --line: #2a3544; }
+  :root[data-theme="dark"] { --bg: #0f1a22; --card: #17252f; --text: #dbe6ec; --muted: #8ea2ae; --line: #253744; --foam: #15303a; --navy: #2b7396; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: var(--text); font-family: "Tajawal", "Segoe UI", sans-serif; }
   body { min-height: 100vh; }
@@ -32,8 +33,9 @@
 
   /* ----- الدخول ----- */
   #login { min-height: 100vh; display: grid; place-items: center; padding: 16px;
-           background: linear-gradient(135deg, var(--navy-dark), #3f668f); }
-  .login-card { background: var(--card); width: 100%; max-width: 380px; border-radius: 18px; padding: 28px 24px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+           background: radial-gradient(1200px 600px at 80% -10%, #2aa3b0 0%, transparent 60%), linear-gradient(160deg, #0b2f47, #145c78 55%, #1b8494); }
+  .login-logo { display: block; width: 104px; height: 104px; margin: -70px auto 8px; border-radius: 50%; background: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.25); border: 4px solid #fff; }
+  .login-card { background: var(--card); width: 100%; max-width: 380px; border-radius: 22px; padding: 28px 24px; margin-top: 50px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
   .login-card h1 { margin: 0 0 4px; color: var(--navy); font-size: 1.5rem; text-align: center; }
   .login-card p { margin: 0 0 20px; color: var(--muted); text-align: center; }
   .login-card label { display: block; font-weight: 700; margin: 12px 0 6px; }
@@ -44,15 +46,40 @@
   .msg { min-height: 22px; margin-top: 10px; text-align: center; font-weight: 700; color: var(--red); }
 
   /* ----- الرأس ----- */
-  header { position: sticky; top: 0; z-index: 10; background: linear-gradient(90deg, var(--navy-dark), var(--navy)); color: #fff;
-           padding: 10px 16px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  header .title { font-weight: 800; font-size: 1.15rem; }
-  header .who { font-size: .9rem; opacity: .9; }
+  .topbar { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 12px rgba(11,47,71,.18); }
+  header { position: relative; color: #fff; padding: 10px 18px 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+           background: radial-gradient(900px 200px at 15% -60%, rgba(64,190,200,.45), transparent 70%), linear-gradient(100deg, #0b2f47 0%, #12506d 55%, #17808f 100%); }
+  header .logo { width: 44px; height: 44px; border-radius: 50%; background: #fff; border: 2px solid rgba(255,255,255,.85); box-shadow: 0 3px 10px rgba(0,0,0,.25); flex: none; }
+  header .title { font-weight: 800; font-size: 1.2rem; line-height: 1.1; display: flex; flex-direction: column; }
+  header .title small { font-size: .72rem; font-weight: 500; opacity: .8; letter-spacing: .3px; }
+  header .who { font-size: .88rem; opacity: .85; }
   header .spacer { flex: 1; }
-  header .sync { font-size: .82rem; padding: 4px 10px; border-radius: 20px; background: rgba(255,255,255,.15); }
+  header .sync { font-size: .8rem; padding: 4px 11px; border-radius: 20px; background: rgba(255,255,255,.14); }
   header .sync.warn { background: var(--amber); color: #222; }
-  header button { background: rgba(255,255,255,.15); color: #fff; border: 0; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  header button { background: rgba(255,255,255,.14); color: #fff; border: 0; border-radius: 10px; padding: 7px 11px; cursor: pointer; transition: background .15s; }
+  header button:hover { background: rgba(255,255,255,.26); }
 
+  /* ----- القوائم: صف رئيسي (امتداد للرأس) + صف فرعي ----- */
+  nav.tabs { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; padding: 0 12px;
+             background: linear-gradient(100deg, #0b2f47 0%, #12506d 55%, #17808f 100%); }
+  nav.tabs::-webkit-scrollbar, nav.subtabs::-webkit-scrollbar { display: none; }
+  nav.tabs button { flex: none; position: relative; border: 0; background: transparent; color: rgba(255,255,255,.78); font-weight: 700; font-size: .95rem;
+                    padding: 10px 15px 12px; border-radius: 14px 14px 0 0; cursor: pointer; white-space: nowrap; transition: color .15s, background .15s; }
+  nav.tabs button:hover { color: #fff; background: rgba(255,255,255,.08); }
+  nav.tabs button.on { background: var(--foam); color: var(--navy-dark); }
+  :root[data-theme="dark"] nav.tabs button.on { color: #dff3f6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) nav.tabs button.on { color: #dff3f6; } }
+  nav.tabs .gbadge { position: absolute; top: 4px; left: 4px; min-width: 18px; height: 18px; line-height: 18px; padding: 0 5px; border-radius: 9px;
+                     background: #ff7a59; color: #fff; font-style: normal; font-size: .7rem; font-weight: 800; text-align: center; }
+  nav.subtabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 9px 16px 10px;
+                background: var(--foam); border-bottom: 1px solid var(--line); }
+  nav.subtabs button { flex: none; border: 1px solid transparent; background: transparent; color: var(--navy); font-weight: 700; font-size: .9rem;
+                       padding: 7px 14px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: background .15s; }
+  nav.subtabs button:hover { background: rgba(23,128,143,.10); }
+  :root[data-theme="dark"] nav.subtabs button:not(.on) { color: #a9d9e1; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) nav.subtabs button:not(.on) { color: #a9d9e1; } }
+  nav.subtabs button.on { background: var(--sea); color: #fff; box-shadow: 0 3px 10px rgba(23,128,143,.3); }
+  nav.subtabs button .badge, nav.tabs button .badge { background: var(--red); color: #fff; border-radius: 10px; padding: 0 7px; font-size: .75rem; margin-inline-start: 4px; }
   .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 12px 16px 0; max-width: 1280px; margin: 0 auto; }
   .chip { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 20px; padding: 7px 14px; cursor: pointer; font-weight: 700; font-size: .9rem; }
   .chip.on { background: var(--navy); color: #fff; border-color: var(--navy); }
@@ -63,7 +90,7 @@
   .kpi { background: var(--card); border-radius: 14px; padding: 12px 14px; border: 1px solid var(--line); }
   .kpi .l { color: var(--muted); font-size: .85rem; font-weight: 700; }
   .kpi .v { font-size: 1.35rem; font-weight: 800; margin-top: 4px; direction: ltr; text-align: right; }
-  .kpi.main { background: linear-gradient(135deg, var(--green), #3d8160); color: #fff; border: 0; }
+  .kpi.main { background: linear-gradient(135deg, #12506d, #17808f); color: #fff; border: 0; box-shadow: 0 6px 18px rgba(18,80,109,.22); }
   .kpi.main .l { color: rgba(255,255,255,.85); }
   .kpi[data-pay] { cursor: pointer; transition: transform .12s, box-shadow .12s; }
   .kpi[data-pay]:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
@@ -88,10 +115,6 @@
   .loading { position: fixed; bottom: 16px; left: 16px; background: var(--navy); color: #fff; padding: 8px 14px; border-radius: 20px; font-weight: 700; }
 
   /* ----- الأقسام ----- */
-  nav.tabs { position: sticky; top: 52px; z-index: 9; background: var(--card); border-bottom: 1px solid var(--line); display: flex; gap: 4px; overflow-x: auto; padding: 6px 12px; }
-  nav.tabs button { flex: none; border: 0; background: transparent; color: var(--muted); font-weight: 800; padding: 9px 14px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
-  nav.tabs button.on { background: var(--navy); color: #fff; }
-  nav.tabs button .badge { background: var(--red); color: #fff; border-radius: 10px; padding: 0 7px; font-size: .75rem; margin-inline-start: 4px; }
   .view { display: none; } .view.on { display: block; }
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
   .toolbar input[type=search], .toolbar select, .fld { border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 10px; padding: 8px 10px; }
@@ -115,7 +138,7 @@
   .toast { position: fixed; bottom: 18px; right: 50%; transform: translateX(50%); background: #1f2d3d; color: #fff; padding: 10px 18px; border-radius: 12px; font-weight: 700; z-index: 50; max-width: 92vw; box-shadow: 0 8px 24px rgba(0,0,0,.25); }
   .status-card { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
   .note { color: var(--muted); font-size: .88rem; line-height: 1.7; }
-  @media (max-width: 640px) { .form { grid-template-columns: 1fr; } nav.tabs { top: 0; position: relative; } .hm { display: none; } input.txt { min-width: 0; } }
+  @media (max-width: 640px) { .form { grid-template-columns: 1fr; } .topbar { position: relative; } header { padding: 8px 12px; gap: 6px; } header .who, header .sync { display: none; } header .logo { width: 38px; height: 38px; } nav.tabs button { padding: 9px 12px 11px; font-size: .9rem; } .hm { display: none; } input.txt { min-width: 0; } }
   dialog { border: 0; border-radius: 14px; padding: 0; width: min(560px, 94vw); background: var(--card); color: var(--text); }
   dialog::backdrop { background: rgba(0,0,0,.45); }
   dialog .head { background: var(--navy); color: #fff; padding: 12px 16px; font-weight: 800; display: flex; justify-content: space-between; }
@@ -184,7 +207,7 @@
 <!-- ================= الدخول ================= -->
 <section id="login" class="hidden">
   <form class="login-card" id="loginForm">
-    <h1>🐟 غاوي سمك</h1>
+    <img class="login-logo" src="logo.png" alt="غاوي سمك" onerror="this.remove()"><h1>غاوي سمك</h1>
     <p>لوحة المدراء — المبيعات والتقارير</p>
     <label for="email">البريد الإلكتروني</label>
     <input id="email" type="email" autocomplete="username" required>
@@ -198,8 +221,9 @@
 
 <!-- ================= اللوحة ================= -->
 <section id="app" class="hidden">
+  <div class="topbar">
   <header>
-    <span class="title">🐟 غاوي سمك</span>
+    <img class="logo" src="logo.png" alt="" onerror="this.remove()"><span class="title">غاوي سمك<small>لوحة المدراء</small></span>
     <span class="who" id="who"></span>
     <span class="spacer"></span>
     <span class="sync" id="sync">…</span>
@@ -209,30 +233,38 @@
     <button id="logout">خروج</button>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button data-v="reports" class="on">📊 اللوحة</button>
-    <button data-v="total">🧮 الإجمالي العام</button>
-    <button data-v="center">📑 مركز التقارير</button>
-    <button data-v="apex">🏪 مبيعات Apex</button>
-    <button data-v="track">⏱ التجهيز</button>
-    <button data-v="products">🍽 الأصناف والأسعار</button>
-    <button data-v="offers">🎁 العروض والكوبونات</button>
-    <button data-v="customers">👥 العملاء</button>
-    <button data-v="suppliers">🚚 الموردون والمشتريات</button>
-    <button data-v="stock">📦 المخزون</button>
-    <button data-v="acc">📒 الحسابات</button>
-    <button data-v="hr">👥 الموظفين والرواتب</button>
-    <button data-v="inv">📋 الجرد والطلبات</button>
-    <button data-v="social">🎯 المنصات</button>
-    <button data-v="screens">📺 الشاشات</button>
-    <button data-v="admin">🛡 الإدارة</button>
-    <button data-v="expense">💸 مصروف</button>
-    <button data-v="wa">📲 واتساب</button>
-    <button data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
-    <button data-v="log">📨 سجل التعديلات <span class="badge hidden" id="pendingBadge"></span></button>
+  <nav class="tabs" id="tabs" aria-label="الأقسام">
+    <button data-g="sales" data-v="total">🧮 <span>الإجمالي العام</span></button>
+    <button data-g="ops" data-v="center">📑 <span>مركز التقارير</span><i class="gbadge hidden"></i></button>
+    <button data-g="menu" data-v="products">🍽 <span>الأصناف والأسعار</span></button>
+    <button data-g="acc" data-v="acc">📒 <span>الحسابات</span></button>
+    <button data-g="sup" data-v="suppliers">🚚 <span>الموردون والمشتريات</span></button>
+    <button data-g="cus" data-v="customers">👥 <span>العملاء</span></button>
+    <button data-g="hr" data-v="hr">👔 <span>الموظفين والرواتب</span></button>
+    <button data-g="social" data-v="social">🎯 <span>المنصات</span></button>
+    <button data-g="ext" data-v="wa">🛍 <span>طلبات خارجية</span><i class="gbadge hidden"></i></button>
+    <button data-g="admin" data-v="admin">🛡 <span>الإدارة</span></button>
   </nav>
+  <nav class="subtabs hidden" id="subtabs" aria-label="الأقسام الفرعية">
+    <button data-g="sales" data-v="total">🧮 الإجمالي العام</button>
+    <button data-g="sales" data-v="apex">🏪 مبيعات Apex</button>
+    <button data-g="sales" data-v="reports">🐟 لوحة غاوي سمك</button>
+    <button data-g="ops" data-v="center">📑 مركز التقارير</button>
+    <button data-g="ops" data-v="track">⏱ التجهيز</button>
+    <button data-g="ops" data-v="expense">💸 المصروف</button>
+    <button data-g="ops" data-v="log">📨 سجل التعديلات <span class="badge hidden" id="pendingBadge"></span></button>
+    <button data-g="menu" data-v="products">🍽 الأصناف والأسعار</button>
+    <button data-g="menu" data-v="offers">🎁 العروض والكوبونات</button>
+    <button data-g="menu" data-v="stock">📦 المخزون</button>
+    <button data-g="menu" data-v="inv">📋 الجرد والطلبات</button>
+    <button data-g="ext" data-v="wa">📲 طلبات واتساب</button>
+    <button data-g="ext" data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
+    <button data-g="admin" data-v="admin">🛡 الإدارة</button>
+    <button data-g="admin" data-v="screens">📺 الشاشات</button>
+  </nav>
+  </div>
 
-  <section class="view on" id="v-reports">
+  <section class="view" id="v-reports">
   <div class="bar" id="periods">
     <button class="chip on" data-p="today">اليوم</button>
     <button class="chip" data-p="yesterday">أمس</button>
@@ -458,7 +490,7 @@
   </main></section>
 
   <!-- ================= الإجمالي العام (غاوي سمك + Apex) ================= -->
-  <section class="view" id="v-total">
+  <section class="view on" id="v-total">
   <div class="bar" id="ttPeriods">
     <button class="chip on" data-p="today">اليوم</button>
     <button class="chip" data-p="yesterday">أمس</button>
@@ -918,8 +950,8 @@ async function start() {
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
   myEmail = session.user.email;
-  let v = "reports";
-  try { v = localStorage.getItem("gs-view") || "reports"; } catch (e) {}
+  let v = "total";
+  try { v = localStorage.getItem("gs-view2") || "total"; } catch (e) {}
   if (!canView(v)) v = Object.keys(VIEW_PERMS).find(canView) || "log";
   showView(v);
   updatePendingBadge();
@@ -1225,13 +1257,40 @@ function table(head, rows, numCols) {
 // =====================================================================
 //  الأقسام والتعديل من الموقع
 // =====================================================================
-let view = "reports", catalog = null, sessionToken = "", myEmail = "";
+let view = "total", catalog = null, sessionToken = "", myEmail = "";
 function toast(msg, ms = 3500) { const t = $("toast"); t.textContent = msg; t.classList.remove("hidden"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.add("hidden"), ms); }
-document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => showView(b.dataset.v));
+// ----- القوائم: صف رئيسي + صف فرعي لكل مجموعة -----
+const navGroupOf = v => { const b = document.querySelector(`#subtabs button[data-v="${v}"]`) || document.querySelector(`#tabs button[data-v="${v}"]`); return b ? b.dataset.g : ""; };
+const navViews = g => [...document.querySelectorAll(`#tabs button[data-g="${g}"], #subtabs button[data-g="${g}"]`)].map(b => b.dataset.v);
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => {
+  const g = b.dataset.g, first = [b.dataset.v, ...navViews(g)].find(v => canView(v));
+  if (first) showView(first);
+});
+document.querySelectorAll("#subtabs button").forEach(b => b.onclick = () => showView(b.dataset.v));
+function navSync(v) {
+  const g = navGroupOf(v);
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x.dataset.g === g));
+  let n = 0;
+  document.querySelectorAll("#subtabs button").forEach(x => {
+    const mine = x.dataset.g === g && canView(x.dataset.v);
+    x.classList.toggle("hidden", !mine); x.classList.toggle("on", x.dataset.v === v); if (mine) n++;
+  });
+  $("subtabs").classList.toggle("hidden", n < 2);
+  const on = document.querySelector("#tabs button.on");
+  if (on && on.scrollIntoView) try { on.scrollIntoView({ block: "nearest", inline: "nearest" }); } catch (e) {}
+}
+// شارة على المجموعة الرئيسية إذا كان بداخلها تنبيه (طلبات زد / تعديلات معلقة)
+setInterval(() => {
+  document.querySelectorAll("#tabs button").forEach(b => {
+    const i = b.querySelector(".gbadge"); if (!i) return;
+    const n = [...document.querySelectorAll(`#subtabs button[data-g="${b.dataset.g}"] .badge`)].filter(x => !x.classList.contains("hidden")).reduce((s, x) => s + (parseInt(x.textContent) || 1), 0);
+    i.textContent = n || ""; i.classList.toggle("hidden", !n || b.classList.contains("on"));
+  });
+}, 1500);
 function showView(v) {
   if (typeof canView === "function" && !canView(v)) { toast("هذه الشاشة غير مسموحة لك"); return; }
   view = v;
-  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x.dataset.v === v));
+  navSync(v);
   document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + v));
   if (v === "reports") load();
   if (v === "products") loadProducts();
@@ -1252,7 +1311,7 @@ function showView(v) {
   if (v === "screens") loadScreensView();
   if (v === "apex") loadApex();
   if (v === "total") loadTotal();
-  try { localStorage.setItem("gs-view", v); } catch (e) {}
+  try { localStorage.setItem("gs-view2", v); } catch (e) {}
 }
 
 // ----- إرسال أمر للبرنامج ومتابعة تطبيقه -----
@@ -4239,7 +4298,8 @@ const isOwner = () => me.role !== "staff";
 const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
 const canView = v => isOwner() || (VIEW_PERMS[v] || []).some(canWeb);
 function applyWebAccess() {
-  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("hidden", !canView(b.dataset.v)));
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("hidden", !navViews(b.dataset.g).concat(b.dataset.v).some(canView)));
+  if (typeof view === "string") navSync(view);
   if (!isOwner()) {
     // داخل الجرد والطلبات: كل جزء حسب صلاحيته
     const show = { count: canWeb("web.count"), hist: canWeb("web.count"), pr: canWeb("web.purchase"), rep: canWeb("web.purchase") };
