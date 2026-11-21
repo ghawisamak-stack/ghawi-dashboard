@@ -4577,7 +4577,7 @@ function brParseSheet(rows, opts) {
 // =====================================================================
 const BR_KIND = { expense: ["💸 مصروف", "red"], income: ["💵 مبيعات نقدية", "green"], deposit: ["🏦 إيداع", "blue"], adjust: ["⚖ فرق خزينة", "amber"], opening: ["🔓 رصيد افتتاحي", ""] };
 const BR_ST = { pending: ['⏳ بانتظار المراجعة', "amber"], approved: ["✔ معتمد", "green"], rejected: ["✖ مرفوض", "red"] };
-let brDocs = {}, brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
+let brrRun = null, brrEnd = "", brDocs = {}, brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
 const brErr = e => (e && /invoice_no|doc_ref/.test(e.message || "")) ? "أعمدة جديدة غير موجودة — شغّل ملف SQL رقم 18 (18_branch_invoice.sql) في Supabase ← SQL Editor" : (e && (e.code === "42P01" || e.code === "PGRST205" || /branch_/.test(e.message || ""))) ? "جداول دفتر المطعم غير موجودة — شغّل ملف SQL رقم 15 (15_branch_ledger.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
 const brBoss = () => canAct("branch.approve");
 const brCanCls = () => canAct("branch.approve") || canAct("branch.cats");
@@ -4659,13 +4659,42 @@ async function loadBranch(force) {
     brDocs = await docMap("branch", brRows.map(r => r.doc_ref)).catch(() => ({}));
   } catch (e) { $("brList").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; $("brKpis").innerHTML = ""; return; }
   brSel.clear();
-  $("brKpis").innerHTML = brKpiHtml(brRows);
+  const endD = t > iso(new Date()) ? iso(new Date()) : t;
+  let run = null; try { run = brRunning(brRows, await brBalanceAt(brPrevDay(f))); } catch (e) {}
+  $("brKpis").innerHTML = brKpiHtml(brRows, run, endD);
   const cats = [...new Set(brRows.map(r => r.category))].sort(), items = [...new Set(brRows.map(r => r.item))].sort();
   const keep = (id, list, all0) => { const v = $(id).value; $(id).innerHTML = `<option value="">${all0}</option>` + list.map(x => `<option${x === v ? " selected" : ""}>${esc(x)}</option>`).join(""); };
   keep("brFCat", cats, "كل الأقسام"); keep("brFItem", items, "كل الأصناف");
   brRenderList();
 }
 
+// ===== رصيد الخزينة: آخر رصيد مسجل في الشيت ثم + المبيعات النقدية − المصروفات والإيداعات وفروق الخزينة بعده =====
+const brMove = r => r.status === "rejected" || r.kind === "opening" ? 0 : (r.kind === "income" ? 1 : -1) * Number(r.amount || 0);
+const brAfter = (r, a) => !a || r.entry_date > a.entry_date || (r.entry_date === a.entry_date && (Number(r.seq) > Number(a.seq) || (Number(r.seq) === Number(a.seq) && r.id > a.id)));
+const brPrevDay = d => { const x = new Date(d + "T12:00"); x.setDate(x.getDate() - 1); return iso(x); };
+async function brBalanceAt(d) {
+  if (d < "2001-01-01") return 0;
+  const a = await sb.from("branch_ledger").select("entry_date,seq,id,sheet_balance,status").not("sheet_balance", "is", null).neq("status", "rejected").lte("entry_date", d)
+    .order("entry_date", { ascending: false }).order("seq", { ascending: false }).order("id", { ascending: false }).limit(1);
+  if (a.error) throw a.error;
+  const an = (a.data || [])[0];
+  const rows = await all(() => { let q = sb.from("branch_ledger").select("entry_date,seq,id,kind,amount,status").lte("entry_date", d).neq("status", "rejected"); if (an) q = q.gte("entry_date", an.entry_date); return q.order("entry_date").order("seq").order("id"); });
+  let bal = an ? Number(an.sheet_balance) : 0;
+  rows.forEach(r => { if (brAfter(r, an)) bal += brMove(r); });
+  return bal;
+}
+// الرصيد اليومي داخل الفترة: يبدأ من رصيد ما قبلها، وعند وجود رصيد من الشيت يُعتمد ويُسجل الفرق إن وُجد
+function brRunning(rows, start) {
+  const days = {}; let bal = start;
+  rows.slice().sort((x, y) => x.entry_date < y.entry_date ? -1 : x.entry_date > y.entry_date ? 1 : (Number(x.seq) - Number(y.seq)) || (x.id - y.id)).forEach(r => {
+    if (r.status === "rejected") return;
+    const d = days[r.entry_date] || (days[r.entry_date] = { bal: 0, diff: 0, sheet: null });
+    bal += brMove(r);
+    if (r.sheet_balance != null) { const sb2 = Number(r.sheet_balance); if (r.kind !== "opening" && Math.abs(sb2 - bal) > 0.5) d.diff += sb2 - bal; bal = sb2; d.sheet = sb2; }
+    d.bal = bal;
+  });
+  return { days, end: bal, start };
+}
 function brTotals(rows) {
   const T = { exp: 0, inc: 0, dep: 0, adj: 0, n: 0, pending: 0, bal: null, balDate: "" };
   rows.forEach(r => {
@@ -4677,12 +4706,17 @@ function brTotals(rows) {
   });
   return T;
 }
-function brKpiHtml(rows) {
+function brKpiHtml(rows, run, endDate) {
   const T = brTotals(rows);
   const k = [["💸 المصروفات", fmt(T.exp), "main"], ["💵 المبيعات النقدية", fmt(T.inc)], ["🏦 الإيداعات البنكية", fmt(T.dep)], ["⚖ فروق الخزينة", fmt(T.adj)],
     ["الصافي (نقدية − مصروفات − إيداع)", fmt(T.inc - T.exp - T.dep - T.adj)], ["📝 عدد الحركات", T.n]];
   if (T.pending) k.push(["⏳ بانتظار المراجعة", T.pending]);
-  if (T.bal != null) k.push([`🧮 رصيد الخزينة (${T.balDate})`, fmt(T.bal)]);
+  if (run) {
+    k.splice(1, 0, [`🧮 رصيد الخزينة (نهاية ${endDate.slice(5)})`, fmt(run.end), "main"]);
+    k.push(["🔓 رصيد أول الفترة", fmt(run.start)]);
+    const diffs = Object.entries(run.days).filter(([, d]) => Math.abs(d.diff) > 0.5);
+    if (diffs.length) k.push(["⚠ فروق بين الحساب والشيت", diffs.slice(-3).map(([d, x]) => `${d.slice(5)}: ${fmt(x.diff)}`).join(" • ")]);
+  }
   return k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
 }
 
@@ -4701,18 +4735,19 @@ function brRenderList() {
       const [kt, kc] = BR_KIND[r.kind] || [r.kind, ""], [stt, stc] = BR_ST[r.status] || [r.status, ""];
       const mine = r.created_by && r.created_by === (myEmail || "").toLowerCase();
       const canEd = brBoss() || (canAct("branch.edit") && r.status === "pending" && mine) || brCanCls();
-      return `<tr${r.status === "rejected" ? ' style="opacity:.55"' : ""}>${sel ? `<td><input type="checkbox" data-bs="${r.id}" ${brSel.has(r.id) ? "checked" : ""}></td>` : ""}
+      return `<tr data-br="${r.id}"${canEd ? ' class="click" title="اضغط مرتين للتعديل"' : ""}${r.status === "rejected" ? ' style="opacity:.55"' : ""}>${sel ? `<td><input type="checkbox" data-bs="${r.id}" ${brSel.has(r.id) ? "checked" : ""}></td>` : ""}
         <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.doc_ref && brDocs[r.doc_ref] ? ` <button class="btn sm ghost doc-chip" data-bd="${r.id}" title="صورة الفاتورة">📎${brDocs[r.doc_ref].length > 1 ? brDocs[r.doc_ref].length : ""}</button>` : ""}${r.invoice_no ? ` <span class="tag" title="رقم الفاتورة">🧾 ${esc(r.invoice_no)}</span>` : ""}${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
         <td>${esc(r.item)}</td><td>${r.category === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(r.category)}</td>
         <td><span class="tag ${kc}">${kt}</span></td><td class="n" style="font-weight:700;color:${r.kind === "income" ? "var(--green)" : r.kind === "expense" ? "var(--red)" : "inherit"}">${fmt(r.amount)}</td>
         <td><span class="tag ${stc}" title="${esc((r.created_name || r.created_by || "") + (r.reviewed_by ? " • راجعها " + r.reviewed_by : ""))}">${stt}</span></td>
-        <td style="white-space:nowrap">${canEd ? `<button class="btn sm ghost" data-be="${r.id}">✏</button>` : ""}${brBoss() && r.status === "pending" ? ` <button class="btn sm green" data-bok="${r.id}" title="اعتماد">✔</button>` : ""}</td></tr>`;
+        <td style="white-space:nowrap">${canEd ? `<button class="btn sm ghost br-edit" data-be="${r.id}" title="تعديل الحركة">✎ تعديل</button>` : ""}${brBoss() && r.status === "pending" ? ` <button class="btn sm green" data-bok="${r.id}" title="اعتماد">✔</button>` : ""}</td></tr>`;
     }).join("") + "</table>" + (rows.length > shown.length ? `<p class="note">يُعرض أحدث ${shown.length} حركة — ضيّق الفترة أو استخدم البحث لرؤية الباقي.</p>` : "");
   const upd = () => { $("brBulk").classList.toggle("hidden", !brSel.size); $("brSelCount").textContent = brSel.size + " محدد";
     $("brBulkOk").classList.toggle("hidden", !brBoss()); $("brBulkNo").classList.toggle("hidden", !brBoss()); };
   $("brList").querySelectorAll("[data-bs]").forEach(c => c.onchange = () => { c.checked ? brSel.add(Number(c.dataset.bs)) : brSel.delete(Number(c.dataset.bs)); upd(); });
   if ($("brAll")) $("brAll").onchange = e => { shown.forEach(r => e.target.checked ? brSel.add(r.id) : brSel.delete(r.id)); brRenderList(); };
   $("brList").querySelectorAll("[data-be]").forEach(b => b.onclick = () => brEditDlg(brRows.find(r => r.id === Number(b.dataset.be))));
+  $("brList").querySelectorAll("tr.click[data-br]").forEach(tr => tr.ondblclick = e => { if (e.target.closest("button,input,label")) return; brEditDlg(brRows.find(r => r.id === Number(tr.dataset.br))); });
   $("brList").querySelectorAll("[data-bd]").forEach(b => b.onclick = () => brAttachFor(brRows.find(r => r.id === Number(b.dataset.bd))));
   $("brList").querySelectorAll("[data-bok]").forEach(b => b.onclick = () => brSetStatus([Number(b.dataset.bok)], "approved"));
   upd();
@@ -4829,6 +4864,7 @@ async function loadBranchRep(force) {
   try {
     await brLoadMeta(force);
     brrRows = (await all(() => sb.from("branch_ledger").select("*").gte("entry_date", f).lte("entry_date", t).order("entry_date").order("seq").order("id"))).filter(r => r.status !== "rejected");
+    brrRun = brRunning(brrRows, await brBalanceAt(brPrevDay(f))); brrEnd = t > iso(new Date()) ? iso(new Date()) : t;
   } catch (e) { $("brrCats").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; return; }
   const cv = $("brrCat").value;
   $("brrCat").innerHTML = '<option value="">كل الأقسام</option>' + [...new Set(brrRows.filter(r => r.kind === "expense").map(r => r.category))].sort().map(c => `<option${c === cv ? " selected" : ""}>${esc(c)}</option>`).join("");
@@ -4841,7 +4877,7 @@ function brRenderRep() {
   $("brrItem").innerHTML = '<option value="">كل الأصناف</option>' + [...new Set(exp.map(r => r.item))].sort().map(i => `<option${i === iv ? " selected" : ""}>${esc(i)}</option>`).join("");
   const rows = brrRows.filter(r => r.kind !== "expense" || ((!c || r.category === c) && (!iv || r.item === iv)));
   const E = rows.filter(r => r.kind === "expense");
-  $("brrKpis").innerHTML = brKpiHtml(c || iv ? E : rows);
+  $("brrKpis").innerHTML = brKpiHtml(c || iv ? E : rows, c || iv ? null : brrRun, brrEnd);
   const totE = E.reduce((s, r) => s + Number(r.amount), 0);
   // حسب اليوم
   const days = {}; rows.forEach(r => { const d = days[r.entry_date] || (days[r.entry_date] = { exp: 0, inc: 0, dep: 0, adj: 0, bal: null }); const a = Number(r.amount);
@@ -4874,8 +4910,9 @@ function brRenderRep() {
     table(["البيان", "المرات", "المبلغ", ""], ue.slice(0, 300).map(([d, v]) => [esc(d), v[0], fmt(v[1]), brCanCls() ? `<button class="btn sm" data-bu="${esc(d)}">🏷 تصنيف</button>` : ""]), [1, 2]);
   $("brrUn").querySelectorAll("[data-bu]").forEach(b => b.onclick = () => brClassifyDlg(null, b.dataset.bu));
   // الأيام
-  $("brrDays").innerHTML = table(["اليوم", "المبيعات النقدية", "المصروفات", "الإيداع", "الصافي", "رصيد الخزينة"], dk.slice().reverse().map(d => { const x = days[d];
-    return [d, fmt(x.inc), fmt(x.exp), fmt(x.dep), fmt(x.inc - x.exp - x.dep - x.adj), x.bal == null ? "—" : fmt(x.bal)]; }), [1, 2, 3, 4, 5]);
+  $("brrDays").innerHTML = table(["اليوم", "المبيعات النقدية", "المصروفات", "الإيداع", "الصافي", "رصيد الخزينة"], dk.slice().reverse().map(d => { const x = days[d], rb = brrRun && brrRun.days[d];
+    return [d, fmt(x.inc), fmt(x.exp), fmt(x.dep), fmt(x.inc - x.exp - x.dep - x.adj),
+      rb ? `<b>${fmt(rb.bal)}</b>${Math.abs(rb.diff) > 0.5 ? ` <span class="tag amber" title="الرصيد المكتوب في الشيت يختلف عن الحساب بـ ${fmt(rb.diff)} — تم اعتماد رصيد الشيت">⚠ ${fmt(rb.diff)}</span>` : ""}` : "—"]; }), [1, 2, 3, 4]);
 }
 function brExport() {
   const [f, t] = brRange(brrPeriod, "brrFrom", "brrTo");
@@ -4918,10 +4955,15 @@ async function brReadFile() {
     const res = brParseSheet(rows, { learned: brLearn });
     if (!res.rows.length) throw new Error("لم أجد حركات في الملف — تأكد من ترتيب الأعمدة");
     const dates = res.rows.map(r => r.date).filter(Boolean).sort(), f = dates[0], t = dates[dates.length - 1];
-    const have = new Set((await all(() => sb.from("branch_ledger").select("row_hash").gte("entry_date", f).lte("entry_date", t).not("row_hash", "is", null))).map(r => r.row_hash));
+    const existing = await all(() => sb.from("branch_ledger").select("id,row_hash,seq,sheet_balance,entry_date,source,description,amount").gte("entry_date", f).lte("entry_date", t));
+    const ex = existing.filter(r => r.row_hash), have = new Map(ex.map(r => [r.row_hash, r]));
     const seq = {}; res.rows.forEach(r => { seq[r.date] = (seq[r.date] || 0) + 1; r.seq = seq[r.date]; });
-    const fresh = res.rows.filter(r => !have.has(r.hash));
-    brImp = { fresh, all: res.rows, warn: res.warn, f, t, name: file.name };
+    const fresh = res.rows.filter(r => !have.has(r.hash)), fileH = new Set(res.rows.map(r => r.hash));
+    // مزامنة: الشيت هو المرجع لما استُورد منه — ما عُدّل أو حُذف في الشيت يُحذف من الموقع، ويُحدَّث الترتيب والرصيد
+    const stale = brBoss() ? ex.filter(r => r.source === "excel" && !fileH.has(r.row_hash)) : [];
+    const moved = brBoss() ? res.rows.filter(r => { const e = have.get(r.hash); return e && (Number(e.seq) !== r.seq || (e.sheet_balance == null ? null : Number(e.sheet_balance)) !== (r.balance == null ? null : Number(r.balance))); }) : [];
+    const manual = existing.filter(r => r.source !== "excel");
+    brImp = { fresh, stale, moved, all: res.rows, warn: res.warn, f, t, name: file.name };
     const sum = (list, k) => list.filter(r => r.kind === k).reduce((s, r) => s + r.amount, 0);
     const cats = {}; fresh.filter(r => r.kind === "expense").forEach(r => { const x = cats[r.category] || (cats[r.category] = [0, 0]); x[0]++; x[1] += r.amount; });
     $("brPreview").innerHTML = `<div class="kpis">
@@ -4930,20 +4972,34 @@ async function brReadFile() {
         <div class="kpi"><div class="l">الفترة</div><div class="v" style="font-size:1rem">${f} ← ${t}</div></div>
         <div class="kpi"><div class="l">💸 المصروفات (الجديدة)</div><div class="v">${fmt(sum(fresh, "expense"))}</div></div>
         <div class="kpi"><div class="l">💵 المبيعات النقدية (الجديدة)</div><div class="v">${fmt(sum(fresh, "income"))}</div></div>
-        <div class="kpi"><div class="l">🏦 الإيداعات</div><div class="v">${fmt(sum(fresh, "deposit"))}</div></div></div>
+        <div class="kpi"><div class="l">🏦 الإيداعات</div><div class="v">${fmt(sum(fresh, "deposit"))}</div></div>
+        ${stale.length ? `<div class="kpi" style="border-color:var(--red)"><div class="l">🗑 تُحذف (عُدّلت أو حُذفت في الشيت)</div><div class="v">${stale.length}</div></div>` : ""}
+        ${moved.length ? `<div class="kpi"><div class="l">🔄 يُحدَّث ترتيبها أو رصيدها</div><div class="v">${moved.length}</div></div>` : ""}
+        <div class="kpi"><div class="l">🧮 رصيد الخزينة في آخر الشيت</div><div class="v">${fmt([...res.rows].reverse().find(r => r.balance != null)?.balance ?? 0)}</div></div></div>
+      ${stale.length ? `<div class="rep-sum bad">سيُحذف من الموقع ${stale.length} حركة كانت مستوردة سابقاً ولم تعد في الشيت بنفس الشكل (تصحيح بيان أو تاريخ أو مبلغ): ${stale.slice(0, 12).map(r => esc(r.entry_date + " " + r.description + " " + fmt(r.amount))).join(" • ")}${stale.length > 12 ? " …" : ""}</div>` : ""}
+      ${manual.length ? `<div class="rep-sum">ℹ يوجد ${manual.length} حركة مسجلة يدوياً من الموقع داخل نفس أيام الشيت — تبقى كما هي. إذا كانت نفس الحركات مكتوبة في الشيت أيضاً فستتكرر؛ احذف المكرر من «الحركات».</div>` : ""}
+      ${!brBoss() ? `<div class="rep-sum">ℹ تصحيح أو حذف حركات سبق استيرادها يحتاج حساب المدير — بصلاحيتك تُضاف الحركات الجديدة فقط.</div>` : ""}
       ${res.warn.length ? `<div class="rep-sum bad">⚠ تواريخ تحتاج مراجعة: ${res.warn.map(esc).join(" • ")}</div>` : ""}
       <p class="note">التواريخ في الشيت بعضها مكتوب يوم/شهر وبعضها شهر/يوم — تم ترتيبها تلقائياً حسب تسلسل الدفتر. ${brBoss() ? "" : "الحركات المستوردة تظهر «بانتظار المراجعة» حتى يعتمدها المدير."}</p>
       <h3>التصنيف التلقائي للمصروفات الجديدة</h3>${table(["القسم", "الحركات", "المبلغ"], Object.entries(cats).sort((a, b) => b[1][1] - a[1][1]).map(([k, v]) => [k === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(k), v[0], fmt(v[1])]), [1, 2])}
       <h3>أول 100 حركة جديدة</h3><div class="scroll" style="max-height:420px">${table(["سطر", "التاريخ", "البيان", "الصنف", "القسم", "النوع", "المبلغ", "الرصيد"], fresh.slice(0, 100).map(r => [r.row, r.date, esc(r.description), esc(r.item), esc(r.category), (BR_KIND[r.kind] || [r.kind])[0], fmt(r.amount), r.balance == null ? "" : fmt(r.balance)]), [0, 6, 7])}</div>`;
-    $("brImport").textContent = `📥 استيراد ${fresh.length} حركة`;
-    $("brImport").classList.toggle("hidden", !fresh.length);
+    $("brImport").textContent = `📥 استيراد / مزامنة (${fresh.length} جديدة${stale.length ? ` • ${stale.length} حذف` : ""}${moved.length ? ` • ${moved.length} تحديث` : ""})`;
+    $("brImport").classList.toggle("hidden", !(fresh.length || stale.length || moved.length));
   } catch (e) { $("brPreview").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; }
 }
 async function brDoImport() {
-  if (!brImp || !brImp.fresh.length) return;
+  if (!brImp) return;
   const list = brImp.fresh, st = brBoss() ? "approved" : "pending";
   $("brImport").disabled = true;
   try {
+    if (brImp.stale.length) {
+      const ids = brImp.stale.map(r => r.id);
+      for (let i = 0; i < ids.length; i += 200) { $("brImport").textContent = `⏳ حذف ${Math.min(i + 200, ids.length)} / ${ids.length}`; const { error } = await sb.from("branch_ledger").delete().in("id", ids.slice(i, i + 200)); if (error) throw error; }
+    }
+    for (let i = 0; i < brImp.moved.length; i++) {
+      const r = brImp.moved[i]; if (i % 20 === 0) $("brImport").textContent = `⏳ تحديث ${i + 1} / ${brImp.moved.length}`;
+      const { error } = await sb.from("branch_ledger").update({ seq: r.seq, sheet_balance: r.balance }).eq("row_hash", r.hash); if (error) throw error;
+    }
     for (let i = 0; i < list.length; i += 400) {
       $("brImport").textContent = `⏳ ${Math.min(i + 400, list.length)} / ${list.length}`;
       const rows = list.slice(i, i + 400).map(r => ({ entry_date: r.date, kind: r.kind, description: r.description, item: r.item, category: r.category, amount: r.amount,
@@ -4951,7 +5007,7 @@ async function brDoImport() {
       const { error } = await sb.from("branch_ledger").upsert(rows, { onConflict: "row_hash", ignoreDuplicates: true });
       if (error) throw error;
     }
-    toast(`✔ تم استيراد ${list.length} حركة`, 6000);
+    toast(`✔ تمت المزامنة: ${list.length} جديدة${brImp.stale.length ? ` • ${brImp.stale.length} حُذفت` : ""}${brImp.moved.length ? ` • ${brImp.moved.length} حُدّثت` : ""}`, 7000);
     brImp = null; $("brFile").value = ""; $("brImport").classList.add("hidden");
     $("brPreview").innerHTML = `<div class="rep-sum ok">✔ تم الاستيراد — راجع التصنيف من «📊 التحليل» (قسم «بيانات غير مصنفة»).</div>`;
     brMetaAt = 0;
