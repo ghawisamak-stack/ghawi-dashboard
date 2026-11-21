@@ -4075,6 +4075,13 @@ function apAggregate(a, b, single) {
   return A;
 }
 
+function apMissingDays(A) {
+  const have = new Set(apRows.filter(r => Number((r.summary || {}).count || 0) > 0).map(r => r.day)), out = [];
+  const today = iso(new Date()), first = apStatusInfo && apStatusInfo.first_day ? apStatusInfo.first_day : A.a;
+  const d = new Date(A.a + "T12:00"), end = A.b < today ? A.b : today;
+  while (iso(d) <= end && out.length < 400) { const k = iso(d); if (k >= first && k < today && !have.has(k)) out.push(k); d.setDate(d.getDate() + 1); }
+  return out;
+}
 function apRender() {
   const A = apLast; if (!A) return;
   const credit = Object.entries(A.pay).filter(([k]) => /آجل/.test(k)).reduce((s, [, v]) => s + v, 0);
@@ -4091,7 +4098,9 @@ function apRender() {
     ["🏷 الخصومات", fmt(A.disc)], ["🛒 المشتريات", fmt(A.pur)]];
   if (A.delCount) k.push(["🗑 فواتير محذوفة", `${A.delCount} • ${fmt(A.del)}`]);
   if (A.single && A.first) k.push(["⏰ أول / آخر فاتورة", `${A.first.slice(0, 5)} / ${A.last.slice(0, 5)}`]);
+  const apMiss = apMissingDays(A);
   $("apKpis").innerHTML = k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("") +
+    (apMiss.length && apRows.length ? `<div class="kpi" style="grid-column:1/-1;border-color:var(--amber)"><div class="l">⚠ أيام بدون بيانات من Apex في هذه الفترة</div><div class="v" style="font-size:.95rem">${apMiss.map(d => d.slice(5)).join(" • ")} <small class="note">— الأداة ترسل الأيام الناقصة تلقائياً كل ساعة (نسخة 1.1)، أو شغّل «4- إعادة إرسال كل الأيام» على جهاز الكاشير. إذا كان المطعم مغلقاً في هذا اليوم تجاهل التنبيه.</small></div></div>` : "") +
     (!apRows.length ? `<div class="kpi" style="grid-column:1/-1"><div class="l">لا توجد بيانات لهذه الفترة</div><div class="v" style="font-size:.95rem;direction:rtl">${apStatusInfo && apStatusInfo.linked ? "لم تصل مبيعات من جهاز Apex لهذه الأيام بعد" : "اربط جهاز Apex أولاً (أداة الربط على جهاز الكاشير)"}</div></div>` : "");
 
   // الرسم: الساعات ليوم واحد، والأيام لفترة
