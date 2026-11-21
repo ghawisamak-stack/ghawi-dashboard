@@ -193,6 +193,10 @@
   .doc-th { height: 150px; display: grid; place-items: center; background: #fff; cursor: zoom-in; overflow: hidden; }
   .doc-th img { width: 100%; height: 100%; object-fit: cover; }
   .doc-meta { padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; word-break: break-all; } .doc-act { padding: 0 8px 8px; }
+  .br-lines .br-inv { min-width: 110px !important; } .br-lines .br-note { min-width: 150px !important; }
+  .br-lines td.br-att { white-space: nowrap; } .br-clip.on { background: var(--sea) !important; color: #fff !important; border-color: var(--sea) !important; }
+  .br-unclip { padding: 2px 6px !important; margin-inline-start: 2px; }
+  .br-lines select.fld { min-width: 135px !important; }
   .pm-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 14px; padding: 10px 16px 14px; }
   .pm-items label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; padding: 4px 0; cursor: pointer; }
   .pm-items label.sec { color: var(--blue); }
@@ -536,18 +540,17 @@
       <div class="toolbar">
         <label class="br-l">التاريخ <input type="date" class="fld" id="brDate"></label>
         <label class="br-l">النوع الافتراضي <select class="fld" id="brKind"><option value="expense">💸 مصروف</option><option value="income">💵 مبيعات نقدية</option><option value="deposit">🏦 إيداع بنكي</option><option value="adjust">⚖ فرق خزينة</option></select></label>
-        <input class="fld" id="brNote" placeholder="ملاحظة لكل الحركات (اختياري) — مثل: فاتورة مورد الخضار" style="flex:1;min-width:200px">
+        <span class="note">كل سطر = حركة مستقلة برقم فاتورتها وصورتها (📎) وملاحظتها</span>
       </div>
-      <div class="scroll"><table class="lines br-lines"><tr><th>البيان (اختر من السابق أو اكتب جديد)</th><th>المبلغ</th><th>الصنف</th><th>القسم</th><th>النوع</th><th></th></tr><tbody id="brLines"></tbody></table></div>
+      <div class="scroll"><table class="lines br-lines"><tr><th>البيان (اختر من السابق أو اكتب جديد)</th><th>المبلغ</th><th>الصنف</th><th>القسم</th><th>رقم الفاتورة</th><th>النوع</th><th title="صورة الفاتورة">📎</th><th>ملاحظات</th><th></th></tr><tbody id="brLines"></tbody></table></div>
       <datalist id="dlBrDesc"></datalist><datalist id="dlBrItem"></datalist><datalist id="dlBrCat"></datalist>
       <div class="toolbar" style="margin-top:8px">
         <button class="btn sm ghost" id="brAddLine">➕ سطر</button>
-        <label class="btn sm ghost doc-pick">📎 إرفاق صورة الفاتورة / PDF<input type="file" id="brFiles" accept="image/*,application/pdf" multiple hidden></label><span class="note doc-info" id="brFilesInfo"></span>
         <span style="flex:1"></span>
         <b>الإجمالي: <span id="brLinesTot">0.00</span></b>
         <button class="btn green" id="brSave">💾 تسجيل</button>
       </div>
-      <p class="note" style="margin:6px 0 0">اضغط Enter بعد المبلغ لسطر جديد. صورة الفاتورة تُرفق بكل الحركات المسجلة معها وتُضغط تلقائياً (حوالي 200 كيلوبايت).</p>
+      <p class="note" style="margin:6px 0 0">اضغط Enter بعد المبلغ لسطر جديد. اضغط 📎 أمام الحركة لإرفاق صورة فاتورتها — تُضغط تلقائياً (حوالي 200 كيلوبايت).</p>
     </div>
     <div class="kpis" id="brKpis"></div>
     <div class="card">
@@ -4575,7 +4578,7 @@ function brParseSheet(rows, opts) {
 const BR_KIND = { expense: ["💸 مصروف", "red"], income: ["💵 مبيعات نقدية", "green"], deposit: ["🏦 إيداع", "blue"], adjust: ["⚖ فرق خزينة", "amber"], opening: ["🔓 رصيد افتتاحي", ""] };
 const BR_ST = { pending: ['⏳ بانتظار المراجعة', "amber"], approved: ["✔ معتمد", "green"], rejected: ["✖ مرفوض", "red"] };
 let brDocs = {}, brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
-const brErr = e => (e && (e.code === "42P01" || e.code === "PGRST205" || /branch_/.test(e.message || ""))) ? "جداول دفتر المطعم غير موجودة — شغّل ملف SQL رقم 15 (15_branch_ledger.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
+const brErr = e => (e && /invoice_no|doc_ref/.test(e.message || "")) ? "أعمدة جديدة غير موجودة — شغّل ملف SQL رقم 18 (18_branch_invoice.sql) في Supabase ← SQL Editor" : (e && (e.code === "42P01" || e.code === "PGRST205" || /branch_/.test(e.message || ""))) ? "جداول دفتر المطعم غير موجودة — شغّل ملف SQL رقم 15 (15_branch_ledger.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
 const brBoss = () => canAct("branch.approve");
 const brCanCls = () => canAct("branch.approve") || canAct("branch.cats");
 
@@ -4613,7 +4616,6 @@ function initBranch() {
   $("brDate").value = iso(new Date());
   brLineAdd(); brLineAdd(); brLinesTot();
   $("brAddLine").onclick = () => brLineAdd(true);
-  docPickerBind("brFiles");
   $("brSave").onclick = brSaveMulti;
   ["brQ", "brFKind", "brFCat", "brFItem", "brFStatus"].forEach(id => $(id).oninput = brRenderList);
   $("brBulkCls").onclick = () => brClassifyDlg([...brSel]);
@@ -4686,7 +4688,7 @@ function brKpiHtml(rows) {
 
 function brFiltered() {
   const q = brNorm($("brQ").value), k = $("brFKind").value, c = $("brFCat").value, it = $("brFItem").value, st = $("brFStatus").value;
-  return brRows.filter(r => (!k || r.kind === k) && (!c || r.category === c) && (!it || r.item === it) && (!st || r.status === st) && (!q || brNorm(r.description + " " + r.item + " " + (r.note || "")).includes(q)));
+  return brRows.filter(r => (!k || r.kind === k) && (!c || r.category === c) && (!it || r.item === it) && (!st || r.status === st) && (!q || brNorm(r.description + " " + r.item + " " + (r.note || "") + " " + (r.invoice_no || "")).includes(q)));
 }
 function brRenderList() {
   const rows = brFiltered().slice().reverse(), sel = brCanCls() || brBoss();
@@ -4700,7 +4702,7 @@ function brRenderList() {
       const mine = r.created_by && r.created_by === (myEmail || "").toLowerCase();
       const canEd = brBoss() || (canAct("branch.edit") && r.status === "pending" && mine) || brCanCls();
       return `<tr${r.status === "rejected" ? ' style="opacity:.55"' : ""}>${sel ? `<td><input type="checkbox" data-bs="${r.id}" ${brSel.has(r.id) ? "checked" : ""}></td>` : ""}
-        <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.doc_ref && brDocs[r.doc_ref] ? ` <button class="btn sm ghost doc-chip" data-bd="${r.id}" title="صورة الفاتورة">📎${brDocs[r.doc_ref].length > 1 ? brDocs[r.doc_ref].length : ""}</button>` : ""}${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
+        <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.doc_ref && brDocs[r.doc_ref] ? ` <button class="btn sm ghost doc-chip" data-bd="${r.id}" title="صورة الفاتورة">📎${brDocs[r.doc_ref].length > 1 ? brDocs[r.doc_ref].length : ""}</button>` : ""}${r.invoice_no ? ` <span class="tag" title="رقم الفاتورة">🧾 ${esc(r.invoice_no)}</span>` : ""}${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
         <td>${esc(r.item)}</td><td>${r.category === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(r.category)}</td>
         <td><span class="tag ${kc}">${kt}</span></td><td class="n" style="font-weight:700;color:${r.kind === "income" ? "var(--green)" : r.kind === "expense" ? "var(--red)" : "inherit"}">${fmt(r.amount)}</td>
         <td><span class="tag ${stc}" title="${esc((r.created_name || r.created_by || "") + (r.reviewed_by ? " • راجعها " + r.reviewed_by : ""))}">${stt}</span></td>
@@ -4754,6 +4756,7 @@ function brEditDlg(r) {
     <div><label>النوع</label><select class="fld" id="beKind" ${full ? "" : "disabled"}>${Object.entries(BR_KIND).map(([k, v]) => `<option value="${k}" ${k === r.kind ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>
     <div class="full"><label>البيان</label><input class="fld" id="beDesc" value="${esc(r.description)}" ${full ? "" : "disabled"}></div>
     <div><label>المبلغ</label><input class="fld" type="number" step="0.01" id="beAmount" value="${r.amount}" ${full ? "" : "disabled"}></div>
+    <div><label>رقم الفاتورة</label><input class="fld" id="beInv" value="${esc(r.invoice_no || "")}" ${full ? "" : "disabled"}></div>
     <div><label>الصنف</label><input class="fld" id="beItem" list="dlBrItem" value="${esc(r.item)}"></div>
     <div><label>القسم</label><input class="fld" id="beCat" list="dlBrCat" value="${esc(r.category)}"></div>
     ${brBoss() ? `<div><label>الحالة</label><select class="fld" id="beSt">${Object.entries(BR_ST).map(([k, v]) => `<option value="${k}" ${k === r.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>` : ""}
@@ -4763,7 +4766,7 @@ function brEditDlg(r) {
     <p class="note">أُضيفت بواسطة ${esc(r.created_name || r.created_by || "—")}${r.source === "excel" ? " (استيراد إكسيل)" : ""}${r.reviewed_by ? " • راجعها " + esc(r.reviewed_by) : ""}</p>`);
   $("beOk").onclick = async () => {
     const upd = { item: $("beItem").value.trim(), category: $("beCat").value.trim() || "غير مصنف" };
-    if (full) Object.assign(upd, { entry_date: $("beDate").value, kind: $("beKind").value, description: $("beDesc").value.trim(), amount: Number($("beAmount").value) || 0, note: $("beNote").value.trim() || null });
+    if (full) Object.assign(upd, { entry_date: $("beDate").value, kind: $("beKind").value, description: $("beDesc").value.trim(), amount: Number($("beAmount").value) || 0, note: $("beNote").value.trim() || null, invoice_no: $("beInv").value.trim() || null });
     if ($("beSt")) upd.status = $("beSt").value;
     try {
       let res = await sb.from("branch_ledger").update(upd).eq("id", r.id); if (res.error) throw res.error;
@@ -4881,8 +4884,8 @@ function brExport() {
   exportCsv({ title: "دفتر المطعم " + (brrPeriod === "all" ? "(الكل)" : f + " إلى " + t), sub: "المصروفات اليومية والمبيعات النقدية", tables: [
     { title: "حسب القسم", cols: ["القسم", "الحركات", "المبلغ"], rows: by("category") },
     { title: "حسب الصنف", cols: ["الصنف", "الحركات", "المبلغ"], rows: by("item") },
-    { title: "الحركات", cols: ["التاريخ", "النوع", "البيان", "الصنف", "القسم", "المبلغ", "رصيد الشيت", "الحالة"],
-      rows: brrRows.map(r => [r.entry_date, (BR_KIND[r.kind] || [r.kind])[0], r.description, r.item, r.category, r2(r.amount), r.sheet_balance == null ? "" : r2(r.sheet_balance), (BR_ST[r.status] || [r.status])[0]]) }] });
+    { title: "الحركات", cols: ["التاريخ", "النوع", "البيان", "الصنف", "القسم", "رقم الفاتورة", "المبلغ", "رصيد الشيت", "الحالة", "ملاحظات"],
+      rows: brrRows.map(r => [r.entry_date, (BR_KIND[r.kind] || [r.kind])[0], r.description, r.item, r.category, r.invoice_no || "", r2(r.amount), r.sheet_balance == null ? "" : r2(r.sheet_balance), (BR_ST[r.status] || [r.status])[0], r.note || ""]) }] });
 }
 
 // ----------------------------------------------------------------- الاستيراد من Excel
@@ -5291,13 +5294,32 @@ const purchaseDocKey = (supplierId, invoiceNo, date) => `${Number(supplierId) ||
 // =====================================================================
 function brLineAdd(focus) {
   const tr = document.createElement("tr");
+  tr._files = [];
   tr.innerHTML = `<td><input class="fld" data-f="d" list="dlBrDesc" placeholder="ثلج، غاز، خضار…" autocomplete="off"></td>
     <td><input class="fld price" data-f="a" type="number" step="0.01" min="0" inputmode="decimal"></td>
     <td><input class="fld" data-f="i" list="dlBrItem" autocomplete="off"></td>
     <td><input class="fld" data-f="c" list="dlBrCat" autocomplete="off"></td>
+    <td><input class="fld br-inv" data-f="n" placeholder="رقم الفاتورة" autocomplete="off"></td>
     <td><select class="fld" data-f="k">${Object.entries(BR_KIND).filter(([k]) => k !== "opening").map(([k, v]) => `<option value="${k}" ${k === $("brKind").value ? "selected" : ""}>${v[0]}</option>`).join("")}</select></td>
-    <td><button class="btn sm gray" type="button" title="حذف السطر">×</button></td>`;
+    <td class="br-att"><label class="btn sm ghost doc-pick br-clip" title="إرفاق صورة الفاتورة / PDF لهذه الحركة">📎<input type="file" accept="image/*,application/pdf" multiple hidden></label><button type="button" class="btn sm gray br-unclip hidden" title="إزالة المرفق">✖</button></td>
+    <td><input class="fld br-note" data-f="o" placeholder="ملاحظة" autocomplete="off"></td>
+    <td><button class="btn sm gray br-del" type="button" title="حذف السطر">×</button></td>`;
   const f = n => tr.querySelector(`[data-f=${n}]`);
+  const fileIn = tr.querySelector(".br-clip input"), clip = tr.querySelector(".br-clip"), unclip = tr.querySelector(".br-unclip");
+  const paintClip = () => {
+    const n = tr._files.length;
+    clip.firstChild.textContent = n ? `📎 ${n}` : "📎";
+    clip.classList.toggle("on", !!n);
+    clip.title = n ? tr._files.map(x => `${x.name} (${docSizeTxt(x.size)})`).join("\n") + "\n— تُضغط الصور تلقائياً" : "إرفاق صورة الفاتورة / PDF لهذه الحركة";
+    unclip.classList.toggle("hidden", !n);
+  };
+  fileIn.onchange = () => {
+    const fs = [...fileIn.files], big = fs.find(x => /\.pdf$/i.test(x.name) && x.size > DOC_MAX_PDF);
+    if (big) { toast(`ملف PDF «${big.name}» أكبر من 3 ميجا — صوّر الفاتورة بالجوال بدلاً منه`, 6000); fileIn.value = ""; return; }
+    if (fs.length) tr._files = fs;
+    fileIn.value = ""; paintClip();
+  };
+  unclip.onclick = () => { tr._files = []; paintClip(); };
   f("d").oninput = () => {
     const c = brClassify(f("d").value, f("k").value === "income", brLearn), has = f("d").value.trim();
     if (!f("i").dataset.touched) f("i").value = has ? c.item : "";
@@ -5306,9 +5328,10 @@ function brLineAdd(focus) {
   };
   ["i", "c"].forEach(n => f(n).oninput = () => f(n).dataset.touched = f(n).value ? "1" : "");
   f("a").oninput = brLinesTot;
-  f("a").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const rows = [...$("brLines").children]; if (rows[rows.length - 1] === tr) brLineAdd(true); else rows[rows.indexOf(tr) + 1].querySelector("[data-f=d]").focus(); } };
+  const next = e => { if (e.key === "Enter") { e.preventDefault(); const rows = [...$("brLines").children]; if (rows[rows.length - 1] === tr) brLineAdd(true); else rows[rows.indexOf(tr) + 1].querySelector("[data-f=d]").focus(); } };
+  f("a").onkeydown = next; f("o").onkeydown = next; f("n").onkeydown = next;
   f("d").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); f("a").focus(); } };
-  tr.querySelector("button").onclick = () => { if ($("brLines").children.length > 1) tr.remove(); else tr.querySelectorAll("input").forEach(i => { i.value = ""; delete i.dataset.touched; }); brLinesTot(); };
+  tr.querySelector(".br-del").onclick = () => { if ($("brLines").children.length > 1) tr.remove(); else { tr.querySelectorAll("input").forEach(i => { i.value = ""; delete i.dataset.touched; }); tr._files = []; paintClip(); } brLinesTot(); };
   $("brLines").appendChild(tr);
   if (focus) f("d").focus();
 }
@@ -5317,34 +5340,33 @@ function brLinesTot() {
   $("brLinesTot").textContent = `${fmt(Math.abs(t))}${n > 1 ? ` (${n} حركات)` : ""}`;
 }
 async function brSaveMulti() {
-  const rows = [], bad = [];
+  const rows = [], files = [], bad = [];
   [...$("brLines").children].forEach((tr, i) => {
     const g = n => tr.querySelector(`[data-f=${n}]`).value.trim(), d = g("d"), a = Number(g("a") || 0);
     if (!d && !a) return;
     if (!d || !(a > 0)) { bad.push(i + 1); return; }
     const k = g("k"), c = brClassify(d, k === "income", brLearn);
-    rows.push({ entry_date: $("brDate").value || iso(new Date()), kind: k, description: d, item: g("i") || c.item, category: g("c") || c.category, amount: a,
-      note: $("brNote").value.trim() || null, source: "manual", status: brBoss() ? "approved" : "pending", seq: 9000 + new Date().getHours() * 60 + new Date().getMinutes() + rows.length });
+    const row = { entry_date: $("brDate").value || iso(new Date()), kind: k, description: d, item: g("i") || c.item, category: g("c") || c.category, amount: a,
+      invoice_no: g("n") || null, note: g("o") || null, source: "manual", status: brBoss() ? "approved" : "pending", seq: 9000 + new Date().getHours() * 60 + new Date().getMinutes() + rows.length };
+    if (tr._files.length) { row.doc_ref = "B" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + rows.length; files.push([row.doc_ref, tr._files]); }
+    rows.push(row);
   });
   if (bad.length) { toast(`أكمل البيان والمبلغ في السطر ${bad.join("، ")}`); return; }
   if (!rows.length) { toast("اكتب البيان والمبلغ"); return; }
-  const files = [...($("brFiles").files || [])];
-  let docRef = null;
-  if (files.length) { docRef = "B" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); rows.forEach(r => r.doc_ref = docRef); }
   $("brSave").disabled = true; $("brSave").textContent = "⏳ جاري الحفظ…";
   try {
-    // تجهيز المرفقات أولاً (للتأكد من صلاحيتها قبل الحفظ)
-    for (const f of files) if (/\.pdf$/i.test(f.name) && f.size > DOC_MAX_PDF) throw new Error(`ملف PDF «${f.name}» أكبر من 3 ميجا — صوّر الفاتورة بالجوال بدلاً منه`);
     const { error } = await sb.from("branch_ledger").insert(rows);
     if (error) throw error;
     await brLearnSave(rows).catch(() => {});
-    let msg = `✔ تم تسجيل ${rows.length} ${rows.length > 1 ? "حركات" : "حركة"}`;
-    if (files.length) {
-      try { const up = await docUpload("branch", docRef, files); msg += ` + ${up.length} مرفق (${docSizeTxt(up.reduce((s, x) => s + x.size, 0))})`; }
-      catch (e) { toast("⚠ حُفظت الحركات لكن تعذر رفع المرفق: " + docErr(e), 8000); }
+    let msg = `✔ تم تسجيل ${rows.length} ${rows.length > 1 ? "حركات" : "حركة"}`, nUp = 0, size = 0, fail = 0;
+    for (const [ref, fs] of files) {
+      $("brSave").textContent = `⏳ رفع المرفقات ${nUp + 1}…`;
+      try { const up = await docUpload("branch", ref, fs); nUp += up.length; size += up.reduce((s, x) => s + x.size, 0); }
+      catch (e) { fail++; toast("⚠ حُفظت الحركات لكن تعذر رفع مرفق: " + docErr(e), 8000); }
     }
-    toast(msg + (brBoss() ? "" : " — بانتظار مراجعة المدير"), 5000);
-    $("brLines").innerHTML = ""; brLineAdd(true); $("brNote").value = ""; $("brFiles").value = ""; $("brFilesInfo").textContent = ""; brLinesTot();
+    if (nUp) msg += ` + ${nUp} مرفق (${docSizeTxt(size)})`;
+    toast(msg + (brBoss() ? "" : " — بانتظار مراجعة المدير"), fail ? 9000 : 5000);
+    $("brLines").innerHTML = ""; brLineAdd(true); brLineAdd(); brLinesTot();
     loadBranch(true);
   } catch (e) { toast("⚠ " + brErr(e), 7000); }
   finally { $("brSave").disabled = false; $("brSave").textContent = "💾 تسجيل"; }
