@@ -185,6 +185,14 @@
   .wu-g label span, .wu-g label { text-align: right; }
   dialog:has(.wu-tree) { width: min(1000px, 96vw); max-width: 96vw; }
   .wu-g > label { display: flex !important; width: 100%; margin: 0; }
+  .br-lines td { padding: 3px 4px; } .br-lines input.fld, .br-lines select.fld { width: 100%; min-width: 90px; }
+  .br-lines td:first-child input { min-width: 180px; } .br-l { display: flex; gap: 6px; align-items: center; font-weight: 700; }
+  .doc-pick { cursor: pointer; } .doc-info { font-size: .82rem; } .doc-chip { padding: 2px 8px !important; font-size: .85rem; } .doc-add { padding: 2px 8px !important; opacity: .7; }
+  .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+  .doc-card { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); display: flex; flex-direction: column; }
+  .doc-th { height: 150px; display: grid; place-items: center; background: #fff; cursor: zoom-in; overflow: hidden; }
+  .doc-th img { width: 100%; height: 100%; object-fit: cover; }
+  .doc-meta { padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; word-break: break-all; } .doc-act { padding: 0 8px 8px; }
   .pm-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 14px; padding: 10px 16px 14px; }
   .pm-items label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; padding: 4px 0; cursor: pointer; }
   .pm-items label.sec { color: var(--blue); }
@@ -277,6 +285,8 @@
     <button data-g="sup" data-v="rep_sup">📑 تقارير</button>
     <button data-g="cus" data-v="customers">👥 العملاء</button>
     <button data-g="cus" data-v="rep_cus">📑 تقارير</button>
+    <button data-g="hr" data-v="hr">👔 الموظفين والرواتب</button>
+    <button data-g="hr" data-v="rep_hr">📑 تقارير</button>
     <button data-g="ext" data-v="wa">📲 طلبات واتساب</button>
     <button data-g="ext" data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
     <button data-g="branch" data-v="branch">📒 الحركات والتسجيل</button>
@@ -522,17 +532,22 @@
   </div>
   <main>
     <div class="card" id="brAddCard">
-      <h2>➕ تسجيل حركة <span class="tag amber hidden" id="brAddNote">تُرسل للمراجعة</span></h2>
-      <div class="form br-form">
-        <div><label>التاريخ</label><input type="date" class="fld" id="brDate"></div>
-        <div><label>النوع</label><select class="fld" id="brKind"><option value="expense">💸 مصروف</option><option value="income">💵 مبيعات نقدية</option><option value="deposit">🏦 إيداع بنكي</option><option value="adjust">⚖ فرق خزينة</option></select></div>
-        <div class="wide"><label>البيان (اختر من السابق أو اكتب جديد)</label><input class="fld" id="brDesc" list="dlBrDesc" placeholder="مثال: ثلج، غاز، خضار…" autocomplete="off"><datalist id="dlBrDesc"></datalist></div>
-        <div><label>المبلغ</label><input class="fld" id="brAmount" type="number" step="0.01" min="0" inputmode="decimal"></div>
-        <div><label>الصنف</label><input class="fld" id="brItem" list="dlBrItem" autocomplete="off"><datalist id="dlBrItem"></datalist></div>
-        <div><label>القسم</label><input class="fld" id="brCat" list="dlBrCat" autocomplete="off"><datalist id="dlBrCat"></datalist></div>
-        <div class="wide"><label>ملاحظة (اختياري)</label><input class="fld" id="brNote"></div>
-        <div style="align-self:end"><button class="btn green" id="brSave">💾 تسجيل</button></div>
+      <h2>➕ تسجيل حركات <span class="tag amber hidden" id="brAddNote">تُرسل للمراجعة</span></h2>
+      <div class="toolbar">
+        <label class="br-l">التاريخ <input type="date" class="fld" id="brDate"></label>
+        <label class="br-l">النوع الافتراضي <select class="fld" id="brKind"><option value="expense">💸 مصروف</option><option value="income">💵 مبيعات نقدية</option><option value="deposit">🏦 إيداع بنكي</option><option value="adjust">⚖ فرق خزينة</option></select></label>
+        <input class="fld" id="brNote" placeholder="ملاحظة لكل الحركات (اختياري) — مثل: فاتورة مورد الخضار" style="flex:1;min-width:200px">
       </div>
+      <div class="scroll"><table class="lines br-lines"><tr><th>البيان (اختر من السابق أو اكتب جديد)</th><th>المبلغ</th><th>الصنف</th><th>القسم</th><th>النوع</th><th></th></tr><tbody id="brLines"></tbody></table></div>
+      <datalist id="dlBrDesc"></datalist><datalist id="dlBrItem"></datalist><datalist id="dlBrCat"></datalist>
+      <div class="toolbar" style="margin-top:8px">
+        <button class="btn sm ghost" id="brAddLine">➕ سطر</button>
+        <label class="btn sm ghost doc-pick">📎 إرفاق صورة الفاتورة / PDF<input type="file" id="brFiles" accept="image/*,application/pdf" multiple hidden></label><span class="note doc-info" id="brFilesInfo"></span>
+        <span style="flex:1"></span>
+        <b>الإجمالي: <span id="brLinesTot">0.00</span></b>
+        <button class="btn green" id="brSave">💾 تسجيل</button>
+      </div>
+      <p class="note" style="margin:6px 0 0">اضغط Enter بعد المبلغ لسطر جديد. صورة الفاتورة تُرفق بكل الحركات المسجلة معها وتُضغط تلقائياً (حوالي 200 كيلوبايت).</p>
     </div>
     <div class="kpis" id="brKpis"></div>
     <div class="card">
@@ -755,6 +770,7 @@
         <button class="chip" data-h="moves">📝 الحركات</button>
         <button class="chip" data-h="pay">💵 مسير الرواتب</button>
         <button class="chip" data-h="stops">⏸ التوقف والعودة</button>
+        <button class="chip" onclick="showView('rep_hr')">📑 التقارير</button>
       </div>
       <div id="hrBanner"></div>
       <div class="hpane" id="h-emps">
@@ -1966,6 +1982,7 @@ async function selectReport(key, autoRun) {
     if (!catalog) await loadCatalog().catch(() => {});
     h += `<select class="fld" id="rpProduct"><option value="">— اختر الصنف —</option>${(catalog ? catalog.prods : []).map(p => `<option>${esc(p.name_ar)}</option>`).join("")}</select>`;
   }
+  if (extra === "emp") { try { await hrEnsure(); } catch (e) {} h += `<select class="fld" id="rpEmp"><option value="">— اختر الموظف —</option>${(hr ? hr.employees : []).map(e => `<option value="${e.id}">${esc(e.no)} — ${esc(e.name)}${e.active ? "" : " (موقوف)"}</option>`).join("")}</select>`; }
   if (extra === "account") { await ensureAccounts(); h += `<input class="fld" id="rpAccount" list="dlAccAll" placeholder="الحساب: اكتب الكود أو الاسم" style="min-width:280px">`; }
   if (extra === "level") h += `<select class="fld" id="rpLevel"><option value="1">المستوى 1</option><option value="2">المستوى 2</option><option value="3">المستوى 3</option><option value="4" selected>كل المستويات</option></select><label style="font-weight:600"><input type="checkbox" id="rpZero" checked> إخفاء الأصفار</label>`;
   if (extra === "jkind") h += `<select class="fld" id="rpJKind"><option value="">كل الأنواع</option><option value="manual">يدوية فقط</option><option value="auto">آلية فقط</option>${["قيد يومية", "سند قبض", "سند صرف", "تحويل", "افتتاحي", "مبيعات", "مصروفات", "مشتريات", "سداد موردين", "ورديات", "تكلفة المبيعات", "إهلاك"].map(k => `<option>${k}</option>`).join("")}</select><input class="fld" id="rpQ" placeholder="🔍 بحث في البيان">`;
@@ -1985,6 +2002,7 @@ function centerParams() {
   if (r[3] === "at") p.at = $("rpAt").value;
   else [p.from, p.to] = periodRange(rcPeriod, $("rpFrom").value, $("rpTo").value);
   if (r[4] === "product") { p.product = $("rpProduct").value; if (!p.product) throw new Error("اختر الصنف"); }
+  if (r[4] === "emp") { p.emp_id = Number($("rpEmp").value); if (!p.emp_id) throw new Error("اختر الموظف"); }
   if (r[4] === "account") { p.code = accCodeFrom($("rpAccount").value); if (!p.code) throw new Error("اختر الحساب"); }
   if (r[4] === "level") { p.level = Number($("rpLevel").value); p.hide_zero = $("rpZero").checked; }
   if (r[4] === "jkind") { p.kind = $("rpJKind").value; p.q = $("rpQ").value.trim(); }
@@ -2010,7 +2028,7 @@ function openCenter(key) {
   const grp = Object.keys(REP_GROUP).find(g => REP_GROUP[g].includes(key) && canView(g)) || "rep_sales";
   rcCurrent = key; showView(grp);
   const r = REP_INDEX[key];
-  selectReport(key, !(r[4] === "product" || r[4] === "account"));
+  selectReport(key, !(r[4] === "product" || r[4] === "account" || r[4] === "emp"));
 }
 
 // =====================================================================
@@ -2272,8 +2290,12 @@ async function loadSuppliers() {
     : '<div class="empty">لا يوجد موردون بعد — اضغط ➕ مورد جديد</div>';
   $("tblSup").querySelectorAll("tr[data-s]").forEach(tr => tr.onclick = () => supplierDialog(Number(tr.dataset.s)));
   const sName = id => (suppliers.find(s => s.supplier_id === id) || {}).name || "";
-  $("tblPurch").innerHTML = purch.length ? '<table><tr><th>التاريخ</th><th>المورد</th><th class="hm">الفاتورة</th><th>المبلغ</th></tr>' + purch.map(p => `<tr class="click" data-p="${p.purchase_id}">
-      <td class="n">${esc(p.purchase_date)}</td><td>${esc(sName(p.supplier_id))}</td><td class="hm">${esc(p.invoice_no || "")}</td><td class="n">${fmt(p.total)}</td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد فواتير</div>';
+  const pdocs = await docMap("purchase", purch.map(p => purchaseDocKey(p.supplier_id, p.invoice_no, p.purchase_date))).catch(() => ({}));
+  $("tblPurch").innerHTML = purch.length ? '<table><tr><th>التاريخ</th><th>المورد</th><th class="hm">الفاتورة</th><th>المبلغ</th><th>📎</th></tr>' + purch.map(p => { const k = purchaseDocKey(p.supplier_id, p.invoice_no, p.purchase_date), d = pdocs[k], tt = esc(sName(p.supplier_id) + " " + (p.invoice_no || ""));
+      return `<tr class="click" data-p="${p.purchase_id}">
+      <td class="n">${esc(p.purchase_date)}</td><td>${esc(sName(p.supplier_id))}</td><td class="hm">${esc(p.invoice_no || "")}</td><td class="n">${fmt(p.total)}</td>
+      <td>${d ? `<button class="btn sm ghost doc-chip" data-pdoc="${esc(k)}" data-pt="${tt}">📎${d.length > 1 ? d.length : ""}</button>` : canAct("act.suppliers") ? `<button class="btn sm ghost doc-add" data-pdoc="${esc(k)}" data-pt="${tt}" title="إرفاق صورة الفاتورة">＋📎</button>` : ""}</td></tr>`; }).join("") + "</table>" : '<div class="empty">لا توجد فواتير</div>';
+  $("tblPurch").querySelectorAll("[data-pdoc]").forEach(b => b.onclick = e => { e.stopPropagation(); docViewer("purchase", b.dataset.pdoc, "فاتورة " + b.dataset.pt, { canAdd: canAct("act.suppliers"), onChange: loadSuppliers }); });
   $("tblPurch").querySelectorAll("tr[data-p]").forEach(tr => tr.onclick = () => drill("supplier_move", "P" + tr.dataset.p, {}));
   $("tblPays").innerHTML = pays.length ? '<table><tr><th>التاريخ</th><th>المورد</th><th class="hm">الطريقة</th><th>السداد</th></tr>' + pays.map(p => `<tr>
       <td class="n">${esc(String(p.pay_date).slice(0, 10))}</td><td>${esc(sName(p.supplier_id))}</td><td class="hm">${esc(p.method || "")}</td><td class="n">${fmt(p.amount)}</td></tr>`).join("") + "</table>" : '<div class="empty">لا توجد سدادات</div>';
@@ -2346,7 +2368,8 @@ async function purchaseForm(id) {
     <div class="full"><label>المورد</label><select class="fld" id="puSup">${supOptions(id)}</select></div>
     <div><label>التاريخ</label><input class="fld" type="date" id="puDate" value="${iso(businessToday())}"></div>
     <div><label>رقم فاتورة المورد</label><input class="fld" id="puInv"></div>
-    <div class="full"><label>ملاحظات</label><input class="fld" id="puNotes"></div></div>
+    <div class="full"><label>ملاحظات</label><input class="fld" id="puNotes"></div>
+    <div class="full">${docPickerHtml("puFiles", "إرفاق صورة فاتورة المورد / PDF")}</div></div>
     <table class="lines" style="margin-top:10px"><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th><th></th></tr><tbody id="puLines"></tbody></table>
     <div class="actions"><button class="btn sm ghost" id="puAdd">➕ سطر</button><span style="font-weight:800;align-self:center">الإجمالي: <span id="puTot">0.00</span> ر.س</span></div>
     <div class="form" style="margin-top:8px"><div><label>المدفوع الآن</label><input class="fld" type="number" step="0.01" min="0" id="puPaid" value="0"></div>
@@ -2370,13 +2393,20 @@ async function purchaseForm(id) {
   };
   add(); add();
   $("puAdd").onclick = add;
+  docPickerBind("puFiles");
   $("puOk").onclick = async () => {
     const lines = [...$("puLines").querySelectorAll("tr")].map(tr => ({ v: tr.querySelector("[data-f=i]").value, q: Number(tr.querySelector("[data-f=q]").value || 0), c: Number(tr.querySelector("[data-f=c]").value || 0) })).filter(l => l.v || l.q);
     if (!lines.length || lines.some(l => !l.v || !(l.q > 0))) { toast("اختر الصنف وأدخل الكمية في كل سطر"); return; }
     const payload = { supplier_id: Number($("puSup").value), date: $("puDate").value, invoice_no: $("puInv").value.trim(), notes: $("puNotes").value.trim(),
       paid: Number($("puPaid").value || 0), pay_method: $("puM").value, items: lines.map(l => ({ type: l.v[0], id: Number(l.v.slice(2)), qty: l.q, unit_cost: l.c })) };
     if (!payload.supplier_id) { toast("اختر المورد"); return; }
-    if (await send({ kind: "purchase.add", payload })) $("dlg").close();
+    const files = [...($("puFiles").files || [])];
+    if (!(await send({ kind: "purchase.add", payload }))) return;
+    $("dlg").close();
+    if (files.length) {
+      try { const up = await docUpload("purchase", purchaseDocKey(payload.supplier_id, payload.invoice_no, payload.date), files); toast(`📎 أُرفقت صورة الفاتورة (${docSizeTxt(up.reduce((s, x) => s + x.size, 0))})`, 5000); }
+      catch (e) { toast("⚠ حُفظت الفاتورة لكن تعذر رفع المرفق: " + docErr(e), 8000); }
+    }
   };
 }
 
@@ -4535,7 +4565,7 @@ function brParseSheet(rows, opts) {
 // =====================================================================
 const BR_KIND = { expense: ["💸 مصروف", "red"], income: ["💵 مبيعات نقدية", "green"], deposit: ["🏦 إيداع", "blue"], adjust: ["⚖ فرق خزينة", "amber"], opening: ["🔓 رصيد افتتاحي", ""] };
 const BR_ST = { pending: ['⏳ بانتظار المراجعة', "amber"], approved: ["✔ معتمد", "green"], rejected: ["✖ مرفوض", "red"] };
-let brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
+let brDocs = {}, brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
 const brErr = e => (e && (e.code === "42P01" || e.code === "PGRST205" || /branch_/.test(e.message || ""))) ? "جداول دفتر المطعم غير موجودة — شغّل ملف SQL رقم 15 (15_branch_ledger.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
 const brBoss = () => canAct("branch.approve");
 const brCanCls = () => canAct("branch.approve") || canAct("branch.cats");
@@ -4572,14 +4602,10 @@ function initBranch() {
   $("brReload").onclick = () => loadBranch(true);
   $("brrReload").onclick = () => loadBranchRep(true);
   $("brDate").value = iso(new Date());
-  $("brDesc").oninput = () => {
-    const c = brClassify($("brDesc").value, $("brKind").value === "income", brLearn);
-    if (!$("brItem").dataset.touched) $("brItem").value = $("brDesc").value.trim() ? c.item : "";
-    if (!$("brCat").dataset.touched) $("brCat").value = $("brDesc").value.trim() ? c.category : "";
-    if (c.kind && c.kind !== "expense" && $("brKind").value === "expense") $("brKind").value = c.kind;
-  };
-  ["brItem", "brCat"].forEach(id => $(id).oninput = () => { $(id).dataset.touched = $(id).value ? "1" : ""; });
-  $("brSave").onclick = brSave;
+  brLineAdd(); brLineAdd(); brLinesTot();
+  $("brAddLine").onclick = () => brLineAdd(true);
+  docPickerBind("brFiles");
+  $("brSave").onclick = brSaveMulti;
   ["brQ", "brFKind", "brFCat", "brFItem", "brFStatus"].forEach(id => $(id).oninput = brRenderList);
   $("brBulkCls").onclick = () => brClassifyDlg([...brSel]);
   $("brBulkOk").onclick = () => brSetStatus([...brSel], "approved");
@@ -4619,6 +4645,7 @@ async function loadBranch(force) {
   try {
     await brLoadMeta(force);
     brRows = await all(() => sb.from("branch_ledger").select("*").gte("entry_date", f).lte("entry_date", t).order("entry_date").order("seq").order("id"));
+    brDocs = await docMap("branch", brRows.map(r => r.doc_ref)).catch(() => ({}));
   } catch (e) { $("brList").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; $("brKpis").innerHTML = ""; return; }
   brSel.clear();
   $("brKpis").innerHTML = brKpiHtml(brRows);
@@ -4664,7 +4691,7 @@ function brRenderList() {
       const mine = r.created_by && r.created_by === (myEmail || "").toLowerCase();
       const canEd = brBoss() || (canAct("branch.edit") && r.status === "pending" && mine) || brCanCls();
       return `<tr${r.status === "rejected" ? ' style="opacity:.55"' : ""}>${sel ? `<td><input type="checkbox" data-bs="${r.id}" ${brSel.has(r.id) ? "checked" : ""}></td>` : ""}
-        <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
+        <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.doc_ref && brDocs[r.doc_ref] ? ` <button class="btn sm ghost doc-chip" data-bd="${r.id}" title="صورة الفاتورة">📎${brDocs[r.doc_ref].length > 1 ? brDocs[r.doc_ref].length : ""}</button>` : ""}${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
         <td>${esc(r.item)}</td><td>${r.category === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(r.category)}</td>
         <td><span class="tag ${kc}">${kt}</span></td><td class="n" style="font-weight:700;color:${r.kind === "income" ? "var(--green)" : r.kind === "expense" ? "var(--red)" : "inherit"}">${fmt(r.amount)}</td>
         <td><span class="tag ${stc}" title="${esc((r.created_name || r.created_by || "") + (r.reviewed_by ? " • راجعها " + r.reviewed_by : ""))}">${stt}</span></td>
@@ -4675,6 +4702,7 @@ function brRenderList() {
   $("brList").querySelectorAll("[data-bs]").forEach(c => c.onchange = () => { c.checked ? brSel.add(Number(c.dataset.bs)) : brSel.delete(Number(c.dataset.bs)); upd(); });
   if ($("brAll")) $("brAll").onchange = e => { shown.forEach(r => e.target.checked ? brSel.add(r.id) : brSel.delete(r.id)); brRenderList(); };
   $("brList").querySelectorAll("[data-be]").forEach(b => b.onclick = () => brEditDlg(brRows.find(r => r.id === Number(b.dataset.be))));
+  $("brList").querySelectorAll("[data-bd]").forEach(b => b.onclick = () => brAttachFor(brRows.find(r => r.id === Number(b.dataset.bd))));
   $("brList").querySelectorAll("[data-bok]").forEach(b => b.onclick = () => brSetStatus([Number(b.dataset.bok)], "approved"));
   upd();
 }
@@ -4722,7 +4750,7 @@ function brEditDlg(r) {
     ${brBoss() ? `<div><label>الحالة</label><select class="fld" id="beSt">${Object.entries(BR_ST).map(([k, v]) => `<option value="${k}" ${k === r.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>` : ""}
     <div class="full"><label>ملاحظة</label><input class="fld" id="beNote" value="${esc(r.note || "")}" ${full ? "" : "disabled"}></div>
     <div class="full"><label style="font-weight:600"><input type="checkbox" id="beAllSame" checked> طبّق نفس الصنف والقسم على كل الحركات بنفس البيان «${esc(r.description)}» (ويتذكره النظام)</label></div>
-    <div class="full"><button class="btn green" id="beOk">💾 حفظ</button> ${brBoss() || (canAct("branch.edit") && r.status === "pending") ? '<button class="btn red" id="beDel">🗑 حذف</button>' : ""}</div></div>
+    <div class="full"><button class="btn green" id="beOk">💾 حفظ</button> <button class="btn ghost" id="beDoc">📎 صورة الفاتورة${r.doc_ref && brDocs[r.doc_ref] ? ` (${brDocs[r.doc_ref].length})` : ""}</button> ${brBoss() || (canAct("branch.edit") && r.status === "pending") ? '<button class="btn red" id="beDel">🗑 حذف</button>' : ""}</div></div>
     <p class="note">أُضيفت بواسطة ${esc(r.created_name || r.created_by || "—")}${r.source === "excel" ? " (استيراد إكسيل)" : ""}${r.reviewed_by ? " • راجعها " + esc(r.reviewed_by) : ""}</p>`);
   $("beOk").onclick = async () => {
     const upd = { item: $("beItem").value.trim(), category: $("beCat").value.trim() || "غير مصنف" };
@@ -4739,6 +4767,7 @@ function brEditDlg(r) {
       toast(`✔ تم الحفظ${n > 1 ? ` — صُنّفت ${n} حركة بنفس البيان` : ""}`); $("dlg").close(); brRefresh();
     } catch (e) { toast("⚠ " + brErr(e), 6000); }
   };
+  $("beDoc").onclick = () => brAttachFor(r);
   if ($("beDel")) $("beDel").onclick = async () => {
     if (!confirm("حذف الحركة نهائياً؟")) return;
     const { error } = await sb.from("branch_ledger").delete().eq("id", r.id);
@@ -4937,7 +4966,7 @@ const PERM_TREE = [
   ["🚚 الموردون والمشتريات", [["v.suppliers", "عرض الموردين والمشتريات", ["web.suppliers"]], ["act.suppliers", "✏ إضافة مشتريات ودفعات للموردين", ["web.suppliers"]],
     ["v.rep_sup", "📑 تقارير المشتريات", ["web.sales", "web.suppliers"]]]],
   ["👥 العملاء", [["v.customers", "عرض العملاء", ["web.customers"]], ["act.customers", "✏ إضافة وتعديل العملاء والنقاط", ["web.customers"]], ["v.rep_cus", "📑 تقارير العملاء", ["web.sales", "web.customers"]]]],
-  ["👔 الموظفين والرواتب", [["v.hr", "عرض الموظفين والرواتب", ["web.hr"]], ["act.hr", "✏ الحركات والرواتب والإيقاف", ["web.hr"]]]],
+  ["👔 الموظفين والرواتب", [["v.hr", "عرض الموظفين والرواتب", ["web.hr"]], ["act.hr", "✏ الحركات والرواتب والإيقاف", ["web.hr"]], ["v.rep_hr", "📑 تقارير الموظفين", ["web.hr"]]]],
   ["🎯 المنصات", [["v.social", "عرض المنصات", ["web.social"]], ["act.social", "✏ إضافة منشورات وروابط", ["web.social"]]]],
   ["🏪 دفتر المطعم", [["branch.view", "عرض الدفتر والتحليل", []], ["branch.add", "✏ تسجيل حركة (مصروف / مبيعات نقدية)", []], ["branch.import", "📥 استيراد شيت Excel", []],
     ["branch.edit", "✏ تعديل وحذف حركاته قبل الاعتماد", []], ["branch.cats", "🏷 تصنيف البيانات (الصنف والقسم)", []], ["branch.approve", "✔ مراجعة واعتماد ورفض الحركات (صلاحية مدير)", []]]],
@@ -5036,6 +5065,7 @@ const lrT = (title, cols, num, rows, styles) => ({ title, cols, num, rows, style
 const WD = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 async function localReport(key, p) {
+  if (key.startsWith("local:hr_")) return hrLocalReport(key, p);
   const f = p.from, t = p.to, r2 = v => Math.round(Number(v || 0) * 100) / 100;
   const base = { title: REP_INDEX[key][1], sub: `${f} ← ${t} • محسوب من بيانات الموقع (غاوي سمك + Apex + دفتر المطعم)` };
   if (key === "local:compare") {
@@ -5138,13 +5168,274 @@ async function localReport(key, p) {
   throw new Error("تقرير غير معروف");
 }
 
+// =====================================================================
+//  📎 مرفقات الفواتير — تُضغط الصور في المتصفح (~150–300 كيلوبايت) وتُحفظ في التخزين السحابي (ملف SQL رقم 16)
+// =====================================================================
+const DOC_MAX_PDF = 3 * 1024 * 1024;
+const docErr = e => (e && /doc_files|bucket|docs/i.test(e.message || "") && /exist|not found|find/i.test(e.message || "")) ? "المرفقات غير مفعّلة — شغّل ملف SQL رقم 16 (16_attachments.sql) في Supabase" : (e && e.message || String(e));
+const docSafe = s => String(s || "").replace(/[^A-Za-z0-9_-]+/g, "_").slice(0, 60) || "f";
+const docSizeTxt = n => n > 1048576 ? (n / 1048576).toFixed(1) + " م.ب" : Math.max(1, Math.round(n / 1024)) + " ك.ب";
+function docLoadImg(file) {
+  return new Promise((ok, no) => { const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => ok({ img, url }); img.onerror = () => { URL.revokeObjectURL(url); no(new Error(/hei[cf]/i.test(file.name + file.type) ? "صيغة HEIC لا يفتحها هذا المتصفح — صوّر الفاتورة من الجوال مباشرة أو حوّلها إلى JPG" : "تعذر قراءة الصورة")); };
+    img.src = url; });
+}
+async function docPrepare(file) {
+  const isImg = /^image\//.test(file.type) || /\.(jpe?g|png|webp|heic|heif|gif|bmp)$/i.test(file.name);
+  if (isImg) {
+    const { img, url } = await docLoadImg(file);
+    const enc = (max, q) => new Promise(ok => {
+      const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight)), w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = h;
+      const g = cv.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+      cv.toBlob(b => ok(b), "image/jpeg", q);
+    });
+    let blob = await enc(1600, 0.72);
+    if (blob && blob.size > 450 * 1024) blob = await enc(1280, 0.6);
+    URL.revokeObjectURL(url);
+    if (!blob) throw new Error("تعذر ضغط الصورة");
+    return { blob, name: file.name.replace(/\.[^.]+$/, "") + ".jpg", mime: "image/jpeg", orig: file.size };
+  }
+  if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+    if (file.size > DOC_MAX_PDF) throw new Error(`ملف PDF «${file.name}» حجمه ${docSizeTxt(file.size)} — الحد 3 ميجا. صوّر الفاتورة بالجوال بدلاً منه (تُضغط تلقائياً)`);
+    return { blob: file, name: file.name, mime: "application/pdf", orig: file.size };
+  }
+  throw new Error(`«${file.name}»: المسموح صور أو PDF فقط`);
+}
+async function docUpload(refType, refKey, files) {
+  const out = [], ym = iso(new Date()).slice(0, 7);
+  for (let i = 0; i < files.length; i++) {
+    const f = await docPrepare(files[i]);
+    const path = `${refType}/${ym}/${docSafe(refKey)}_${Date.now().toString(36)}${i}${f.mime === "application/pdf" ? ".pdf" : ".jpg"}`;
+    const up = await sb.storage.from("docs").upload(path, f.blob, { contentType: f.mime, upsert: false });
+    if (up.error) throw up.error;
+    const row = { ref_type: refType, ref_key: refKey, path, name: f.name, mime: f.mime, size: f.blob.size, created_by: (myEmail || "").toLowerCase() };
+    const ins = await sb.from("doc_files").insert(row);
+    if (ins.error) { await sb.storage.from("docs").remove([path]).catch(() => {}); throw ins.error; }
+    out.push(Object.assign(row, { orig: f.orig }));
+  }
+  return out;
+}
+async function docMap(refType, keys) {
+  const m = {}; keys = [...new Set(keys.filter(Boolean))];
+  for (let i = 0; i < keys.length; i += 150) {
+    const { data, error } = await sb.from("doc_files").select("*").eq("ref_type", refType).in("ref_key", keys.slice(i, i + 150));
+    if (error) return m;
+    (data || []).forEach(d => (m[d.ref_key] = m[d.ref_key] || []).push(d));
+  }
+  return m;
+}
+async function docUrl(path) {
+  const { data, error } = await sb.storage.from("docs").createSignedUrl(path, 900);
+  if (error) throw error; return data.signedUrl;
+}
+// زر اختيار الملفات مع عرض الأحجام بعد الضغط
+function docPickerHtml(id, label) {
+  return `<label class="btn sm ghost doc-pick">📎 ${label || "إرفاق صورة الفاتورة / PDF"}<input type="file" id="${id}" accept="image/*,application/pdf" multiple hidden></label><span class="note doc-info" id="${id}Info"></span>`;
+}
+function docPickerBind(id) {
+  const el = $(id); if (!el) return;
+  el.onchange = () => { const fs = [...el.files]; $(id + "Info").textContent = fs.length ? `${fs.length} ملف: ${fs.map(f => f.name).join("، ")} — تُضغط الصور تلقائياً` : ""; };
+}
+// نافذة عرض المرفقات (مع إضافة وحذف)
+async function docViewer(refType, refKey, title, opts = {}) {
+  openDlg("📎 " + (title || "المرفقات"), `<div id="dvList"><div class="wait"><span class="spin"></span>جاري التحميل…</div></div>
+    ${opts.canAdd !== false ? `<div class="toolbar" style="margin-top:10px">${docPickerHtml("dvFiles", "إضافة مرفق")}<button class="btn sm green hidden" id="dvUp">⬆ رفع</button></div>` : ""}
+    <p class="note">الصور تُضغط قبل الرفع وتُحفظ في التخزين السحابي — لا تُثقل برنامج الكاشير.</p>`);
+  const paint = async () => {
+    let list = [];
+    try { list = (await docMap(refType, [refKey]))[refKey] || []; } catch (e) {}
+    if (!list.length) { $("dvList").innerHTML = '<div class="empty">لا توجد مرفقات بعد</div>'; return; }
+    $("dvList").innerHTML = `<div class="doc-grid">${list.map(d => `<div class="doc-card" data-dp="${esc(d.path)}">
+      <div class="doc-th" data-open="${esc(d.path)}">${d.mime === "application/pdf" ? '<span style="font-size:2.4rem">📄</span>' : '<span class="spin"></span>'}</div>
+      <div class="doc-meta"><b>${esc(d.name)}</b><small class="note">${docSizeTxt(d.size)} • ${esc(String(d.created_at || "").slice(0, 10))}</small></div>
+      <div class="doc-act"><button class="btn sm" data-open="${esc(d.path)}">فتح</button>${isOwner() || canAct("branch.approve") || d.created_by === (myEmail || "").toLowerCase() ? ` <button class="btn sm red" data-ddel="${d.id}">🗑</button>` : ""}</div></div>`).join("")}</div>`;
+    list.filter(d => d.mime !== "application/pdf").forEach(async d => {
+      try { const u = await docUrl(d.path), el = $("dvList").querySelector(`.doc-th[data-open="${CSS.escape(d.path)}"]`); if (el) el.innerHTML = `<img src="${u}" alt="">`; } catch (e) {}
+    });
+    $("dvList").querySelectorAll("[data-open]").forEach(b => b.onclick = async () => { try { window.open(await docUrl(b.dataset.open), "_blank"); } catch (e) { toast("⚠ " + docErr(e)); } });
+    $("dvList").querySelectorAll("[data-ddel]").forEach(b => b.onclick = async () => {
+      if (!confirm("حذف المرفق؟")) return;
+      const d = list.find(x => x.id === Number(b.dataset.ddel));
+      const r = await sb.from("doc_files").delete().eq("id", d.id);
+      if (r.error) { toast("⚠ " + docErr(r.error)); return; }
+      await sb.storage.from("docs").remove([d.path]).catch(() => {});
+      paint(); if (opts.onChange) opts.onChange();
+    });
+  };
+  if ($("dvFiles")) {
+    docPickerBind("dvFiles");
+    $("dvFiles").addEventListener("change", () => $("dvUp").classList.toggle("hidden", !$("dvFiles").files.length));
+    $("dvUp").onclick = async () => {
+      $("dvUp").disabled = true; $("dvUp").textContent = "⏳ جاري الضغط والرفع…";
+      try { const up = await docUpload(refType, refKey, [...$("dvFiles").files]); toast(`✔ رُفع ${up.length} مرفق (${docSizeTxt(up.reduce((s, x) => s + x.size, 0))})`); $("dvFiles").value = ""; $("dvFilesInfo").textContent = ""; $("dvUp").classList.add("hidden"); paint(); if (opts.onChange) opts.onChange(); }
+      catch (e) { toast("⚠ " + docErr(e), 7000); }
+      finally { $("dvUp").disabled = false; $("dvUp").textContent = "⬆ رفع"; }
+    };
+  }
+  paint();
+}
+const purchaseDocKey = (supplierId, invoiceNo, date) => `${Number(supplierId) || 0}|${String(invoiceNo || "").trim()}|${String(date || "").slice(0, 10)}`;
+
+// =====================================================================
+//  دفتر المطعم: تسجيل عدة حركات مرة واحدة + مرفق الفاتورة
+// =====================================================================
+function brLineAdd(focus) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td><input class="fld" data-f="d" list="dlBrDesc" placeholder="ثلج، غاز، خضار…" autocomplete="off"></td>
+    <td><input class="fld price" data-f="a" type="number" step="0.01" min="0" inputmode="decimal"></td>
+    <td><input class="fld" data-f="i" list="dlBrItem" autocomplete="off"></td>
+    <td><input class="fld" data-f="c" list="dlBrCat" autocomplete="off"></td>
+    <td><select class="fld" data-f="k">${Object.entries(BR_KIND).filter(([k]) => k !== "opening").map(([k, v]) => `<option value="${k}" ${k === $("brKind").value ? "selected" : ""}>${v[0]}</option>`).join("")}</select></td>
+    <td><button class="btn sm gray" type="button" title="حذف السطر">×</button></td>`;
+  const f = n => tr.querySelector(`[data-f=${n}]`);
+  f("d").oninput = () => {
+    const c = brClassify(f("d").value, f("k").value === "income", brLearn), has = f("d").value.trim();
+    if (!f("i").dataset.touched) f("i").value = has ? c.item : "";
+    if (!f("c").dataset.touched) f("c").value = has ? c.category : "";
+    if (has && c.kind && c.kind !== "expense" && f("k").value === "expense") f("k").value = c.kind;
+  };
+  ["i", "c"].forEach(n => f(n).oninput = () => f(n).dataset.touched = f(n).value ? "1" : "");
+  f("a").oninput = brLinesTot;
+  f("a").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const rows = [...$("brLines").children]; if (rows[rows.length - 1] === tr) brLineAdd(true); else rows[rows.indexOf(tr) + 1].querySelector("[data-f=d]").focus(); } };
+  f("d").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); f("a").focus(); } };
+  tr.querySelector("button").onclick = () => { if ($("brLines").children.length > 1) tr.remove(); else tr.querySelectorAll("input").forEach(i => { i.value = ""; delete i.dataset.touched; }); brLinesTot(); };
+  $("brLines").appendChild(tr);
+  if (focus) f("d").focus();
+}
+function brLinesTot() {
+  let t = 0, n = 0; [...$("brLines").children].forEach(tr => { const a = Number(tr.querySelector("[data-f=a]").value || 0); if (a > 0) { n++; t += (tr.querySelector("[data-f=k]").value === "income" ? -1 : 1) * a; } });
+  $("brLinesTot").textContent = `${fmt(Math.abs(t))}${n > 1 ? ` (${n} حركات)` : ""}`;
+}
+async function brSaveMulti() {
+  const rows = [], bad = [];
+  [...$("brLines").children].forEach((tr, i) => {
+    const g = n => tr.querySelector(`[data-f=${n}]`).value.trim(), d = g("d"), a = Number(g("a") || 0);
+    if (!d && !a) return;
+    if (!d || !(a > 0)) { bad.push(i + 1); return; }
+    const k = g("k"), c = brClassify(d, k === "income", brLearn);
+    rows.push({ entry_date: $("brDate").value || iso(new Date()), kind: k, description: d, item: g("i") || c.item, category: g("c") || c.category, amount: a,
+      note: $("brNote").value.trim() || null, source: "manual", status: brBoss() ? "approved" : "pending", seq: 9000 + new Date().getHours() * 60 + new Date().getMinutes() + rows.length });
+  });
+  if (bad.length) { toast(`أكمل البيان والمبلغ في السطر ${bad.join("، ")}`); return; }
+  if (!rows.length) { toast("اكتب البيان والمبلغ"); return; }
+  const files = [...($("brFiles").files || [])];
+  let docRef = null;
+  if (files.length) { docRef = "B" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); rows.forEach(r => r.doc_ref = docRef); }
+  $("brSave").disabled = true; $("brSave").textContent = "⏳ جاري الحفظ…";
+  try {
+    // تجهيز المرفقات أولاً (للتأكد من صلاحيتها قبل الحفظ)
+    for (const f of files) if (/\.pdf$/i.test(f.name) && f.size > DOC_MAX_PDF) throw new Error(`ملف PDF «${f.name}» أكبر من 3 ميجا — صوّر الفاتورة بالجوال بدلاً منه`);
+    const { error } = await sb.from("branch_ledger").insert(rows);
+    if (error) throw error;
+    await brLearnSave(rows).catch(() => {});
+    let msg = `✔ تم تسجيل ${rows.length} ${rows.length > 1 ? "حركات" : "حركة"}`;
+    if (files.length) {
+      try { const up = await docUpload("branch", docRef, files); msg += ` + ${up.length} مرفق (${docSizeTxt(up.reduce((s, x) => s + x.size, 0))})`; }
+      catch (e) { toast("⚠ حُفظت الحركات لكن تعذر رفع المرفق: " + docErr(e), 8000); }
+    }
+    toast(msg + (brBoss() ? "" : " — بانتظار مراجعة المدير"), 5000);
+    $("brLines").innerHTML = ""; brLineAdd(true); $("brNote").value = ""; $("brFiles").value = ""; $("brFilesInfo").textContent = ""; brLinesTot();
+    loadBranch(true);
+  } catch (e) { toast("⚠ " + brErr(e), 7000); }
+  finally { $("brSave").disabled = false; $("brSave").textContent = "💾 تسجيل"; }
+}
+async function brAttachFor(r) {
+  if (!r.doc_ref) {
+    const ref = "L" + r.id, { error } = await sb.from("branch_ledger").update({ doc_ref: ref }).eq("id", r.id);
+    if (error) { toast("⚠ " + brErr(error)); return; }
+    r.doc_ref = ref;
+  }
+  const same = brRows.filter(x => x.doc_ref === r.doc_ref).length;
+  docViewer("branch", r.doc_ref, `مرفقات: ${r.description}${same > 1 ? ` (+${same - 1} حركة بنفس الفاتورة)` : ""}`, { onChange: () => brRefresh() });
+}
+
+// =====================================================================
+//  👔 تقارير الموظفين (من برنامج الكاشير مباشرة)
+// =====================================================================
+const HR_REPORTS = [
+  ["local:hr_summary", "👥 ملخص الموظفين والرواتب", "عدد الموظفين والرواتب حسب الوظيفة ونوع العمالة ومركز التكلفة والجنسية", "month"],
+  ["local:hr_balances", "💰 أرصدة وذمم الموظفين", "من عليه سلف أو ذمم ومن له مستحقات، وكم شهر يحتاج للسداد بالقسط الحالي", "month"],
+  ["local:hr_moves", "📝 حركات الموظفين خلال فترة", "سلف وغياب وخصومات وحوافز كل موظف (حتى 12 شهر)", "month"],
+  ["local:hr_payroll", "💵 تكلفة الرواتب شهرياً", "مسيرات الرواتب: الرواتب والمستحق والمستقطع والصافي لكل شهر (حتى 12 شهر)", "year"],
+  ["local:hr_stops", "⏸ التوقفات والإجازات", "فترات التوقف والإجازات وأيامها خلال الفترة", "year"],
+  ["hr.statement", "📄 كشف حساب موظف", "كل حركات الموظف مع الرصيد", "year", "emp"]
+];
+HR_REPORTS.forEach(r => REP_INDEX[r[0]] = r);
+if (!REPORTS.some(([g]) => g === "الموظفون")) REPORTS.push(["الموظفون", HR_REPORTS]);
+REP_GROUP.rep_hr = HR_REPORTS.map(r => r[0]);
+const hrMonths = (f, t) => { const out = []; const d = new Date(f.slice(0, 7) + "-01T12:00"), e = t.slice(0, 7); while (iso(d).slice(0, 7) <= e && out.length < 60) { out.push(iso(d).slice(0, 7)); d.setMonth(d.getMonth() + 1); } return out.slice(-12); };
+async function hrEnsure() { if (!hr) hr = await liveData("hr.data", {}); return hr; }
+async function hrLocalReport(key, p) {
+  const f = p.from, t = p.to, r2 = v => Math.round(Number(v || 0) * 100) / 100;
+  const H = await hrEnsure(), base = { title: REP_INDEX[key][1], sub: `${f} ← ${t} • من برنامج الكاشير` };
+  const act = H.employees.filter(e => e.active);
+  if (key === "local:hr_summary") {
+    const grp = k => { const o = {}; act.forEach(e => { const x = o[e[k] || "—"] || (o[e[k] || "—"] = [0, 0]); x[0]++; x[1] += n2(e.gross); }); return Object.entries(o).sort((a, b) => b[1][1] - a[1][1]).map(([n, v]) => [n, v[0], r2(v[1]), r2(v[1] / v[0])]); };
+    const cols = ["", "العدد", "الرواتب", "متوسط الراتب"], num = [false, true, true, true], tot = act.reduce((s, e) => s + n2(e.gross), 0);
+    return Object.assign(base, { sub: "الموظفون على رأس العمل الآن", summary: `${act.length} موظف • إجمالي الرواتب ${fmt(tot)} ر.س شهرياً • متوسط ${fmt(act.length ? tot / act.length : 0)}`,
+      tables: [lrT("حسب الوظيفة", ["الوظيفة", ...cols.slice(1)], num, grp("job")), lrT("حسب نوع العمالة", ["النوع", ...cols.slice(1)], num, grp("emp_type")),
+        lrT("حسب مركز التكلفة", ["المركز", ...cols.slice(1)], num, grp("center")), lrT("حسب الجنسية", ["الجنسية", ...cols.slice(1)], num, grp("nationality")),
+        lrT("حسب طريقة الصرف", ["الطريقة", ...cols.slice(1)], num, grp("pay_method")),
+        lrT("الموظفون", ["الرقم", "الموظف", "الوظيفة", "النوع", "الالتحاق", "الراتب", "الحالة"], [false, false, false, false, false, true, false],
+          H.employees.map(e => [e.no, e.name, e.job, e.emp_type, e.join_date || "", r2(e.gross), !e.active ? "موقوف" : e.stopped ? "متوقف: " + e.stopped : "على رأس العمل"]))] });
+  }
+  if (key === "local:hr_balances") {
+    const L = H.employees.filter(e => n2(e.balance) !== 0).sort((a, b) => n2(a.balance) - n2(b.balance));
+    const owe = L.filter(e => n2(e.balance) < 0), due = L.filter(e => n2(e.balance) > 0);
+    const rows = L.map(e => [e.name, e.job, r2(e.gross), n2(e.balance) < 0 ? r2(-e.balance) : 0, n2(e.balance) > 0 ? r2(e.balance) : 0, r2(e.installment),
+      n2(e.balance) < 0 && n2(e.installment) > 0 ? Math.ceil(-n2(e.balance) / n2(e.installment)) + " شهر" : n2(e.balance) < 0 ? "⚠ بدون قسط" : "—", e.active ? "" : "موقوف"]);
+    return Object.assign(base, { sub: "الأرصدة الحالية", summary: `على الموظفين (سلف وذمم): ${fmt(owe.reduce((s, e) => s - n2(e.balance), 0))} ر.س (${owe.length}) • للموظفين: ${fmt(due.reduce((s, e) => s + n2(e.balance), 0))} ر.س (${due.length})`,
+      ok: !owe.some(e => !n2(e.installment)), tables: [lrT("الأرصدة", ["الموظف", "الوظيفة", "الراتب", "عليه", "له", "القسط الشهري", "مدة السداد", ""], [false, false, true, true, true, true, false, false], rows)] });
+  }
+  if (key === "local:hr_moves") {
+    const months = hrMonths(f, t), per = {}, kinds = {};
+    for (const m of months) {
+      const r = await liveData("hr.moves", { month: m, emp_id: 0 });
+      (r.moves || []).forEach(x => {
+        if (x.kind === "salary" || x.kind === "pay") return;
+        kinds[x.kind] = x.kind_title || x.kind;
+        const e = per[x.name] || (per[x.name] = {}); const k = e[x.kind] || (e[x.kind] = { a: 0, d: 0, n: 0 }); k.a += n2(x.amount); k.d += n2(x.days); k.n++;
+      });
+    }
+    const ks = Object.keys(kinds);
+    const rows = Object.entries(per).map(([n, e]) => [n, ...ks.map(k => e[k] ? fmt(e[k].a) + (e[k].d ? ` (${e[k].d} يوم)` : "") : ""), ks.reduce((s, k) => s + (e[k] ? e[k].n : 0), 0)]);
+    const totals = ["الإجمالي", ...ks.map(k => fmt(Object.values(per).reduce((s, e) => s + (e[k] ? e[k].a : 0), 0))), ""];
+    rows.push(totals);
+    return Object.assign(base, { sub: base.sub + ` • الأشهر: ${months[0]} ← ${months[months.length - 1]}`,
+      tables: [lrT("الحركات حسب الموظف", ["الموظف", ...ks.map(k => kinds[k]), "عدد الحركات"], [false, ...ks.map(() => false), true], rows, rows.map((r, i) => i === rows.length - 1 ? "T" : ""))] });
+  }
+  if (key === "local:hr_payroll") {
+    const months = hrMonths(f, t), rows = [], T = { g: 0, a: 0, d: 0, n: 0 };
+    for (const m of months) {
+      const r = await liveData("hr.payroll", { month: m }), L = r.lines || [], s = k => L.reduce((a, x) => a + n2(x[k]), 0);
+      T.g += s("gross"); T.a += s("accrual"); T.d += s("debt"); T.n += s("net");
+      rows.push([r.month_name || m, L.length, r2(s("gross")), r2(s("abs_amt")), r2(s("deduct")), r2(s("bonus")), r2(s("accrual")), r2(s("debt")), r2(s("net")), r2(s("bank")), r2(s("cash")),
+        L.length && L.every(x => x.paid) ? "✔ مصروف" : L.some(x => x.approved) ? "🧾 معتمد" : "⏳ لم يُعتمد"]);
+    }
+    rows.push(["الإجمالي", "", r2(T.g), "", "", "", r2(T.a), r2(T.d), r2(T.n), "", "", ""]);
+    return Object.assign(base, { summary: `إجمالي صافي الرواتب: ${fmt(T.n)} ر.س • متوسط الشهر ${fmt(months.length ? T.n / months.length : 0)}`,
+      tables: [lrT("المسيرات", ["الشهر", "الموظفون", "الرواتب", "الغياب والتوقف", "الخصومات", "الحوافز", "المستحق", "المستقطع", "الصافي", "بنك", "نقدي", "الحالة"],
+        [false, true, true, true, true, true, true, true, true, true, true, false], rows, rows.map((r, i) => i === rows.length - 1 ? "T" : ""))] });
+  }
+  if (key === "local:hr_stops") {
+    const today = iso(businessToday());
+    const L = (H.stops || []).filter(s => (s.return_date || "9999") >= f && (s.last_day || "") <= t);
+    const days = s => { const a = new Date((s.last_day > f ? s.last_day : f) + "T12:00"), b = new Date(((s.return_date || today) < t ? (s.return_date || today) : t) + "T12:00"); return Math.max(0, Math.round((b - a) / 864e5)); };
+    const rows = L.map(s => [s.name, s.reason, s.last_day, s.return_date || "غير محدد", days(s), s.paid ? "مدفوعة" : "تُخصم", !s.return_date || s.return_date > today ? "⏸ حالياً" : "", s.note || ""]);
+    return Object.assign(base, { summary: `${L.length} فترة توقف • ${L.reduce((s, x) => s + days(x), 0)} يوم داخل الفترة`,
+      tables: [lrT("التوقفات", ["الموظف", "السبب", "آخر يوم عمل", "العودة", "الأيام في الفترة", "الراتب", "", "ملاحظات"], [false, false, false, false, true, false, false, false], rows)] });
+  }
+  throw new Error("تقرير غير معروف");
+}
+
 const WEB_PERMS = [
   ["web.sales", "📊 المبيعات والتقارير والطلبات"], ["web.purchase", "🛒 طلبات الشراء"], ["web.count", "⚖ الجرد"], ["web.stock", "📦 المخزون والمواد الخام"],
   ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
   ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"], ["web.screens", "📺 شاشات العرض"]];
 // الشاشة ← الصلاحيات التي تفتحها
 const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], track: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
-  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], apex: ["web.sales"], total: ["web.sales"], log: ["*"], rep_sales: ["web.sales"], rep_menu: ["web.sales", "web.stock"], rep_acc: ["web.accounts"], rep_sup: ["web.suppliers"], rep_cus: ["web.customers"], branch: ["branch.view"], branchrep: ["branch.view"], branchimp: ["branch.import"] };
+  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], apex: ["web.sales"], total: ["web.sales"], log: ["*"], rep_sales: ["web.sales"], rep_menu: ["web.sales", "web.stock"], rep_acc: ["web.accounts"], rep_sup: ["web.suppliers"], rep_cus: ["web.customers"], rep_hr: ["web.hr"], branch: ["branch.view"], branchrep: ["branch.view"], branchimp: ["branch.import"] };
 let me = { role: "owner", perms: [] };
 const isOwner = () => me.role !== "staff";
 const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
