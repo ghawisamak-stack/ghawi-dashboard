@@ -173,6 +173,18 @@
   .pm-grp > summary { list-style: none; cursor: pointer; padding: 10px 14px; font-weight: 800; display: flex; align-items: center; gap: 10px; background: var(--bg); }
   .pm-grp > summary::-webkit-details-marker { display: none; }
   .pm-grp > summary .cnt { margin-inline-start: auto; font-size: .82rem; font-weight: 700; color: var(--muted); }
+  .br-form { grid-template-columns: repeat(4, 1fr); } .br-form .wide { grid-column: span 2; }
+  @media (max-width: 900px) { .br-form { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 640px) { .br-form { grid-template-columns: 1fr; } .br-form .wide { grid-column: auto; } }
+  .wu-tree { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; max-height: 52vh; overflow: auto; padding: 4px; }
+  .wu-g { border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; background: var(--bg); }
+  .wu-g label { display: flex; gap: 7px; align-items: flex-start; font-weight: 600; padding: 3px 0; cursor: pointer; font-size: .92rem; }
+  .wu-g label.wu-h { font-weight: 800; color: var(--navy); border-bottom: 1px dashed var(--line); margin-bottom: 4px; padding-bottom: 6px; }
+  .wu-g label.act { padding-inline-start: 14px; color: var(--sea); }
+  .wu-g input[type=checkbox], .wu-g input { width: auto !important; flex: none; margin: 3px 0 0; min-width: 0; }
+  .wu-g label span, .wu-g label { text-align: right; }
+  dialog:has(.wu-tree) { width: min(1000px, 96vw); max-width: 96vw; }
+  .wu-g > label { display: flex !important; width: 100%; margin: 0; }
   .pm-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 14px; padding: 10px 16px 14px; }
   .pm-items label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; padding: 4px 0; cursor: pointer; }
   .pm-items label.sec { color: var(--blue); }
@@ -235,7 +247,7 @@
 
   <nav class="tabs" id="tabs" aria-label="الأقسام">
     <button data-g="sales" data-v="total">🧮 <span>الإجمالي العام</span></button>
-    <button data-g="ops" data-v="center">📑 <span>مركز التقارير</span><i class="gbadge hidden"></i></button>
+    <button data-g="ops" data-v="track">📑 <span>مركز التقارير</span><i class="gbadge hidden"></i></button>
     <button data-g="menu" data-v="products">🍽 <span>الأصناف والأسعار</span></button>
     <button data-g="acc" data-v="acc">📒 <span>الحسابات</span></button>
     <button data-g="sup" data-v="suppliers">🚚 <span>الموردون والمشتريات</span></button>
@@ -243,22 +255,33 @@
     <button data-g="hr" data-v="hr">👔 <span>الموظفين والرواتب</span></button>
     <button data-g="social" data-v="social">🎯 <span>المنصات</span></button>
     <button data-g="ext" data-v="wa">🛍 <span>طلبات خارجية</span><i class="gbadge hidden"></i></button>
+    <button data-g="branch" data-v="branch">🏪 <span>دفتر المطعم</span></button>
     <button data-g="admin" data-v="admin">🛡 <span>الإدارة</span></button>
   </nav>
   <nav class="subtabs hidden" id="subtabs" aria-label="الأقسام الفرعية">
     <button data-g="sales" data-v="total">🧮 الإجمالي العام</button>
     <button data-g="sales" data-v="apex">🏪 مبيعات Apex</button>
     <button data-g="sales" data-v="reports">🐟 لوحة غاوي سمك</button>
-    <button data-g="ops" data-v="center">📑 مركز التقارير</button>
+    <button data-g="sales" data-v="rep_sales">📑 تقارير</button>
     <button data-g="ops" data-v="track">⏱ التجهيز</button>
-    <button data-g="ops" data-v="expense">💸 المصروف</button>
     <button data-g="ops" data-v="log">📨 سجل التعديلات <span class="badge hidden" id="pendingBadge"></span></button>
     <button data-g="menu" data-v="products">🍽 الأصناف والأسعار</button>
     <button data-g="menu" data-v="offers">🎁 العروض والكوبونات</button>
     <button data-g="menu" data-v="stock">📦 المخزون</button>
     <button data-g="menu" data-v="inv">📋 الجرد والطلبات</button>
+    <button data-g="menu" data-v="rep_menu">📑 تقارير</button>
+    <button data-g="acc" data-v="acc">📒 الحسابات</button>
+    <button data-g="acc" data-v="expense">💸 المصروف</button>
+    <button data-g="acc" data-v="rep_acc">📑 تقارير</button>
+    <button data-g="sup" data-v="suppliers">🚚 الموردون والمشتريات</button>
+    <button data-g="sup" data-v="rep_sup">📑 تقارير</button>
+    <button data-g="cus" data-v="customers">👥 العملاء</button>
+    <button data-g="cus" data-v="rep_cus">📑 تقارير</button>
     <button data-g="ext" data-v="wa">📲 طلبات واتساب</button>
     <button data-g="ext" data-v="zid">🛒 متجر زد <span class="badge hidden" id="zidBadge"></span></button>
+    <button data-g="branch" data-v="branch">📒 الحركات والتسجيل</button>
+    <button data-g="branch" data-v="branchrep">📊 التحليل والتصنيف</button>
+    <button data-g="branch" data-v="branchimp">📥 استيراد Excel</button>
     <button data-g="admin" data-v="admin">🛡 الإدارة</button>
     <button data-g="admin" data-v="screens">📺 الشاشات</button>
   </nav>
@@ -486,6 +509,86 @@
       <div id="sgProgress" class="note"></div>
       <div id="sgSlides"></div>
       <p class="note">• الصور تُصغَّر تلقائياً لمقاس التلفزيون قبل الرفع. • سعر الصنف واسمه يتحدثان على الشاشة تلقائياً عند تعديلهما في البرنامج. • 📌 تثبيت = تعرض الشاشة هذه الشريحة فقط (عرض عاجل) حتى إلغاء التثبيت. • حدد (وقت العرض) لعروض الفطور أو الغداء أو عروض نهاية الأسبوع.</p>
+    </div>
+  </main></section>
+
+  <!-- ================= دفتر المطعم (مسئول المطعم) ================= -->
+  <section class="view" id="v-branch">
+  <div class="bar" id="brPeriods">
+    <button class="chip" data-p="today">اليوم</button><button class="chip" data-p="yesterday">أمس</button><button class="chip" data-p="week">7 أيام</button>
+    <button class="chip on" data-p="month">هذا الشهر</button><button class="chip" data-p="lastmonth">الشهر الماضي</button><button class="chip" data-p="year">هذه السنة</button><button class="chip" data-p="all">الكل</button><button class="chip" data-p="custom">فترة / يوم</button>
+    <span id="brCustom" class="hidden"><input type="date" id="brFrom"> ← <input type="date" id="brTo"></span>
+    <span style="flex:1"></span><button class="btn sm ghost" id="brReload">⟳</button>
+  </div>
+  <main>
+    <div class="card" id="brAddCard">
+      <h2>➕ تسجيل حركة <span class="tag amber hidden" id="brAddNote">تُرسل للمراجعة</span></h2>
+      <div class="form br-form">
+        <div><label>التاريخ</label><input type="date" class="fld" id="brDate"></div>
+        <div><label>النوع</label><select class="fld" id="brKind"><option value="expense">💸 مصروف</option><option value="income">💵 مبيعات نقدية</option><option value="deposit">🏦 إيداع بنكي</option><option value="adjust">⚖ فرق خزينة</option></select></div>
+        <div class="wide"><label>البيان (اختر من السابق أو اكتب جديد)</label><input class="fld" id="brDesc" list="dlBrDesc" placeholder="مثال: ثلج، غاز، خضار…" autocomplete="off"><datalist id="dlBrDesc"></datalist></div>
+        <div><label>المبلغ</label><input class="fld" id="brAmount" type="number" step="0.01" min="0" inputmode="decimal"></div>
+        <div><label>الصنف</label><input class="fld" id="brItem" list="dlBrItem" autocomplete="off"><datalist id="dlBrItem"></datalist></div>
+        <div><label>القسم</label><input class="fld" id="brCat" list="dlBrCat" autocomplete="off"><datalist id="dlBrCat"></datalist></div>
+        <div class="wide"><label>ملاحظة (اختياري)</label><input class="fld" id="brNote"></div>
+        <div style="align-self:end"><button class="btn green" id="brSave">💾 تسجيل</button></div>
+      </div>
+    </div>
+    <div class="kpis" id="brKpis"></div>
+    <div class="card">
+      <h2>📒 الحركات <span class="tag" id="brCount"></span></h2>
+      <div class="toolbar">
+        <input type="search" class="fld" id="brQ" placeholder="🔍 بحث في البيان" style="flex:1;min-width:160px">
+        <select class="fld" id="brFKind"><option value="">كل الأنواع</option><option value="expense">مصروفات</option><option value="income">مبيعات نقدية</option><option value="deposit">إيداعات</option><option value="adjust">فرق خزينة</option><option value="opening">رصيد افتتاحي</option></select>
+        <select class="fld" id="brFCat"><option value="">كل الأقسام</option></select>
+        <select class="fld" id="brFItem"><option value="">كل الأصناف</option></select>
+        <select class="fld" id="brFStatus"><option value="">كل الحالات</option><option value="pending">⏳ بانتظار المراجعة</option><option value="approved">✔ معتمد</option><option value="rejected">✖ مرفوض</option></select>
+      </div>
+      <div class="toolbar hidden" id="brBulk">
+        <span class="tag" id="brSelCount"></span>
+        <button class="btn sm" id="brBulkCls">🏷 تصنيف المحدد</button>
+        <button class="btn sm green" id="brBulkOk">✔ اعتماد المحدد</button>
+        <button class="btn sm red" id="brBulkNo">✖ رفض المحدد</button>
+        <button class="btn sm ghost" id="brBulkClear">إلغاء التحديد</button>
+      </div>
+      <div class="scroll" id="brList" style="max-height:620px"></div>
+    </div>
+    <p class="note">• «الصنف» = الشيء نفسه (ثلج، غاز، خبز…) و«القسم» = المجموعة (ثلج وغاز، خبز ومخبوزات…). عند تصنيف بيان مرة يتذكره النظام ويصنّف الحركات القادمة تلقائياً. • حركات مسئول المطعم تظهر «بانتظار المراجعة» حتى يعتمدها المدير.</p>
+  </main>
+  </section>
+
+  <section class="view" id="v-branchrep">
+  <div class="bar" id="brrPeriods">
+    <button class="chip" data-p="today">اليوم</button><button class="chip" data-p="yesterday">أمس</button><button class="chip" data-p="week">7 أيام</button>
+    <button class="chip on" data-p="month">هذا الشهر</button><button class="chip" data-p="lastmonth">الشهر الماضي</button><button class="chip" data-p="year">هذه السنة</button><button class="chip" data-p="all">الكل</button><button class="chip" data-p="custom">فترة / يوم</button>
+    <span id="brrCustom" class="hidden"><input type="date" id="brrFrom"> ← <input type="date" id="brrTo"></span>
+    <select class="fld" id="brrCat"><option value="">كل الأقسام</option></select>
+    <select class="fld" id="brrItem"><option value="">كل الأصناف</option></select>
+    <span style="flex:1"></span><button class="btn sm ghost" id="brrExport">📥 تصدير</button><button class="btn sm ghost" id="brrReload">⟳</button>
+  </div>
+  <main>
+    <div class="kpis" id="brrKpis"></div>
+    <div class="grid">
+      <div class="card"><h2>المصروفات والمبيعات النقدية حسب اليوم</h2><div class="chart"><canvas id="brrChDays"></canvas></div></div>
+      <div class="card"><h2>المصروفات حسب القسم</h2><div class="chart"><canvas id="brrChCats"></canvas></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>الأقسام <small class="note">(اضغط على القسم لعرض أصنافه)</small></h2><div class="scroll" id="brrCats"></div></div>
+      <div class="card"><h2>الأصناف <span class="tag" id="brrItemsTag"></span></h2><div class="scroll" id="brrItems"></div></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>⚠ بيانات غير مصنفة <span class="tag amber" id="brrUnTag"></span></h2><p class="note">صنّف البيان مرة واحدة ← تُصنَّف كل حركاته السابقة والقادمة.</p><div class="scroll" id="brrUn"></div></div>
+      <div class="card"><h2>📅 الأيام (الخزينة)</h2><div class="scroll" id="brrDays"></div></div>
+    </div>
+  </main>
+  </section>
+
+  <section class="view" id="v-branchimp"><main>
+    <div class="card">
+      <h2>📥 استيراد شيت المصروفات اليومية (Excel)</h2>
+      <p class="note">الأعمدة بالترتيب: <b>التاريخ | البيان | المبيعات النقدية | المصروفات اليومية | رصيد الخزينة</b> — يمكن رفع نفس الملف كل فترة بعد الإضافة عليه: الحركات المستوردة سابقاً لا تتكرر.</p>
+      <div class="toolbar"><input type="file" id="brFile" accept=".xlsx,.xls,.xlsm,.csv" class="fld"><button class="btn green hidden" id="brImport">📥 استيراد</button></div>
+      <div id="brPreview"></div>
     </div>
   </main></section>
 
@@ -952,7 +1055,8 @@ async function start() {
   myEmail = session.user.email;
   let v = "total";
   try { v = localStorage.getItem("gs-view2") || "total"; } catch (e) {}
-  if (!canView(v)) v = Object.keys(VIEW_PERMS).find(canView) || "log";
+  if (v === "center") v = "rep_sales";
+  if (!canView(v)) v = [...document.querySelectorAll("#tabs button, #subtabs button")].map(b => b.dataset.v).find(canView) || "log";
   showView(v);
   updatePendingBadge();
   clearInterval(refreshTimer);
@@ -1291,14 +1395,22 @@ function showView(v) {
   if (typeof canView === "function" && !canView(v)) { toast("هذه الشاشة غير مسموحة لك"); return; }
   view = v;
   navSync(v);
-  document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + v));
+  const sec = REP_GROUP[v] ? "center" : v;
+  document.querySelectorAll(".view").forEach(x => x.classList.toggle("on", x.id === "v-" + sec));
   if (v === "reports") load();
   if (v === "products") loadProducts();
   if (v === "offers") loadOffers();
   if (v === "zid") loadZid();
   if (v === "wa") loadWa();
   if (v === "log") loadLog();
-  if (v === "center" && !rcCurrent) { renderCenterList(); selectReport("cashier", true); }
+  if (REP_GROUP[v]) {
+    rcFilter = v;
+    const list = REP_GROUP[v];
+    if (!rcCurrent || !list.includes(rcCurrent)) selectReport(list[0], true); else renderCenterList();
+  }
+  if (v === "branch") loadBranch();
+  if (v === "branchrep") loadBranchRep();
+  if (v === "branchimp") { initBranch(); if (!canAct("branch.import")) $("brPreview").innerHTML = '<div class="empty">ليس لديك صلاحية الاستيراد</div>'; }
   if (v === "customers") loadCustomers();
   if (v === "suppliers") loadSuppliers();
   if (v === "stock") loadStockView();
@@ -1317,6 +1429,8 @@ function showView(v) {
 // ----- إرسال أمر للبرنامج ومتابعة تطبيقه -----
 const watching = new Map();
 async function send(list) {
+  { const bad = (Array.isArray(list) ? list : [list]).find(c => { const a = kindAct(c.kind); return a && !canAct(a); });
+    if (bad) { toast("⛔ ليس لديك صلاحية هذا الإجراء — راجع المدير", 5000); return false; } }
   const rows = (Array.isArray(list) ? list : [list]).map(c => ({ kind: c.kind, payload: c.payload }));
   const { data, error } = await sb.from("pos_commands").insert(rows).select("id");
   if (error) { toast("⚠ تعذر الإرسال: " + error.message, 6000); return false; }
@@ -1805,6 +1919,7 @@ const REPORTS = [
     ["acc.vat", "🧾 إقرار ضريبة القيمة المضافة", "المخرجات والمدخلات وصافي الضريبة", "quarter"]
   ]]
 ];
+window.REPORTS_ALL = REPORTS;
 const REP_INDEX = {};
 REPORTS.forEach(([, items]) => items.forEach(r => REP_INDEX[r[0]] = r));
 let rcCurrent = null, rcPeriod = "today";
@@ -1822,6 +1937,8 @@ function periodRange(p, f, t) {
   }
 }
 function renderCenterList() {
+  const allow = REP_GROUP[rcFilter] || null;
+  const REPORTS = allow ? window.REPORTS_ALL.map(([g, items]) => [g, items.filter(r => allow.includes(r[0]))]).filter(([, items]) => items.length) : window.REPORTS_ALL;
   $("rcList").innerHTML = `<select class="fld mo" id="rcSelect">${REPORTS.map(([g, items]) => `<optgroup label="${g}">` + items.map(r => `<option value="${r[0]}" ${rcCurrent === r[0] ? "selected" : ""}>${r[1]}</option>`).join("") + "</optgroup>").join("")}</select>` +
     REPORTS.map(([g, items]) => `<div class="rc-group">${g}</div>` +
     items.map(r => `<button class="rc-item${rcCurrent === r[0] ? " on" : ""}" data-r="${r[0]}">${r[1]}</button>`).join("")).join("");
@@ -1880,9 +1997,9 @@ async function runCenter() {
   let kind, p;
   try { [kind, p] = centerParams(); } catch (e) { toast(e.message); return; }
   const seq = ++rcSeq;
-  $("rcResult").innerHTML = `<div class="wait"><span class="spin"></span>يُجهَّز التقرير في برنامج الكاشير…</div>`;
+  $("rcResult").innerHTML = `<div class="wait"><span class="spin"></span>${kind.startsWith("local:") ? "يُحسب التقرير…" : "يُجهَّز التقرير في برنامج الكاشير…"}</div>`;
   try {
-    const res = await getReport(kind, p);
+    const res = kind.startsWith("local:") ? await localReport(kind, p) : await getReport(kind, p);
     if (seq !== rcSeq) return;
     mountReport($("rcResult"), res, { params: p, kind });
   } catch (e) {
@@ -1890,7 +2007,8 @@ async function runCenter() {
   }
 }
 function openCenter(key) {
-  showView("center");
+  const grp = Object.keys(REP_GROUP).find(g => REP_GROUP[g].includes(key) && canView(g)) || "rep_sales";
+  rcCurrent = key; showView(grp);
   const r = REP_INDEX[key];
   selectReport(key, !(r[4] === "product" || r[4] === "account"));
 }
@@ -4286,17 +4404,757 @@ function ttExport() {
     { title: "الأصناف", cols: ["الصنف", "غاوي سمك", "Apex", "الكمية", "الإجمالي"], rows: L.items.map(i => [i.name, r2(i.pos), r2(i.apex), +(i.pq + i.aq).toFixed(3), r2(i.pos + i.apex)]) }] });
 }
 
+// ===== قراءة شيت المصروفات اليومية وبيان الدخل (يعمل في المتصفح وفي الاختبار) =====
+const BR_RULES = [
+  // [كلمات, الصنف, القسم, النوع]
+  [/^(النقدي|نقدي|نقديه|نقدية|نقدى|مبيعات نقد)/, "مبيعات نقدية", "مبيعات نقدية", "income"],
+  [/ايداع|إيداع|تحويل بنك|ايداع بنك/, "إيداع بنكي", "إيداعات بنكية", "deposit"],
+  [/فرق (خزين|خزن|صندوق)|^عجز|^زياده|^زيادة/, "فرق خزينة", "فرق خزينة", "adjust"],
+  [/ثلج|ثلخ/, "ثلج", "ثلج وغاز", "expense"],
+  [/غاز|حوض للغاز/, "غاز", "ثلج وغاز", "expense"],
+  [/خبز|عيش|صامول|سنبل|سنابل|كود[وه]|فينو/, "خبز", "خبز ومخبوزات", "expense"],
+  [/مياه|مايه|ماء|قوارير|قارور/, "مياه", "مياه", "expense"],
+  [/سمك|بلطي|بلطى|جمبري|جمبرى|حبار|كاليمار|سلمون|هامور|شعور|ابوزيد|خيرات الصيادين/, "أسماك", "أسماك ومأكولات بحرية", "expense"],
+  [/خضار|طماطم|كزبر|ليمون|بصل|ثوم|بقدونس|فلفل|خيار|بطاطس|ثمرات الربيع|فواكه|جرجير/, "خضار", "خضار وفواكه", "expense"],
+  [/فراخ|دجاج|اكل استاف|أكل استاف|غدا|غداء|عشاء|فطار|فطور|استاف|إصطاف|اصطاف/, "وجبات الموظفين", "وجبات الموظفين", "expense"],
+  [/راتب|رواتب|سلف|سلفه|سلفة|مكافأ|مكافا|اجر|أجر|يوميه|يومية/, "رواتب وسلف", "رواتب وسلف", "expense"],
+  [/توصيل|توصل|بنزين|تاكسى|تاكسي|مواصلات|دباب|اوبر|كريم/, "توصيل ومواصلات", "توصيل ومواصلات", "expense"],
+  [/منظف|تنظيف|تنضيف|غسيل|معطر|كلور|صابون|مناديل|موبى|موبي|الدرسوني/, "نظافة", "نظافة ومنظفات", "expense"],
+  [/تغليف|ديكسوباك|بلاستيك|ورقيات|علب|اكياس|أكياس|قصدير|استيكر|سلوفان|كاسات|الماس/, "تغليف", "تغليف ومستهلكات", "expense"],
+  [/توابل|بهارات|طحين|مكرون|دقيق|زيت|ارز|أرز|رز|سكر|ملح|خل|صوص|مايونيز|كاتشب|امتياز الجمل|عدس|جبن|لبن|زبد|بيض|ردة|رده|شاي|قهو|كرك|كابتشينو|بيبسي|مشروب/, "مواد غذائية", "مواد غذائية", "expense"],
+  [/صيان|تركيب|سيليكون|ادوات|أدوات|سباك|كهرب|نجار|تصليح|اصلاح|إصلاح|مسن|سكين|حوض|شبكة صرف|كاميرا|تكييف|مكيف|ثلاجه|ثلاجة|دبابيس|دفتر|اقلام|أقلام/, "صيانة وأدوات", "صيانة وأدوات", "expense"],
+  [/ايجار|إيجار|كهرباء|فاتورة مياه|انترنت|إنترنت|جوال|شحن رصيد|سكن/, "إيجارات وفواتير", "إيجارات وفواتير", "expense"],
+  [/عامل المطبخ|عامل مطبخ|كاشير|ويتر/, "رواتب وسلف", "رواتب وسلف", "expense"],
+  [/كنزا|كينزا|كنزه|بيبسي|ميرندا|سفن/, "مشروبات", "مواد غذائية", "expense"],
+  [/^خس|خضروات/, "خضار", "خضار وفواكه", "expense"],
+  [/فحم/, "فحم", "ثلج وغاز", "expense"],
+  [/طفاي|يونيفورم|زي موحد|كشاف|بروجيكتور|بوجيكتور|مكنس|شرشوب|اسمنت|مسمار|ونش|ديكور|شاحن|استاند|سرير|دولاب|مرتبه/, "صيانة وتجهيزات", "صيانة وأدوات", "expense"],
+  [/نت شهر|باقة|باقه|فاتورة نت/, "إنترنت واتصالات", "إيجارات وفواتير", "expense"],
+  [/منيو|طباعة|طباعه/, "دعاية وطباعة", "دعاية وطباعة", "expense"],
+  [/فاتور|شركه|شركة|مؤسسه|مؤسسة|مشتريات|دفعه ل|دفعة ل|جمله|الجملة/, "مشتريات موردين", "مشتريات موردين", "expense"],
+  [/صدق/, "صدقة", "صدقات", "expense"],
+  [/شبك|بالشبكه|بالشبكة/, "مدفوع بالشبكة", "مدفوع بالشبكة", "expense"],
+  [/خصم عميل|خصم/, "خصم عميل", "خصومات", "expense"],
+];
+const brNorm = s => String(s == null ? "" : s).normalize("NFKC").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/\s+/g, " ").trim();
+// learned: { normalized description -> {item, category} } من التصنيفات السابقة
+function brClassify(desc, isIncome, learned) {
+  const d = String(desc || "").trim(), n = brNorm(d);
+  if (isIncome) return { kind: "income", item: "مبيعات نقدية", category: "مبيعات نقدية" };
+  if (learned && learned[n]) return Object.assign({ kind: "expense" }, learned[n]);
+  for (const [re, item, cat, kind] of BR_RULES) {
+    if (re.test(d) || re.test(n)) {
+      if (kind === "income") continue; // الإيراد يُعرف من عمود المبيعات فقط
+      return { kind, item, category: cat };
+    }
+  }
+  return { kind: "expense", item: d || "بدون بيان", category: "غير مصنف" };
+}
+
+// rows: مصفوفة صفوف (A..E) كقيم خام، dateInfo(cell) يعيد {y,m,d} أو null
+function brParseSheet(rows, opts) {
+  opts = opts || {};
+  const learned = opts.learned || {};
+  const out = [], warn = [];
+  const ymd = (y, m, d) => (m >= 1 && m <= 12 && d >= 1 && d <= 31 && y > 2000 && y < 2100) ? new Date(Date.UTC(y, m - 1, d)) : null;
+  const strDates = s => {
+    const m = String(s).trim().match(/^(\d{1,4})[-\/.](\d{1,2})[-\/.](\d{1,4})$/); if (!m) return [];
+    let a = +m[1], b = +m[2], c = +m[3];
+    if (a > 31) return [ymd(a, b, c)].filter(Boolean);             // YYYY-MM-DD
+    if (c < 100) c += 2000;
+    return [ymd(c, a, b), ymd(c, b, a)].filter(Boolean);           // MM-DD-YYYY أو DD-MM-YYYY
+  };
+  const cands = v => {
+    if (v == null || v === "") return [];
+    if (typeof v === "object" && v.y) return [ymd(v.y, v.m, v.d), v.d <= 12 ? ymd(v.y, v.d, v.m) : null].filter(Boolean); // التاريخ مع احتمال تبديل اليوم والشهر
+    if (typeof v === "string") return strDates(v);
+    return [];
+  };
+  const DAY = 864e5;
+  // اختيار التواريخ: أفضل تسلسل زمني (الدفتر يمشي للأمام) مع احتمال تبديل اليوم/الشهر أو خطأ في السنة
+  const dated = [];
+  rows.forEach((r, i) => {
+    const base = cands(r[0]); if (!base.length) return;
+    const list = [];
+    base.forEach((x, k) => {
+      list.push({ t: x, p: k ? 0.3 : 0 });
+      [-2, -1, 1, 2].forEach(dy => { const y = new Date(x); y.setUTCFullYear(x.getUTCFullYear() + dy); list.push({ t: y, p: Math.abs(dy) * 8 }); });
+    });
+    dated.push({ i, list });
+  });
+  const pick = {};
+  if (dated.length) {
+    const cost = (a, b) => { const d = (b - a) / DAY; return d >= 0 ? Math.min(d, 400) * (d > 3 ? 1 : 0.2) : (d >= -2 ? -d * 0.5 : 60 + Math.min(-d, 400) * 2); };
+    let prevC = dated[0].list.map(c => c.p), back = [];
+    for (let n = 1; n < dated.length; n++) {
+      const cur = dated[n].list, pr = dated[n - 1].list, bk = [], cc = [];
+      cur.forEach(c => { let best = Infinity, bi = 0; pr.forEach((q, k) => { const v = prevC[k] + cost(q.t, c.t); if (v < best) { best = v; bi = k; } }); cc.push(best + c.p); bk.push(bi); });
+      back.push(bk); prevC = cc;
+    }
+    let k = prevC.indexOf(Math.min(...prevC));
+    for (let n = dated.length - 1; n >= 0; n--) {
+      const ch = dated[n].list[k].t; pick[dated[n].i] = ch;
+      if (n > 0) {
+        const prv = dated[n - 1].list[back[n - 1][k]].t, jump = (ch - prv) / DAY;
+        if (jump > 20 || jump < -2) warn.push(`سطر ${dated[n].i + 2}: فرق ${Math.round(jump)} يوم عن السطر السابق — راجع التاريخ`);
+        k = back[n - 1][k];
+      }
+    }
+  }
+  let prev = null;
+  const occ = {};
+  rows.forEach((r, i) => {
+    const [a, desc0, sales0, exp0, bal0] = r;
+    const num = v => (v == null || v === "" || isNaN(Number(v))) ? null : Number(v);
+    const sales = num(sales0), exp = num(exp0), bal = num(bal0);
+    const desc = desc0 == null ? "" : String(desc0).trim();
+    if (pick[i]) prev = pick[i];
+    // رصيد افتتاحي
+    if (typeof a === "string" && /رصيد/.test(a) && bal != null && sales == null && exp == null) {
+      const first = Object.values(pick)[0];
+      out.push({ row: i + 2, date: (prev || first) ? (prev || first).toISOString().slice(0, 10) : null, kind: "opening", description: a.trim(), item: "رصيد افتتاحي", category: "رصيد افتتاحي", amount: bal, balance: bal, hash: "opening|" + a.trim() + "|" + bal });
+      return;
+    }
+    if (!prev) return;
+    const date = prev.toISOString().slice(0, 10);
+    const push = (kind, amount, cls) => {
+      if (!amount) return;
+      const key = date + "|" + brNorm(desc) + "|" + amount + "|" + kind;
+      occ[key] = (occ[key] || 0) + 1;
+      out.push({ row: i + 2, date, kind: cls.kind || kind, description: desc || (kind === "income" ? "مبيعات نقدية" : ""), item: cls.item, category: cls.category,
+                 amount: Math.round(amount * 100) / 100, balance: bal, hash: key + "|" + occ[key] });
+    };
+    if (sales) push("income", sales, brClassify(desc, true, learned));
+    if (exp) push("expense", exp, brClassify(desc, false, learned));
+  });
+  return { rows: out, warn };
+}
+
+// =====================================================================
+//  🏪 دفتر المطعم — المصروفات اليومية والمبيعات النقدية ورصيد الخزينة (ملف SQL رقم 15)
+// =====================================================================
+const BR_KIND = { expense: ["💸 مصروف", "red"], income: ["💵 مبيعات نقدية", "green"], deposit: ["🏦 إيداع", "blue"], adjust: ["⚖ فرق خزينة", "amber"], opening: ["🔓 رصيد افتتاحي", ""] };
+const BR_ST = { pending: ['⏳ بانتظار المراجعة', "amber"], approved: ["✔ معتمد", "green"], rejected: ["✖ مرفوض", "red"] };
+let brRows = [], brCats = [], brLearn = {}, brDescs = [], brPeriod = "month", brrPeriod = "month", brSel = new Set(), brInited = false, brMetaAt = 0, brrRows = [];
+const brErr = e => (e && (e.code === "42P01" || e.code === "PGRST205" || /branch_/.test(e.message || ""))) ? "جداول دفتر المطعم غير موجودة — شغّل ملف SQL رقم 15 (15_branch_ledger.sql) في Supabase ← SQL Editor" : (e && e.message || String(e));
+const brBoss = () => canAct("branch.approve");
+const brCanCls = () => canAct("branch.approve") || canAct("branch.cats");
+
+function brRange(p, fromEl, toEl) {
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const d = n => { const x = new Date(t); x.setDate(x.getDate() + n); return iso(x); };
+  switch (p) {
+    case "today": return [d(0), d(0)];
+    case "yesterday": return [d(-1), d(-1)];
+    case "week": return [d(-6), d(0)];
+    case "lastmonth": return [iso(new Date(t.getFullYear(), t.getMonth() - 1, 1)), iso(new Date(t.getFullYear(), t.getMonth(), 0))];
+    case "year": return [iso(new Date(t.getFullYear(), 0, 1)), d(0)];
+    case "all": return ["2000-01-01", "2100-12-31"];
+    case "custom": { const a = $(fromEl).value || d(0), b = $(toEl).value || a; return a <= b ? [a, b] : [b, a]; }
+    default: return [iso(new Date(t.getFullYear(), t.getMonth(), 1)), d(0)];
+  }
+}
+function brChips(barId, customId, fromId, toId, get, set, reload) {
+  document.querySelectorAll(`#${barId} .chip`).forEach(b => b.onclick = () => {
+    set(b.dataset.p);
+    document.querySelectorAll(`#${barId} .chip`).forEach(x => x.classList.toggle("on", x === b));
+    $(customId).classList.toggle("hidden", b.dataset.p !== "custom");
+    if (b.dataset.p === "custom" && !$(fromId).value) $(fromId).value = $(toId).value = iso(new Date());
+    reload();
+  });
+  $(fromId).onchange = $(toId).onchange = reload;
+}
+
+function initBranch() {
+  if (brInited) return; brInited = true;
+  brChips("brPeriods", "brCustom", "brFrom", "brTo", () => brPeriod, v => brPeriod = v, () => loadBranch());
+  brChips("brrPeriods", "brrCustom", "brrFrom", "brrTo", () => brrPeriod, v => brrPeriod = v, () => loadBranchRep());
+  $("brReload").onclick = () => loadBranch(true);
+  $("brrReload").onclick = () => loadBranchRep(true);
+  $("brDate").value = iso(new Date());
+  $("brDesc").oninput = () => {
+    const c = brClassify($("brDesc").value, $("brKind").value === "income", brLearn);
+    if (!$("brItem").dataset.touched) $("brItem").value = $("brDesc").value.trim() ? c.item : "";
+    if (!$("brCat").dataset.touched) $("brCat").value = $("brDesc").value.trim() ? c.category : "";
+    if (c.kind && c.kind !== "expense" && $("brKind").value === "expense") $("brKind").value = c.kind;
+  };
+  ["brItem", "brCat"].forEach(id => $(id).oninput = () => { $(id).dataset.touched = $(id).value ? "1" : ""; });
+  $("brSave").onclick = brSave;
+  ["brQ", "brFKind", "brFCat", "brFItem", "brFStatus"].forEach(id => $(id).oninput = brRenderList);
+  $("brBulkCls").onclick = () => brClassifyDlg([...brSel]);
+  $("brBulkOk").onclick = () => brSetStatus([...brSel], "approved");
+  $("brBulkNo").onclick = () => brSetStatus([...brSel], "rejected");
+  $("brBulkClear").onclick = () => { brSel.clear(); brRenderList(); };
+  ["brrCat", "brrItem"].forEach(id => $(id).oninput = () => { if (id === "brrCat") $("brrItem").value = ""; brRenderRep(); });
+  $("brrExport").onclick = brExport;
+  $("brFile").onchange = brReadFile;
+  $("brImport").onclick = brDoImport;
+}
+
+async function brLoadMeta(force) {
+  if (!force && Date.now() - brMetaAt < 120000 && brCats.length) return;
+  const [c, l, d] = await Promise.all([
+    sb.from("branch_categories").select("*").order("sort"),
+    all(() => sb.from("branch_items").select("*")),
+    sb.from("branch_ledger").select("description,item,category,kind").order("id", { ascending: false }).limit(4000)
+  ]);
+  if (c.error) throw c.error; if (d.error) throw d.error;
+  brCats = c.data || [];
+  brLearn = {}; (l || []).forEach(x => brLearn[x.desc_key] = { item: x.item, category: x.category });
+  const seen = new Set(); brDescs = [];
+  (d.data || []).forEach(r => { const k = brNorm(r.description); if (k && !seen.has(k)) { seen.add(k); brDescs.push(r); } if (k && !brLearn[k] && r.category !== "غير مصنف") brLearn[k] = { item: r.item, category: r.category }; });
+  brMetaAt = Date.now();
+  $("dlBrDesc").innerHTML = brDescs.slice(0, 1500).map(r => `<option value="${esc(r.description)}">${esc(r.category)}</option>`).join("");
+  const items = [...new Set(brDescs.map(r => r.item).filter(Boolean))].sort();
+  $("dlBrItem").innerHTML = items.map(i => `<option value="${esc(i)}">`).join("");
+  $("dlBrCat").innerHTML = brCats.map(c => `<option value="${esc(c.name)}">`).join("");
+}
+
+async function loadBranch(force) {
+  initBranch();
+  $("brAddCard").classList.toggle("hidden", !canAct("branch.add"));
+  $("brAddNote").classList.toggle("hidden", brBoss());
+  const [f, t] = brRange(brPeriod, "brFrom", "brTo");
+  $("brList").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  try {
+    await brLoadMeta(force);
+    brRows = await all(() => sb.from("branch_ledger").select("*").gte("entry_date", f).lte("entry_date", t).order("entry_date").order("seq").order("id"));
+  } catch (e) { $("brList").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; $("brKpis").innerHTML = ""; return; }
+  brSel.clear();
+  $("brKpis").innerHTML = brKpiHtml(brRows);
+  const cats = [...new Set(brRows.map(r => r.category))].sort(), items = [...new Set(brRows.map(r => r.item))].sort();
+  const keep = (id, list, all0) => { const v = $(id).value; $(id).innerHTML = `<option value="">${all0}</option>` + list.map(x => `<option${x === v ? " selected" : ""}>${esc(x)}</option>`).join(""); };
+  keep("brFCat", cats, "كل الأقسام"); keep("brFItem", items, "كل الأصناف");
+  brRenderList();
+}
+
+function brTotals(rows) {
+  const T = { exp: 0, inc: 0, dep: 0, adj: 0, n: 0, pending: 0, bal: null, balDate: "" };
+  rows.forEach(r => {
+    if (r.status === "pending") T.pending++;
+    if (r.status === "rejected") return;
+    T.n++; const a = Number(r.amount || 0);
+    if (r.kind === "expense") T.exp += a; else if (r.kind === "income") T.inc += a; else if (r.kind === "deposit") T.dep += a; else if (r.kind === "adjust") T.adj += a;
+    if (r.sheet_balance != null) { T.bal = Number(r.sheet_balance); T.balDate = r.entry_date; }
+  });
+  return T;
+}
+function brKpiHtml(rows) {
+  const T = brTotals(rows);
+  const k = [["💸 المصروفات", fmt(T.exp), "main"], ["💵 المبيعات النقدية", fmt(T.inc)], ["🏦 الإيداعات البنكية", fmt(T.dep)], ["⚖ فروق الخزينة", fmt(T.adj)],
+    ["الصافي (نقدية − مصروفات − إيداع)", fmt(T.inc - T.exp - T.dep - T.adj)], ["📝 عدد الحركات", T.n]];
+  if (T.pending) k.push(["⏳ بانتظار المراجعة", T.pending]);
+  if (T.bal != null) k.push([`🧮 رصيد الخزينة (${T.balDate})`, fmt(T.bal)]);
+  return k.map(([l, v, c]) => `<div class="kpi ${c || ""}"><div class="l">${l}</div><div class="v">${v}</div></div>`).join("");
+}
+
+function brFiltered() {
+  const q = brNorm($("brQ").value), k = $("brFKind").value, c = $("brFCat").value, it = $("brFItem").value, st = $("brFStatus").value;
+  return brRows.filter(r => (!k || r.kind === k) && (!c || r.category === c) && (!it || r.item === it) && (!st || r.status === st) && (!q || brNorm(r.description + " " + r.item + " " + (r.note || "")).includes(q)));
+}
+function brRenderList() {
+  const rows = brFiltered().slice().reverse(), sel = brCanCls() || brBoss();
+  const tot = rows.reduce((s, r) => s + (r.status === "rejected" ? 0 : (r.kind === "income" ? 1 : r.kind === "opening" ? 0 : -1) * Number(r.amount || 0)), 0);
+  $("brCount").textContent = rows.length + (rows.length !== brRows.length ? " / " + brRows.length : "") + " • " + fmt(tot);
+  const shown = rows.slice(0, 800);
+  $("brList").innerHTML = !rows.length ? '<div class="empty">لا توجد حركات في هذه الفترة</div>' :
+    `<table><tr>${sel ? '<th><input type="checkbox" id="brAll"></th>' : ""}<th>التاريخ</th><th>البيان</th><th>الصنف</th><th>القسم</th><th>النوع</th><th class="n">المبلغ</th><th>الحالة</th><th></th></tr>` +
+    shown.map(r => {
+      const [kt, kc] = BR_KIND[r.kind] || [r.kind, ""], [stt, stc] = BR_ST[r.status] || [r.status, ""];
+      const mine = r.created_by && r.created_by === (myEmail || "").toLowerCase();
+      const canEd = brBoss() || (canAct("branch.edit") && r.status === "pending" && mine) || brCanCls();
+      return `<tr${r.status === "rejected" ? ' style="opacity:.55"' : ""}>${sel ? `<td><input type="checkbox" data-bs="${r.id}" ${brSel.has(r.id) ? "checked" : ""}></td>` : ""}
+        <td style="white-space:nowrap">${r.entry_date}</td><td class="wrap"><b>${esc(r.description)}</b>${r.note ? `<br><small class="note">${esc(r.note)}</small>` : ""}${r.source === "excel" ? ' <span class="tag" title="مستورد من الإكسيل">📥</span>' : ""}</td>
+        <td>${esc(r.item)}</td><td>${r.category === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(r.category)}</td>
+        <td><span class="tag ${kc}">${kt}</span></td><td class="n" style="font-weight:700;color:${r.kind === "income" ? "var(--green)" : r.kind === "expense" ? "var(--red)" : "inherit"}">${fmt(r.amount)}</td>
+        <td><span class="tag ${stc}" title="${esc((r.created_name || r.created_by || "") + (r.reviewed_by ? " • راجعها " + r.reviewed_by : ""))}">${stt}</span></td>
+        <td style="white-space:nowrap">${canEd ? `<button class="btn sm ghost" data-be="${r.id}">✏</button>` : ""}${brBoss() && r.status === "pending" ? ` <button class="btn sm green" data-bok="${r.id}" title="اعتماد">✔</button>` : ""}</td></tr>`;
+    }).join("") + "</table>" + (rows.length > shown.length ? `<p class="note">يُعرض أحدث ${shown.length} حركة — ضيّق الفترة أو استخدم البحث لرؤية الباقي.</p>` : "");
+  const upd = () => { $("brBulk").classList.toggle("hidden", !brSel.size); $("brSelCount").textContent = brSel.size + " محدد";
+    $("brBulkOk").classList.toggle("hidden", !brBoss()); $("brBulkNo").classList.toggle("hidden", !brBoss()); };
+  $("brList").querySelectorAll("[data-bs]").forEach(c => c.onchange = () => { c.checked ? brSel.add(Number(c.dataset.bs)) : brSel.delete(Number(c.dataset.bs)); upd(); });
+  if ($("brAll")) $("brAll").onchange = e => { shown.forEach(r => e.target.checked ? brSel.add(r.id) : brSel.delete(r.id)); brRenderList(); };
+  $("brList").querySelectorAll("[data-be]").forEach(b => b.onclick = () => brEditDlg(brRows.find(r => r.id === Number(b.dataset.be))));
+  $("brList").querySelectorAll("[data-bok]").forEach(b => b.onclick = () => brSetStatus([Number(b.dataset.bok)], "approved"));
+  upd();
+}
+
+async function brLearnSave(list) {
+  // list: [{description, item, category}] — يتذكر النظام التصنيف لكل بيان
+  const rows = [], seen = new Set();
+  list.forEach(x => { const k = brNorm(x.description); if (!k || seen.has(k) || !x.category || x.category === "غير مصنف") return; seen.add(k); rows.push({ desc_key: k, item: x.item || x.description, category: x.category, updated_at: new Date().toISOString() }); brLearn[k] = { item: x.item, category: x.category }; });
+  for (let i = 0; i < rows.length; i += 500) await sb.from("branch_items").upsert(rows.slice(i, i + 500));
+  const newCats = [...new Set(list.map(x => x.category))].filter(c => c && !brCats.some(b => b.name === c));
+  if (newCats.length && brCanCls()) { await sb.from("branch_categories").upsert(newCats.map(n => ({ name: n, kind: "expense", sort: 50 }))); brMetaAt = 0; }
+}
+
+async function brSave() {
+  const amount = Number($("brAmount").value), desc = $("brDesc").value.trim(), kind = $("brKind").value;
+  if (!desc || !(amount > 0)) { toast("اكتب البيان والمبلغ"); return; }
+  const c = brClassify(desc, kind === "income", brLearn);
+  const row = { entry_date: $("brDate").value || iso(new Date()), kind, description: desc, item: $("brItem").value.trim() || c.item, category: $("brCat").value.trim() || c.category,
+    amount, note: $("brNote").value.trim() || null, source: "manual", status: brBoss() ? "approved" : "pending", seq: 9000 + new Date().getHours() * 60 + new Date().getMinutes() };
+  $("brSave").disabled = true;
+  try {
+    const { error } = await sb.from("branch_ledger").insert(row);
+    if (error) throw error;
+    await brLearnSave([row]).catch(() => {});
+    toast(brBoss() ? "✔ تم التسجيل" : "✔ تم التسجيل — بانتظار مراجعة المدير");
+    ["brDesc", "brAmount", "brItem", "brCat", "brNote"].forEach(id => { $(id).value = ""; delete $(id).dataset.touched; });
+    $("brDesc").focus();
+    loadBranch(true);
+  } catch (e) { toast("⚠ " + brErr(e), 6000); }
+  finally { $("brSave").disabled = false; }
+}
+
+function brCatOptions(v) { return [...new Set(brCats.map(c => c.name).concat(v ? [v] : []))].map(c => `<option${c === v ? " selected" : ""}>${esc(c)}</option>`).join(""); }
+
+function brEditDlg(r) {
+  if (!r) return;
+  const full = brBoss() || (canAct("branch.edit") && r.status === "pending");
+  openDlg("✏ تعديل حركة", `<div class="form">
+    <div><label>التاريخ</label><input type="date" class="fld" id="beDate" value="${r.entry_date}" ${full ? "" : "disabled"}></div>
+    <div><label>النوع</label><select class="fld" id="beKind" ${full ? "" : "disabled"}>${Object.entries(BR_KIND).map(([k, v]) => `<option value="${k}" ${k === r.kind ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>
+    <div class="full"><label>البيان</label><input class="fld" id="beDesc" value="${esc(r.description)}" ${full ? "" : "disabled"}></div>
+    <div><label>المبلغ</label><input class="fld" type="number" step="0.01" id="beAmount" value="${r.amount}" ${full ? "" : "disabled"}></div>
+    <div><label>الصنف</label><input class="fld" id="beItem" list="dlBrItem" value="${esc(r.item)}"></div>
+    <div><label>القسم</label><input class="fld" id="beCat" list="dlBrCat" value="${esc(r.category)}"></div>
+    ${brBoss() ? `<div><label>الحالة</label><select class="fld" id="beSt">${Object.entries(BR_ST).map(([k, v]) => `<option value="${k}" ${k === r.status ? "selected" : ""}>${v[0]}</option>`).join("")}</select></div>` : ""}
+    <div class="full"><label>ملاحظة</label><input class="fld" id="beNote" value="${esc(r.note || "")}" ${full ? "" : "disabled"}></div>
+    <div class="full"><label style="font-weight:600"><input type="checkbox" id="beAllSame" checked> طبّق نفس الصنف والقسم على كل الحركات بنفس البيان «${esc(r.description)}» (ويتذكره النظام)</label></div>
+    <div class="full"><button class="btn green" id="beOk">💾 حفظ</button> ${brBoss() || (canAct("branch.edit") && r.status === "pending") ? '<button class="btn red" id="beDel">🗑 حذف</button>' : ""}</div></div>
+    <p class="note">أُضيفت بواسطة ${esc(r.created_name || r.created_by || "—")}${r.source === "excel" ? " (استيراد إكسيل)" : ""}${r.reviewed_by ? " • راجعها " + esc(r.reviewed_by) : ""}</p>`);
+  $("beOk").onclick = async () => {
+    const upd = { item: $("beItem").value.trim(), category: $("beCat").value.trim() || "غير مصنف" };
+    if (full) Object.assign(upd, { entry_date: $("beDate").value, kind: $("beKind").value, description: $("beDesc").value.trim(), amount: Number($("beAmount").value) || 0, note: $("beNote").value.trim() || null });
+    if ($("beSt")) upd.status = $("beSt").value;
+    try {
+      let res = await sb.from("branch_ledger").update(upd).eq("id", r.id); if (res.error) throw res.error;
+      let n = 1;
+      if ($("beAllSame").checked && brCanCls()) {
+        res = await sb.from("branch_ledger").update({ item: upd.item, category: upd.category }).eq("description", r.description).select("id"); if (res.error) throw res.error;
+        n = (res.data || []).length;
+      }
+      await brLearnSave([{ description: upd.description || r.description, item: upd.item, category: upd.category }]).catch(() => {});
+      toast(`✔ تم الحفظ${n > 1 ? ` — صُنّفت ${n} حركة بنفس البيان` : ""}`); $("dlg").close(); brRefresh();
+    } catch (e) { toast("⚠ " + brErr(e), 6000); }
+  };
+  if ($("beDel")) $("beDel").onclick = async () => {
+    if (!confirm("حذف الحركة نهائياً؟")) return;
+    const { error } = await sb.from("branch_ledger").delete().eq("id", r.id);
+    if (error) { toast("⚠ " + brErr(error), 6000); return; }
+    $("dlg").close(); brRefresh();
+  };
+}
+
+function brClassifyDlg(ids, desc) {
+  // ids: حركات محددة، أو desc: كل حركات هذا البيان
+  const sample = desc ? { description: desc } : brRows.find(r => r.id === ids[0]) || {};
+  const c = brClassify(sample.description, false, brLearn);
+  openDlg("🏷 تصنيف", `<div class="form">
+    <div class="full"><p>${desc ? `كل الحركات بالبيان «<b>${esc(desc)}</b>»` : `${ids.length} حركة محددة`}</p></div>
+    <div><label>الصنف</label><input class="fld" id="bcItem" list="dlBrItem" value="${esc(c.category === "غير مصنف" ? (sample.description || "") : c.item)}"></div>
+    <div><label>القسم</label><input class="fld" id="bcCat" list="dlBrCat" value="${esc(c.category === "غير مصنف" ? "" : c.category)}" placeholder="اختر أو اكتب قسماً جديداً"></div>
+    <div class="full"><button class="btn green" id="bcOk">🏷 تصنيف</button></div></div>
+    <p class="note">الأقسام الموجودة: ${brCats.filter(x => x.kind === "expense").map(x => esc(x.name)).join("، ")}</p>`);
+  $("bcOk").onclick = async () => {
+    const item = $("bcItem").value.trim(), category = $("bcCat").value.trim();
+    if (!category) { toast("اختر القسم"); return; }
+    try {
+      let res;
+      if (desc) res = await sb.from("branch_ledger").update({ item, category }).eq("description", desc).select("id,description");
+      else res = await sb.from("branch_ledger").update({ item, category }).in("id", ids).select("id,description");
+      if (res.error) throw res.error;
+      const descs = [...new Set((res.data || []).map(x => x.description))];
+      await brLearnSave(descs.map(d => ({ description: d, item, category }))).catch(() => {});
+      toast(`✔ صُنّفت ${(res.data || []).length} حركة`); $("dlg").close(); brSel.clear(); brRefresh();
+    } catch (e) { toast("⚠ " + brErr(e), 6000); }
+  };
+}
+
+async function brSetStatus(ids, status) {
+  if (!ids.length) return;
+  const { error } = await sb.from("branch_ledger").update({ status }).in("id", ids);
+  if (error) { toast("⚠ " + brErr(error), 6000); return; }
+  toast(status === "approved" ? `✔ اعتُمدت ${ids.length} حركة` : `✖ رُفضت ${ids.length} حركة`); brSel.clear(); brRefresh();
+}
+function brRefresh() { if (view === "branchrep") loadBranchRep(true); else loadBranch(true); }
+
+// ----------------------------------------------------------------- التحليل
+async function loadBranchRep(force) {
+  initBranch();
+  const [f, t] = brRange(brrPeriod, "brrFrom", "brrTo");
+  $("brrCats").innerHTML = '<div class="wait"><span class="spin"></span>جاري التحميل…</div>';
+  try {
+    await brLoadMeta(force);
+    brrRows = (await all(() => sb.from("branch_ledger").select("*").gte("entry_date", f).lte("entry_date", t).order("entry_date").order("seq").order("id"))).filter(r => r.status !== "rejected");
+  } catch (e) { $("brrCats").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; return; }
+  const cv = $("brrCat").value;
+  $("brrCat").innerHTML = '<option value="">كل الأقسام</option>' + [...new Set(brrRows.filter(r => r.kind === "expense").map(r => r.category))].sort().map(c => `<option${c === cv ? " selected" : ""}>${esc(c)}</option>`).join("");
+  brRenderRep();
+}
+function brRenderRep() {
+  const c = $("brrCat").value;
+  const exp = brrRows.filter(r => r.kind === "expense" && (!c || r.category === c));
+  const iv = $("brrItem").value;
+  $("brrItem").innerHTML = '<option value="">كل الأصناف</option>' + [...new Set(exp.map(r => r.item))].sort().map(i => `<option${i === iv ? " selected" : ""}>${esc(i)}</option>`).join("");
+  const rows = brrRows.filter(r => r.kind !== "expense" || ((!c || r.category === c) && (!iv || r.item === iv)));
+  const E = rows.filter(r => r.kind === "expense");
+  $("brrKpis").innerHTML = brKpiHtml(c || iv ? E : rows);
+  const totE = E.reduce((s, r) => s + Number(r.amount), 0);
+  // حسب اليوم
+  const days = {}; rows.forEach(r => { const d = days[r.entry_date] || (days[r.entry_date] = { exp: 0, inc: 0, dep: 0, adj: 0, bal: null }); const a = Number(r.amount);
+    if (r.kind === "expense") d.exp += a; else if (r.kind === "income") d.inc += a; else if (r.kind === "deposit") d.dep += a; else if (r.kind === "adjust") d.adj += a; if (r.sheet_balance != null) d.bal = Number(r.sheet_balance); });
+  const dk = Object.keys(days).sort();
+  const many = dk.length > 62, grp = many ? (d => d.slice(0, 7)) : (d => d);
+  const g = {}; dk.forEach(d => { const k = grp(d), x = g[k] || (g[k] = { exp: 0, inc: 0 }); x.exp += days[d].exp; x.inc += days[d].inc; });
+  const gk = Object.keys(g).sort();
+  draw("brrChDays", { type: "bar", data: { labels: gk.map(k => many ? k : k.slice(5)), datasets: [
+    { label: "المصروفات", data: gk.map(k => +g[k].exp.toFixed(2)), backgroundColor: "#c05c52", borderRadius: 4 },
+    ...(c || iv ? [] : [{ label: "المبيعات النقدية", data: gk.map(k => +g[k].inc.toFixed(2)), backgroundColor: "#3d8160", borderRadius: 4 }])] } });
+  // الأقسام
+  const cats = {}; brrRows.filter(r => r.kind === "expense").forEach(r => { const x = cats[r.category] || (cats[r.category] = [0, 0]); x[0]++; x[1] += Number(r.amount); });
+  const ce = Object.entries(cats).sort((a, b) => b[1][1] - a[1][1]), allE = ce.reduce((s, x) => s + x[1][1], 0);
+  const pal = ["#17808f", "#1f5a7a", "#46946c", "#d4a048", "#c05c52", "#7c62a3", "#467ca8", "#e67e22", "#2c9c8f", "#9aa5ad", "#b3607d", "#5b8c3a"];
+  draw("brrChCats", { type: "doughnut", data: { labels: ce.slice(0, 11).map(x => x[0]).concat(ce.length > 11 ? ["أخرى"] : []),
+    datasets: [{ data: ce.slice(0, 11).map(x => +x[1][1].toFixed(2)).concat(ce.length > 11 ? [+ce.slice(11).reduce((s, x) => s + x[1][1], 0).toFixed(2)] : []), backgroundColor: pal }] } });
+  $("brrCats").innerHTML = table(["القسم", "الحركات", "المبلغ", "النسبة"], ce.map(([n, v]) => [`<a href="#" data-bc="${esc(n)}">${n === c ? "▶ " : ""}${esc(n)}</a>`, v[0], fmt(v[1]), allE ? (100 * v[1] / allE).toFixed(1) + "%" : "—"]), [1, 2, 3]);
+  $("brrCats").querySelectorAll("[data-bc]").forEach(a => a.onclick = e => { e.preventDefault(); $("brrCat").value = a.dataset.bc === c ? "" : a.dataset.bc; $("brrItem").value = ""; brRenderRep(); });
+  // الأصناف
+  const its = {}; E.forEach(r => { const x = its[r.item] || (its[r.item] = { n: 0, a: 0, cat: r.category, last: "" }); x.n++; x.a += Number(r.amount); if (r.entry_date > x.last) x.last = r.entry_date; });
+  const ie = Object.entries(its).sort((a, b) => b[1].a - a[1].a);
+  $("brrItemsTag").textContent = ie.length ? ie.length + " صنف • " + fmt(totE) : "";
+  $("brrItems").innerHTML = table(["الصنف", "القسم", "المرات", "المبلغ", "المتوسط", "النسبة", "آخر مرة"], ie.map(([n, x]) => [esc(n), esc(x.cat), x.n, fmt(x.a), fmt(x.a / x.n), totE ? (100 * x.a / totE).toFixed(1) + "%" : "—", x.last]), [2, 3, 4, 5]);
+  // غير المصنف
+  const un = {}; brrRows.filter(r => r.kind === "expense" && r.category === "غير مصنف").forEach(r => { const x = un[r.description] || (un[r.description] = [0, 0]); x[0]++; x[1] += Number(r.amount); });
+  const ue = Object.entries(un).sort((a, b) => b[1][1] - a[1][1]);
+  $("brrUnTag").textContent = ue.length ? `${ue.length} بيان • ${fmt(ue.reduce((s, x) => s + x[1][1], 0))}` : "";
+  $("brrUn").innerHTML = !ue.length ? '<div class="empty">✅ كل المصروفات مصنفة</div>' :
+    table(["البيان", "المرات", "المبلغ", ""], ue.slice(0, 300).map(([d, v]) => [esc(d), v[0], fmt(v[1]), brCanCls() ? `<button class="btn sm" data-bu="${esc(d)}">🏷 تصنيف</button>` : ""]), [1, 2]);
+  $("brrUn").querySelectorAll("[data-bu]").forEach(b => b.onclick = () => brClassifyDlg(null, b.dataset.bu));
+  // الأيام
+  $("brrDays").innerHTML = table(["اليوم", "المبيعات النقدية", "المصروفات", "الإيداع", "الصافي", "رصيد الخزينة"], dk.slice().reverse().map(d => { const x = days[d];
+    return [d, fmt(x.inc), fmt(x.exp), fmt(x.dep), fmt(x.inc - x.exp - x.dep - x.adj), x.bal == null ? "—" : fmt(x.bal)]; }), [1, 2, 3, 4, 5]);
+}
+function brExport() {
+  const [f, t] = brRange(brrPeriod, "brrFrom", "brrTo");
+  const E = brrRows.filter(r => r.kind === "expense"), r2 = v => +Number(v).toFixed(2);
+  const by = (key) => { const o = {}; E.forEach(r => { const x = o[r[key]] || (o[r[key]] = [0, 0]); x[0]++; x[1] += Number(r.amount); }); return Object.entries(o).sort((a, b) => b[1][1] - a[1][1]).map(([k, v]) => [k, v[0], r2(v[1])]); };
+  exportCsv({ title: "دفتر المطعم " + (brrPeriod === "all" ? "(الكل)" : f + " إلى " + t), sub: "المصروفات اليومية والمبيعات النقدية", tables: [
+    { title: "حسب القسم", cols: ["القسم", "الحركات", "المبلغ"], rows: by("category") },
+    { title: "حسب الصنف", cols: ["الصنف", "الحركات", "المبلغ"], rows: by("item") },
+    { title: "الحركات", cols: ["التاريخ", "النوع", "البيان", "الصنف", "القسم", "المبلغ", "رصيد الشيت", "الحالة"],
+      rows: brrRows.map(r => [r.entry_date, (BR_KIND[r.kind] || [r.kind])[0], r.description, r.item, r.category, r2(r.amount), r.sheet_balance == null ? "" : r2(r.sheet_balance), (BR_ST[r.status] || [r.status])[0]]) }] });
+}
+
+// ----------------------------------------------------------------- الاستيراد من Excel
+let brImp = null;
+function brLoadXlsx() {
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((ok, no) => { const s = document.createElement("script"); s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"; s.onload = ok; s.onerror = () => no(new Error("تعذر تحميل قارئ Excel — تأكد من الإنترنت")); document.head.appendChild(s); });
+}
+async function brReadFile() {
+  const file = $("brFile").files[0]; if (!file) return;
+  $("brImport").classList.add("hidden");
+  $("brPreview").innerHTML = '<div class="wait"><span class="spin"></span>جاري قراءة الملف…</div>';
+  try {
+    await brLoadXlsx(); await brLoadMeta(true);
+    const wb = XLSX.read(await file.arrayBuffer(), { type: "array", cellDates: false });
+    const ws = wb.Sheets[wb.SheetNames[0]], rg = XLSX.utils.decode_range(ws["!ref"]);
+    let start = 0;
+    for (let R = 0; R <= Math.min(rg.e.r, 5); R++) { const c = ws[XLSX.utils.encode_cell({ r: R, c: 1 })]; if (c && /البيان|بيان/.test(String(c.v))) { start = R + 1; break; } }
+    const rows = [];
+    for (let R = start; R <= rg.e.r; R++) {
+      const row = [];
+      for (let C = 0; C < 5; C++) {
+        const c = ws[XLSX.utils.encode_cell({ r: R, c: C })]; let v = c ? c.v : null;
+        if (c && C === 0 && c.t === "n" && v > 20000 && v < 80000) { const p = XLSX.SSF.parse_date_code(v); v = { y: p.y, m: p.m, d: p.d }; }
+        else if (c && C === 0 && c.t === "d") { const d = new Date(c.v); v = { y: d.getFullYear(), m: d.getMonth() + 1, d: d.getDate() }; }
+        row.push(v);
+      }
+      rows.push(row);
+    }
+    const res = brParseSheet(rows, { learned: brLearn });
+    if (!res.rows.length) throw new Error("لم أجد حركات في الملف — تأكد من ترتيب الأعمدة");
+    const dates = res.rows.map(r => r.date).filter(Boolean).sort(), f = dates[0], t = dates[dates.length - 1];
+    const have = new Set((await all(() => sb.from("branch_ledger").select("row_hash").gte("entry_date", f).lte("entry_date", t).not("row_hash", "is", null))).map(r => r.row_hash));
+    const seq = {}; res.rows.forEach(r => { seq[r.date] = (seq[r.date] || 0) + 1; r.seq = seq[r.date]; });
+    const fresh = res.rows.filter(r => !have.has(r.hash));
+    brImp = { fresh, all: res.rows, warn: res.warn, f, t, name: file.name };
+    const sum = (list, k) => list.filter(r => r.kind === k).reduce((s, r) => s + r.amount, 0);
+    const cats = {}; fresh.filter(r => r.kind === "expense").forEach(r => { const x = cats[r.category] || (cats[r.category] = [0, 0]); x[0]++; x[1] += r.amount; });
+    $("brPreview").innerHTML = `<div class="kpis">
+        <div class="kpi main"><div class="l">حركات جديدة للاستيراد</div><div class="v">${fresh.length}</div></div>
+        <div class="kpi"><div class="l">موجودة سابقاً (تُتجاهل)</div><div class="v">${res.rows.length - fresh.length}</div></div>
+        <div class="kpi"><div class="l">الفترة</div><div class="v" style="font-size:1rem">${f} ← ${t}</div></div>
+        <div class="kpi"><div class="l">💸 المصروفات (الجديدة)</div><div class="v">${fmt(sum(fresh, "expense"))}</div></div>
+        <div class="kpi"><div class="l">💵 المبيعات النقدية (الجديدة)</div><div class="v">${fmt(sum(fresh, "income"))}</div></div>
+        <div class="kpi"><div class="l">🏦 الإيداعات</div><div class="v">${fmt(sum(fresh, "deposit"))}</div></div></div>
+      ${res.warn.length ? `<div class="rep-sum bad">⚠ تواريخ تحتاج مراجعة: ${res.warn.map(esc).join(" • ")}</div>` : ""}
+      <p class="note">التواريخ في الشيت بعضها مكتوب يوم/شهر وبعضها شهر/يوم — تم ترتيبها تلقائياً حسب تسلسل الدفتر. ${brBoss() ? "" : "الحركات المستوردة تظهر «بانتظار المراجعة» حتى يعتمدها المدير."}</p>
+      <h3>التصنيف التلقائي للمصروفات الجديدة</h3>${table(["القسم", "الحركات", "المبلغ"], Object.entries(cats).sort((a, b) => b[1][1] - a[1][1]).map(([k, v]) => [k === "غير مصنف" ? '<span class="tag amber">غير مصنف</span>' : esc(k), v[0], fmt(v[1])]), [1, 2])}
+      <h3>أول 100 حركة جديدة</h3><div class="scroll" style="max-height:420px">${table(["سطر", "التاريخ", "البيان", "الصنف", "القسم", "النوع", "المبلغ", "الرصيد"], fresh.slice(0, 100).map(r => [r.row, r.date, esc(r.description), esc(r.item), esc(r.category), (BR_KIND[r.kind] || [r.kind])[0], fmt(r.amount), r.balance == null ? "" : fmt(r.balance)]), [0, 6, 7])}</div>`;
+    $("brImport").textContent = `📥 استيراد ${fresh.length} حركة`;
+    $("brImport").classList.toggle("hidden", !fresh.length);
+  } catch (e) { $("brPreview").innerHTML = `<div class="empty" style="color:var(--red)">⚠ ${esc(brErr(e))}</div>`; }
+}
+async function brDoImport() {
+  if (!brImp || !brImp.fresh.length) return;
+  const list = brImp.fresh, st = brBoss() ? "approved" : "pending";
+  $("brImport").disabled = true;
+  try {
+    for (let i = 0; i < list.length; i += 400) {
+      $("brImport").textContent = `⏳ ${Math.min(i + 400, list.length)} / ${list.length}`;
+      const rows = list.slice(i, i + 400).map(r => ({ entry_date: r.date, kind: r.kind, description: r.description, item: r.item, category: r.category, amount: r.amount,
+        sheet_balance: r.balance, source: "excel", status: st, row_hash: r.hash, seq: r.seq, note: null }));
+      const { error } = await sb.from("branch_ledger").upsert(rows, { onConflict: "row_hash", ignoreDuplicates: true });
+      if (error) throw error;
+    }
+    toast(`✔ تم استيراد ${list.length} حركة`, 6000);
+    brImp = null; $("brFile").value = ""; $("brImport").classList.add("hidden");
+    $("brPreview").innerHTML = `<div class="rep-sum ok">✔ تم الاستيراد — راجع التصنيف من «📊 التحليل» (قسم «بيانات غير مصنفة»).</div>`;
+    brMetaAt = 0;
+  } catch (e) { toast("⚠ " + brErr(e), 7000); }
+  finally { $("brImport").disabled = false; }
+}
+
+// =====================================================================
+//  الصلاحيات التفصيلية (النظام الجديد _v2): شاشة بشاشة + إجراء بإجراء
+//  [المفتاح، الاسم، الصلاحيات العامة التي يحتاجها الخادم]
+// =====================================================================
+const PERM_TREE = [
+  ["🧮 الإجمالي العام", [["v.total", "الإجمالي العام (البرنامجين)", ["web.sales"]], ["v.apex", "مبيعات Apex", ["web.sales"]], ["v.reports", "لوحة غاوي سمك", ["web.sales"]],
+    ["v.rep_sales", "📑 تقارير المبيعات", ["web.sales"]], ["act.orders", "✏ تعديل طريقة الدفع وحالة الطلبات", ["web.sales"]]]],
+  ["📑 مركز التقارير", [["v.track", "التجهيز (متابعة الطلبات)", ["web.sales"]], ["v.log", "سجل التعديلات", []]]],
+  ["🍽 الأصناف والأسعار", [["v.products", "عرض الأصناف والأسعار", ["web.menu"]], ["act.menu", "✏ تعديل الأصناف والأسعار", ["web.menu"]],
+    ["v.offers", "عرض العروض والكوبونات", ["web.customers"]], ["act.offers", "✏ إضافة وتعديل العروض والكوبونات", ["web.customers"]],
+    ["v.stock", "عرض المخزون", ["web.stock"]], ["act.stock", "✏ حركات المخزون وتعديل المواد", ["web.stock"]],
+    ["inv.pr", "طلبات الشراء (عرض)", ["web.purchase"]], ["act.pr", "✏ إنشاء وإرسال طلبات الشراء", ["web.purchase"]],
+    ["inv.count", "الجرد (عرض)", ["web.count"]], ["act.count", "✏ حفظ الجرد", ["web.count"]],
+    ["v.rep_menu", "📑 تقارير الأصناف والمخزون", ["web.sales", "web.stock"]]]],
+  ["📒 الحسابات", [["v.acc", "الحسابات (شجرة الحسابات والكشوف)", ["web.accounts"]], ["act.acc", "✏ سندات وقيود وتحويلات", ["web.accounts"]],
+    ["v.expense", "المصروف", ["web.accounts"]], ["act.expense", "✏ تسجيل مصروف في البرنامج", ["web.accounts"]], ["v.rep_acc", "📑 التقارير المالية", ["web.accounts", "web.sales"]]]],
+  ["🚚 الموردون والمشتريات", [["v.suppliers", "عرض الموردين والمشتريات", ["web.suppliers"]], ["act.suppliers", "✏ إضافة مشتريات ودفعات للموردين", ["web.suppliers"]],
+    ["v.rep_sup", "📑 تقارير المشتريات", ["web.sales", "web.suppliers"]]]],
+  ["👥 العملاء", [["v.customers", "عرض العملاء", ["web.customers"]], ["act.customers", "✏ إضافة وتعديل العملاء والنقاط", ["web.customers"]], ["v.rep_cus", "📑 تقارير العملاء", ["web.sales", "web.customers"]]]],
+  ["👔 الموظفين والرواتب", [["v.hr", "عرض الموظفين والرواتب", ["web.hr"]], ["act.hr", "✏ الحركات والرواتب والإيقاف", ["web.hr"]]]],
+  ["🎯 المنصات", [["v.social", "عرض المنصات", ["web.social"]], ["act.social", "✏ إضافة منشورات وروابط", ["web.social"]]]],
+  ["🏪 دفتر المطعم", [["branch.view", "عرض الدفتر والتحليل", []], ["branch.add", "✏ تسجيل حركة (مصروف / مبيعات نقدية)", []], ["branch.import", "📥 استيراد شيت Excel", []],
+    ["branch.edit", "✏ تعديل وحذف حركاته قبل الاعتماد", []], ["branch.cats", "🏷 تصنيف البيانات (الصنف والقسم)", []], ["branch.approve", "✔ مراجعة واعتماد ورفض الحركات (صلاحية مدير)", []]]],
+  ["📺 الشاشات", [["v.screens", "شاشات العرض في المطعم", ["web.screens"]]]]
+];
+const PERM_INDEX = {}; PERM_TREE.forEach(([g, items]) => items.forEach(x => PERM_INDEX[x[0]] = x));
+// الشاشة ← المفاتيح التي تفتحها في النظام الجديد
+const VIEW_REQ = { inv: ["inv.pr", "inv.count"], branch: ["branch.view"], branchrep: ["branch.view"], branchimp: ["branch.import"] };
+const isV2 = () => (me.perms || []).includes("_v2");
+// تحويل صلاحيات مستخدم قديم إلى مفاتيح النظام الجديد (لتعبئة النموذج)
+function permsToV2(perms) {
+  if ((perms || []).includes("_v2")) return perms;
+  const out = [];
+  PERM_TREE.forEach(([, items]) => items.forEach(([k, , imp]) => { if (imp.length && imp.some(p => perms.includes(p)) && (imp.length === 1 || imp.every(p => perms.includes(p)))) out.push(k); }));
+  if (perms.includes("web.purchase")) out.push("inv.pr", "act.pr");
+  if (perms.includes("web.count")) out.push("inv.count", "act.count");
+  return [...new Set(out)];
+}
+function permsFromV2(keys) {
+  const s = new Set(["_v2"]);
+  keys.forEach(k => { s.add(k); (PERM_INDEX[k] ? PERM_INDEX[k][2] : []).forEach(p => s.add(p)); });
+  return [...s];
+}
+// أمر برنامج الكاشير ← صلاحية الإجراء (نفس الجدول في ملف SQL رقم 15)
+function kindAct(k) {
+  if (["product.create", "product.update", "size.update", "category.update", "price.bulk"].includes(k)) return "act.menu";
+  if (/^(coupon\.|offer\.)/.test(k)) return "act.offers";
+  if (["stock.move", "stock.min", "material.upsert", "material.delete"].includes(k)) return "act.stock";
+  if (["pr.save", "pr.status", "pr.delete"].includes(k)) return "act.pr";
+  if (k === "count.save") return "act.count";
+  if (["supplier.upsert", "supplier.payment", "supplier.move.delete", "purchase.add"].includes(k)) return "act.suppliers";
+  if (["customer.upsert", "customer.delete", "customer.points"].includes(k)) return "act.customers";
+  if (k === "expense.add") return "act.expense";
+  if (["acc.post", "account.upsert", "account.delete", "journal.save", "journal.delete", "voucher.save"].includes(k)) return "act.acc";
+  if (["hr.emp.upsert", "hr.move.add", "hr.move.delete", "hr.pay.edit", "hr.payroll.unapprove", "hr.stop.save", "hr.stop.delete", "hr.stop.return"].includes(k)) return "act.hr";
+  if (["social.hashtags", "social.link", "social.post.add", "social.post.delete"].includes(k)) return "act.social";
+  if (["order.payment", "order.track"].includes(k)) return "act.orders";
+  return null;
+}
+
+// =====================================================================
+//  التقارير داخل كل قسم (الصف الفرعي «📑 تقارير»)
+// =====================================================================
+const REP_GROUP = {
+  rep_sales: ["local:compare", "local:weekday", "local:monthly", "cashier", "sales:DailySummary", "sales:ByHour", "sales:PaymentTypes", "sales:OrderTypes", "sales:Discounts", "sales:Returns"],
+  rep_menu: ["local:abc", "local:movers", "sales:ItemSales", "sales:SingleItem", "sales:CategorySales", "sales:ReturnedItems", "sales:MaterialUsage", "stock.fish", "stock.materials"],
+  rep_acc: ["local:profit", "local:expmonth", "acc.income", "acc.balance", "acc.trial", "acc.ledger", "acc.journal", "acc.vat", "sales:Expenses"],
+  rep_sup: ["local:purch", "sales:Purchases", "sales:MaterialUsage"],
+  rep_cus: ["local:delivery", "sales:TopCustomers", "sales:Discounts"]
+};
+let rcFilter = "rep_sales";
+const LOCAL_REPORTS = [
+  ["local:compare", "📈 مقارنة بالفترة السابقة", "المبيعات والطلبات والمصروفات مقارنة بنفس طول الفترة السابقة (البرنامجين)", "month"],
+  ["local:weekday", "📆 أداء أيام الأسبوع", "متوسط مبيعات كل يوم من أيام الأسبوع — لتخطيط العمالة والمشتريات", "quarter"],
+  ["local:monthly", "📊 الاتجاه الشهري", "مبيعات كل شهر للبرنامجين والمصروفات والنمو", "year"],
+  ["local:abc", "⭐ تحليل ABC للأصناف", "الأصناف التي تصنع 80% من المبيعات (A) والأصناف الضعيفة (C)", "month"],
+  ["local:movers", "🔺🔻 الأصناف الصاعدة والمتراجعة", "مقارنة مبيعات كل صنف بالفترة السابقة", "month"],
+  ["local:profit", "💹 صافي النقدية اليومي", "المبيعات (البرنامجين) − مصروفات الدفتر ومصروفات البرنامج لكل يوم ونسبة المصروفات", "month"],
+  ["local:expmonth", "🧾 المصروفات حسب القسم شهرياً", "من دفتر المطعم: كم صُرف على كل قسم في كل شهر", "year"],
+  ["local:purch", "🛒 المشتريات اليومية من الدفتر", "مشتريات الأسماك والخضار والمواد والموردين من دفتر المطعم حسب البيان/المورد", "month"],
+  ["local:delivery", "🛵 القنوات وشركات التوصيل", "حصة كل قناة (محلي/سفري/هنجر/كيتا/جاهز...) من المبيعات في البرنامجين", "month"]
+];
+LOCAL_REPORTS.forEach(r => REP_INDEX[r[0]] = r);
+if (!REPORTS.some(([g]) => g === "رؤى وتحليلات")) REPORTS.unshift(["رؤى وتحليلات", LOCAL_REPORTS]);
+
+// ----- بيانات مساعدة للتقارير المحلية -----
+const lrNum = v => Number(v || 0);
+async function lrSales(f, t) {
+  const [pos, apex] = await Promise.all([
+    all(() => sb.from("v_daily_summary").select("*").gte("business_date", f).lte("business_date", t)),
+    all(() => sb.from("apex_daily").select("day,summary").gte("day", f).lte("day", t)).catch(() => [])
+  ]);
+  const days = {}, D = d => days[d] || (days[d] = { pos: 0, posN: 0, apex: 0, apexN: 0, cash: 0, card: 0 });
+  pos.forEach(r => { const x = D(r.business_date); x.pos += lrNum(r.total); x.posN += lrNum(r.orders_count); x.cash += lrNum(r.cash); x.card += lrNum(r.network); });
+  apex.forEach(r => { const s = apFix(r.summary || {}), x = D(r.day); x.apex += lrNum(s.sales); x.apexN += lrNum(s.count);
+    Object.entries(s.pay || {}).forEach(([k, v]) => { if (/نقد/.test(k)) x.cash += lrNum(v); else if (/شبك|مدى/.test(k)) x.card += lrNum(v); }); });
+  return { days, apex };
+}
+async function lrLedger(f, t) {
+  try { return (await all(() => sb.from("branch_ledger").select("entry_date,kind,description,item,category,amount,status").gte("entry_date", f).lte("entry_date", t))).filter(r => r.status !== "rejected"); }
+  catch (e) { return []; }
+}
+async function lrItems(f, t) {
+  const [pos, apex] = await Promise.all([
+    all(() => sb.from("v_item_sales").select("*").gte("business_date", f).lte("business_date", t)),
+    all(() => sb.from("apex_daily").select("summary").gte("day", f).lte("day", t)).catch(() => [])
+  ]);
+  const m = {};
+  pos.forEach(r => { const k = ttKey(r.product_name), x = m[k] || (m[k] = { name: r.product_name, cat: r.category || "", q: 0, v: 0 }); x.q += lrNum(r.quantity); x.v += lrNum(r.total); });
+  apex.forEach(r => (apFix(r.summary || {}).items || []).forEach(([n, u, q, v, c]) => { const k = ttKey(n), x = m[k] || (m[k] = { name: n, cat: c || "", q: 0, v: 0 }); x.q += lrNum(q); x.v += lrNum(v); }));
+  return m;
+}
+const lrPrev = (f, t) => { const a = new Date(f + "T12:00"), b = new Date(t + "T12:00"), n = Math.round((b - a) / 864e5) + 1; const pb = new Date(a); pb.setDate(pb.getDate() - 1); const pa = new Date(pb); pa.setDate(pa.getDate() - n + 1); return [iso(pa), iso(pb)]; };
+const lrPct = (a, b) => b ? Math.round(1000 * (a - b) / Math.abs(b)) / 10 : (a ? 100 : 0);
+const lrT = (title, cols, num, rows, styles) => ({ title, cols, num, rows, styles });
+const WD = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+async function localReport(key, p) {
+  const f = p.from, t = p.to, r2 = v => Math.round(Number(v || 0) * 100) / 100;
+  const base = { title: REP_INDEX[key][1], sub: `${f} ← ${t} • محسوب من بيانات الموقع (غاوي سمك + Apex + دفتر المطعم)` };
+  if (key === "local:compare") {
+    const [pf, pt] = lrPrev(f, t);
+    const [A, B, LA, LB] = await Promise.all([lrSales(f, t), lrSales(pf, pt), lrLedger(f, t), lrLedger(pf, pt)]);
+    const agg = S => Object.values(S.days).reduce((o, x) => { o.pos += x.pos; o.apex += x.apex; o.n += x.posN + x.apexN; o.cash += x.cash; o.card += x.card; return o; }, { pos: 0, apex: 0, n: 0, cash: 0, card: 0 });
+    const a = agg(A), b = agg(B), le = L => L.filter(r => r.kind === "expense").reduce((s, r) => s + lrNum(r.amount), 0);
+    const ea = le(LA), eb = le(LB);
+    const row = (n, x, y) => [n, r2(x), r2(y), r2(x - y), lrPct(x, y) + "%"];
+    const rows = [row("مبيعات غاوي سمك", a.pos, b.pos), row("مبيعات Apex", a.apex, b.apex), row("الإجمالي", a.pos + a.apex, b.pos + b.apex), row("عدد الطلبات", a.n, b.n),
+      row("متوسط الطلب", a.n ? (a.pos + a.apex) / a.n : 0, b.n ? (b.pos + b.apex) / b.n : 0), row("نقدي", a.cash, b.cash), row("شبكة", a.card, b.card), row("مصروفات الدفتر", ea, eb),
+      row("الصافي بعد مصروفات الدفتر", a.pos + a.apex - ea, b.pos + b.apex - eb)];
+    const ch = lrPct(a.pos + a.apex, b.pos + b.apex);
+    return Object.assign(base, { summary: `المبيعات ${ch >= 0 ? "ارتفعت" : "انخفضت"} ${Math.abs(ch)}% مقارنة بالفترة السابقة (${pf} ← ${pt})`, ok: ch >= 0,
+      tables: [lrT("المقارنة", ["البند", "الفترة الحالية", "الفترة السابقة", "الفرق", "التغير"], [false, true, true, true, true], rows, rows.map((r, i) => i === 2 ? "T" : ""))] });
+  }
+  if (key === "local:weekday") {
+    const S = await lrSales(f, t), w = WD.map(() => ({ n: 0, s: 0, max: 0, maxD: "", o: 0 }));
+    Object.entries(S.days).forEach(([d, x]) => { const k = new Date(d + "T12:00").getDay(), v = x.pos + x.apex; const y = w[k]; y.n++; y.s += v; y.o += x.posN + x.apexN; if (v > y.max) { y.max = v; y.maxD = d; } });
+    const tot = w.reduce((s, y) => s + (y.n ? y.s / y.n : 0), 0);
+    const best = w.map((y, i) => [i, y.n ? y.s / y.n : 0]).sort((a, b) => b[1] - a[1]);
+    const rows = w.map((y, i) => [WD[i], y.n, r2(y.n ? y.s / y.n : 0), r2(y.n ? y.o / y.n : 0), tot ? Math.round(1000 * (y.n ? y.s / y.n : 0) / tot) / 10 + "%" : "—", r2(y.max), y.maxD]);
+    return Object.assign(base, { summary: `أقوى يوم: ${WD[best[0][0]]} • أضعف يوم: ${WD[best[best.length - 1][0]]}`,
+      tables: [lrT("متوسط كل يوم", ["اليوم", "عدد الأيام", "متوسط المبيعات", "متوسط الطلبات", "النسبة من الأسبوع", "أعلى مبيعات", "تاريخه"], [false, true, true, true, true, true, false], rows)] });
+  }
+  if (key === "local:monthly") {
+    const [S, L] = await Promise.all([lrSales(f, t), lrLedger(f, t)]);
+    const m = {}, M = k => m[k] || (m[k] = { pos: 0, apex: 0, n: 0, exp: 0, days: new Set() });
+    Object.entries(S.days).forEach(([d, x]) => { const y = M(d.slice(0, 7)); y.pos += x.pos; y.apex += x.apex; y.n += x.posN + x.apexN; y.days.add(d); });
+    L.filter(r => r.kind === "expense").forEach(r => M(r.entry_date.slice(0, 7)).exp += lrNum(r.amount));
+    let prev = null;
+    const rows = Object.keys(m).sort().map(k => { const y = m[k], tot = y.pos + y.apex, g = prev == null ? "—" : lrPct(tot, prev) + "%"; prev = tot;
+      return [k, r2(y.pos), r2(y.apex), r2(tot), y.n, r2(y.days.size ? tot / y.days.size : 0), r2(y.exp), r2(tot - y.exp), g]; });
+    return Object.assign(base, { tables: [lrT("الأشهر", ["الشهر", "غاوي سمك", "Apex", "الإجمالي", "الطلبات", "متوسط اليوم", "مصروفات الدفتر", "الصافي", "النمو"], [false, true, true, true, true, true, true, true, true], rows)] });
+  }
+  if (key === "local:abc") {
+    const m = Object.values(await lrItems(f, t)).sort((a, b) => b.v - a.v), tot = m.reduce((s, x) => s + x.v, 0);
+    let cum = 0; const cnt = { A: 0, B: 0, C: 0 };
+    const rows = m.map(x => { cum += x.v; const pc = tot ? cum / tot : 0, cls = pc <= 0.8 || cum === x.v ? "A" : pc <= 0.95 ? "B" : "C"; cnt[cls]++;
+      return [x.name, x.cat, r2(x.q), r2(x.v), tot ? Math.round(1000 * x.v / tot) / 10 + "%" : "—", Math.round(1000 * pc) / 10 + "%", cls]; });
+    return Object.assign(base, { summary: `${cnt.A} صنف (A) تحقق 80% من المبيعات • ${cnt.B} صنف (B) • ${cnt.C} صنف (C) ضعيف المبيعات — راجع أصناف C للتطوير أو الإلغاء`,
+      tables: [lrT("الأصناف", ["الصنف", "المجموعة", "الكمية", "المبيعات", "النسبة", "التراكمي", "الفئة"], [false, false, true, true, true, true, false], rows, rows.map(r => r[6] === "A" ? "G" : ""))] });
+  }
+  if (key === "local:movers") {
+    const [pf, pt] = lrPrev(f, t);
+    const [A, B] = await Promise.all([lrItems(f, t), lrItems(pf, pt)]);
+    const keys = new Set([...Object.keys(A), ...Object.keys(B)]);
+    const list = [...keys].map(k => { const a = A[k] || { v: 0, name: (B[k] || {}).name }, b = B[k] || { v: 0 }; return [a.name || b.name, r2(a.v), r2(b.v), r2(a.v - b.v), lrPct(a.v, b.v) + "%"]; });
+    const up = list.filter(x => x[3] > 0).sort((a, b) => b[3] - a[3]).slice(0, 20), down = list.filter(x => x[3] < 0).sort((a, b) => a[3] - b[3]).slice(0, 20);
+    const gone = list.filter(x => x[1] === 0 && x[2] > 0).length;
+    const cols = ["الصنف", "الفترة الحالية", "الفترة السابقة", "الفرق", "التغير"], num = [false, true, true, true, true];
+    return Object.assign(base, { sub: base.sub + ` • السابقة: ${pf} ← ${pt}`, summary: gone ? `${gone} صنف لم يُبع في هذه الفترة رغم بيعه في السابقة` : "",
+      tables: [lrT("🔺 الأكثر صعوداً", cols, num, up), lrT("🔻 الأكثر تراجعاً", cols, num, down)] });
+  }
+  if (key === "local:profit") {
+    const [S, L, E] = await Promise.all([lrSales(f, t), lrLedger(f, t), all(() => sb.from("expenses").select("amount,expense_date").gte("expense_date", f).lt("expense_date", nextDay(t))).catch(() => [])]);
+    const d = {}, D = k => d[k] || (d[k] = { s: 0, le: 0, pe: 0 });
+    Object.entries(S.days).forEach(([k, x]) => D(k).s += x.pos + x.apex);
+    L.filter(r => r.kind === "expense").forEach(r => D(r.entry_date).le += lrNum(r.amount));
+    E.forEach(r => D(String(r.expense_date).slice(0, 10)).pe += lrNum(r.amount));
+    const T = { s: 0, le: 0, pe: 0 };
+    const rows = Object.keys(d).sort().reverse().map(k => { const x = d[k]; T.s += x.s; T.le += x.le; T.pe += x.pe; const net = x.s - x.le - x.pe;
+      return [k, WD[new Date(k + "T12:00").getDay()], r2(x.s), r2(x.le), r2(x.pe), r2(net), x.s ? Math.round(1000 * (x.le + x.pe) / x.s) / 10 + "%" : "—"]; });
+    rows.push(["الإجمالي", "", r2(T.s), r2(T.le), r2(T.pe), r2(T.s - T.le - T.pe), T.s ? Math.round(1000 * (T.le + T.pe) / T.s) / 10 + "%" : "—"]);
+    const ratio = T.s ? Math.round(1000 * (T.le + T.pe) / T.s) / 10 : 0;
+    return Object.assign(base, { summary: `المصروفات اليومية = ${ratio}% من المبيعات • الصافي ${fmt(T.s - T.le - T.pe)} (تقديري: لا يشمل الرواتب الشهرية والإيجار وفواتير الموردين الآجلة)`, ok: ratio < 40,
+      tables: [lrT("الأيام", ["اليوم", "", "المبيعات", "مصروفات الدفتر", "مصروفات البرنامج", "الصافي", "نسبة المصروفات"], [false, false, true, true, true, true, true], rows, rows.map((r, i) => i === rows.length - 1 ? "T" : ""))] });
+  }
+  if (key === "local:expmonth") {
+    const L = (await lrLedger(f, t)).filter(r => r.kind === "expense");
+    const months = [...new Set(L.map(r => r.entry_date.slice(0, 7)))].sort(), c = {};
+    L.forEach(r => { const x = c[r.category] || (c[r.category] = {}); const k = r.entry_date.slice(0, 7); x[k] = (x[k] || 0) + lrNum(r.amount); });
+    const rows = Object.entries(c).map(([n, x]) => [n, ...months.map(k => r2(x[k] || 0)), r2(Object.values(x).reduce((s, v) => s + v, 0))]).sort((a, b) => b[b.length - 1] - a[a.length - 1]);
+    rows.push(["الإجمالي", ...months.map(k => r2(L.filter(r => r.entry_date.startsWith(k)).reduce((s, r) => s + lrNum(r.amount), 0))), r2(L.reduce((s, r) => s + lrNum(r.amount), 0))]);
+    return Object.assign(base, { summary: L.length ? "" : "لا توجد بيانات في دفتر المطعم لهذه الفترة — استورد شيت الإكسيل من «🏪 دفتر المطعم»",
+      tables: [lrT("الأقسام × الأشهر", ["القسم", ...months, "الإجمالي"], [false, ...months.map(() => true), true], rows, rows.map((r, i) => i === rows.length - 1 ? "T" : ""))] });
+  }
+  if (key === "local:purch") {
+    const PC = /أسماك|خضار|مواد غذائية|مشتريات|تغليف|خبز|مياه|ثلج/;
+    const L = (await lrLedger(f, t)).filter(r => r.kind === "expense" && PC.test(r.category));
+    const by = {}; L.forEach(r => { const k = r.description, x = by[k] || (by[k] = { cat: r.category, n: 0, a: 0, last: "" }); x.n++; x.a += lrNum(r.amount); if (r.entry_date > x.last) x.last = r.entry_date; });
+    const cats = {}; L.forEach(r => cats[r.category] = (cats[r.category] || 0) + lrNum(r.amount));
+    const tot = L.reduce((s, r) => s + lrNum(r.amount), 0);
+    return Object.assign(base, { summary: `إجمالي المشتريات اليومية من الدفتر: ${fmt(tot)}`, tables: [
+      lrT("حسب القسم", ["القسم", "المبلغ", "النسبة"], [false, true, true], Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, r2(v), tot ? Math.round(1000 * v / tot) / 10 + "%" : "—"])),
+      lrT("حسب البيان / المورد", ["البيان", "القسم", "المرات", "المبلغ", "المتوسط", "آخر مرة"], [false, false, true, true, true, false],
+        Object.entries(by).sort((a, b) => b[1].a - a[1].a).slice(0, 300).map(([k, x]) => [k, x.cat, x.n, r2(x.a), r2(x.a / x.n), x.last]))] });
+  }
+  if (key === "local:delivery") {
+    const [types, apex] = await Promise.all([all(() => sb.from("v_order_types").select("*").gte("business_date", f).lte("business_date", t)), all(() => sb.from("apex_daily").select("summary").gte("day", f).lte("day", t)).catch(() => [])]);
+    const m = {}, M = k => m[k] || (m[k] = { pn: 0, pv: 0, an: 0, av: 0 });
+    types.forEach(r => { const x = M(r.order_type || "غير محدد"); x.pn += lrNum(r.orders_count); x.pv += lrNum(r.total); });
+    apex.forEach(r => Object.entries(apFix(r.summary || {}).chan || {}).forEach(([k, v]) => { const x = M(k); x.an += lrNum(v[0]); x.av += lrNum(v[1]); }));
+    const tot = Object.values(m).reduce((s, x) => s + x.pv + x.av, 0);
+    const rows = Object.entries(m).sort((a, b) => (b[1].pv + b[1].av) - (a[1].pv + a[1].av)).map(([k, x]) => [k, x.pn + x.an, r2(x.pv), r2(x.av), r2(x.pv + x.av), r2((x.pv + x.av) / Math.max(1, x.pn + x.an)), tot ? Math.round(1000 * (x.pv + x.av) / tot) / 10 + "%" : "—"]);
+    const apps = Object.entries(m).filter(([k]) => /هنجر|كيتا|جاهز|مرسول|نون|تطبيق|منصة|hunger|keeta|jahez/i.test(k)).reduce((s, [, x]) => s + x.pv + x.av, 0);
+    return Object.assign(base, { summary: `حصة تطبيقات التوصيل: ${tot ? Math.round(1000 * apps / tot) / 10 : 0}% من المبيعات (${fmt(apps)}) — تذكّر أن عمولة التطبيقات تُخصم من هذه المبالغ`,
+      tables: [lrT("القنوات", ["القناة", "الطلبات", "غاوي سمك", "Apex", "الإجمالي", "متوسط الطلب", "النسبة"], [false, true, true, true, true, true, true], rows)] });
+  }
+  throw new Error("تقرير غير معروف");
+}
+
 const WEB_PERMS = [
   ["web.sales", "📊 المبيعات والتقارير والطلبات"], ["web.purchase", "🛒 طلبات الشراء"], ["web.count", "⚖ الجرد"], ["web.stock", "📦 المخزون والمواد الخام"],
   ["web.suppliers", "🚚 الموردون والمشتريات"], ["web.customers", "⭐ العملاء والعروض"], ["web.menu", "🍽 الأصناف والأسعار"], ["web.hr", "👥 الموظفون والرواتب"],
   ["web.accounts", "📒 الحسابات والمصروفات"], ["web.social", "🎯 المنصات"], ["web.screens", "📺 شاشات العرض"]];
 // الشاشة ← الصلاحيات التي تفتحها
 const VIEW_PERMS = { reports: ["web.sales"], center: ["web.sales"], track: ["web.sales"], products: ["web.menu"], offers: ["web.customers"], customers: ["web.customers"], suppliers: ["web.suppliers"],
-  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], apex: ["web.sales"], total: ["web.sales"], log: ["*"] };
+  stock: ["web.stock"], acc: ["web.accounts"], expense: ["web.accounts"], hr: ["web.hr"], inv: ["web.purchase", "web.count"], social: ["web.social"], screens: ["web.screens"], apex: ["web.sales"], total: ["web.sales"], log: ["*"], rep_sales: ["web.sales"], rep_menu: ["web.sales", "web.stock"], rep_acc: ["web.accounts"], rep_sup: ["web.suppliers"], rep_cus: ["web.customers"], branch: ["branch.view"], branchrep: ["branch.view"], branchimp: ["branch.import"] };
 let me = { role: "owner", perms: [] };
 const isOwner = () => me.role !== "staff";
 const canWeb = p => isOwner() || p === "*" || me.perms.includes(p);
-const canView = v => isOwner() || (VIEW_PERMS[v] || []).some(canWeb);
+const canView = v => {
+  if (isOwner()) return true;
+  if (["admin", "wa", "zid"].includes(v)) return false;
+  if (isV2()) { if (v === "log") return true; return (VIEW_REQ[v] || ["v." + v]).some(k => me.perms.includes(k)); }
+  return (VIEW_PERMS[v] || []).some(canWeb);
+};
+const canAct = a => isOwner() || (isV2() || a.startsWith("branch.") ? me.perms.includes(a) : true);
 function applyWebAccess() {
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("hidden", !navViews(b.dataset.g).concat(b.dataset.v).some(canView)));
   if (typeof view === "string") navSync(view);
@@ -4305,7 +5163,7 @@ function applyWebAccess() {
     const show = { count: canWeb("web.count"), hist: canWeb("web.count"), pr: canWeb("web.purchase"), rep: canWeb("web.purchase") };
     document.querySelectorAll("#invTabs .chip").forEach(c => c.classList.toggle("hidden", !show[c.dataset.i]));
     if (!show[invPane]) { invPane = Object.keys(show).find(k => show[k]) || "pr"; paneSwitch("invTabs", "i", "i", invPane); }
-    if ($("icSave")) $("icSave").classList.toggle("hidden", !canWeb("web.count"));
+    if ($("icSave")) $("icSave").classList.toggle("hidden", !(isV2() ? canAct("act.count") : canWeb("web.count")));
   }
 }
 let webUsers = [];
@@ -4323,7 +5181,7 @@ async function loadWebUsers() {
   $("tblWeb").innerHTML = "<table><tr><th>الاسم</th><th>البريد</th><th>النوع</th><th>الشاشات</th><th>الحالة</th><th></th></tr>" + webUsers.map((u, i) => `<tr>
       <td><b>${esc(u.full_name)}</b></td><td dir="ltr" style="text-align:right">${esc(cleanEmail(u.email))}${cleanEmail(u.email) !== u.email ? '<br><span class="tag red" dir="rtl">⚠ في البريد رموز مخفية — اضغط تعديل ثم حفظ</span>' : ""}</td>
       <td>${u.role === "staff" ? '<span class="tag amber">🔐 محدود</span>' : '<span class="tag green">👑 مدير كامل</span>'}</td>
-      <td class="wrap">${u.role === "staff" ? (u.perms || []).map(p => esc((WEB_PERMS.find(x => x[0] === p) || [p, p])[1])).join("، ") || "—" : "كل الشاشات"}</td>
+      <td class="wrap">${u.role !== "staff" ? "كل الشاشات" : (u.perms || []).includes("_v2") ? PERM_TREE.filter(([, it]) => it.some(x => u.perms.includes(x[0]))).map(([g, it]) => `${esc(g)} <span class="tag">${it.filter(x => u.perms.includes(x[0])).length}/${it.length}</span>`).join(" ") : (u.perms || []).map(p => esc((WEB_PERMS.find(x => x[0] === p) || [p, p])[1])).join("، ") || "—"}</td>
       <td>${u.is_active ? "✔ نشط" : '<span class="tag red">موقوف</span>'}</td>
       <td style="white-space:nowrap"><button class="btn sm" data-wu="${i}">✏ تعديل</button></td></tr>`).join("") + "</table>";
   $("tblWeb").querySelectorAll("[data-wu]").forEach(b => b.onclick = () => webUserForm(webUsers[Number(b.dataset.wu)]));
@@ -4336,19 +5194,35 @@ function webUserForm(u) {
     <div><label>البريد الإلكتروني (للدخول)</label><input class="fld" id="wuEmail" dir="ltr" value="${esc(u ? cleanEmail(u.email) : "")}" ${u ? "disabled" : ""} placeholder="name@gmail.com" autocomplete="off" spellcheck="false" oninput="const c=cleanEmail(this.value);if(c!==this.value)this.value=c"></div>
     <div><label>النوع</label><select class="fld" id="wuRole" ${self ? "disabled" : ""}><option value="staff">🔐 محدود — شاشات محددة</option><option value="owner" ${u && u.role !== "staff" ? "selected" : ""}>👑 مدير كامل</option></select></div>
     <div><label>الحالة</label><select class="fld" id="wuActive" ${self ? "disabled" : ""}><option value="1">✔ نشط</option><option value="0" ${u && !u.is_active ? "selected" : ""}>⛔ موقوف</option></select></div>
-    <div class="full" id="wuPermsBox"><label>الشاشات المسموحة</label><div class="pm-items" style="padding:4px 0">${WEB_PERMS.map(([k, t]) => `<label><input type="checkbox" data-wp="${k}" ${u && (u.perms || []).includes(k) ? "checked" : ""}> ${esc(t)}</label>`).join("")}</div></div>
+    <div class="full" id="wuPermsBox"><label>الصلاحيات التفصيلية <small class="note">(✏ = إضافة وتعديل، بدونها يكون عرض فقط)</small></label>
+      <div class="wu-tree">${(() => { const cur = permsToV2(u ? (u.perms || []) : []); return PERM_TREE.map(([g, items], gi) => `<div class="wu-g"><label class="wu-h"><input type="checkbox" data-wg="${gi}"> ${esc(g)}</label>` +
+        items.map(([k, t]) => `<label class="${k.startsWith("act.") || /^branch\.(add|import|edit|cats|approve)$/.test(k) ? "act" : ""}"><input type="checkbox" data-wp="${k}" data-gi="${gi}" ${cur.includes(k) ? "checked" : ""}> ${esc(t)}</label>`).join("") + "</div>").join(""); })()}</div>
+      <div class="toolbar" style="margin-top:8px"><span class="note">قوالب سريعة:</span><button type="button" class="btn sm ghost" data-wtpl="rm">🏪 مسئول المطعم</button><button type="button" class="btn sm ghost" data-wtpl="acc">📒 محاسب</button><button type="button" class="btn sm ghost" data-wtpl="view">👁 عرض فقط</button><button type="button" class="btn sm ghost" data-wtpl="none">مسح الكل</button></div></div>
     ${u ? "" : '<div class="full"><label style="font-weight:600"><input type="checkbox" id="wuInvite" checked> إرسال بريد للمستخدم لتعيين كلمة المرور (ينشئ حسابه تلقائياً عبر برنامج الكاشير)</label></div>'}
     <div class="full"><button class="btn green" id="wuOk">💾 حفظ</button> ${u && !self ? '<button class="btn ghost" id="wuInv">📧 إعادة إرسال رابط كلمة المرور</button> <button class="btn red" id="wuDel">🗑 حذف</button>' : ""}</div></div>
-    <p class="note">مثال: مسئول المطعم ← محدود + (🛒 طلبات الشراء، ⚖ الجرد) فيستطيع إنشاء طلبات الشراء من المنزل دون رؤية المبيعات أو الحسابات.</p>`);
+    <p class="note">مثال: مسئول المطعم ← محدود + قالب «🏪 مسئول المطعم»: يسجّل المصروفات ويستورد الشيت (تبقى بانتظار مراجعتك)، وينشئ طلبات الشراء والجرد، دون رؤية المبيعات أو الحسابات. الإدارة وطلبات واتساب وزد للمدير الكامل فقط.</p>`);
   const sync = () => $("wuPermsBox").style.display = $("wuRole").value === "staff" ? "" : "none";
+  const gsync = () => document.querySelectorAll("[data-wg]").forEach(g => { const cs = [...document.querySelectorAll(`[data-gi="${g.dataset.wg}"]`)]; g.checked = cs.every(c => c.checked); g.indeterminate = !g.checked && cs.some(c => c.checked); });
+  document.querySelectorAll("[data-wg]").forEach(g => g.onchange = () => { document.querySelectorAll(`[data-gi="${g.dataset.wg}"]`).forEach(c => c.checked = g.checked); gsync(); });
+  document.querySelectorAll("[data-wp]").forEach(c => c.onchange = () => {
+    // الإجراء يحتاج العرض: تفعيل ✏ يفعّل عرض نفس القسم
+    if (c.checked && c.dataset.wp.startsWith("act.")) { const v = { "act.pr": "inv.pr", "act.count": "inv.count", "act.orders": "v.reports" }[c.dataset.wp] || "v." + c.dataset.wp.slice(4); const vb = document.querySelector(`[data-wp="${v}"]`); if (vb) vb.checked = true; }
+    if (c.checked && /^branch\./.test(c.dataset.wp)) { const vb = document.querySelector('[data-wp="branch.view"]'); if (vb) vb.checked = true; }
+    gsync();
+  });
+  const TPL = { rm: ["branch.view", "branch.add", "branch.import", "branch.edit", "branch.cats", "inv.pr", "act.pr", "inv.count", "act.count", "v.stock", "v.products", "v.track"],
+    acc: ["v.acc", "act.acc", "v.expense", "act.expense", "v.rep_acc", "v.suppliers", "v.rep_sup", "branch.view", "branch.cats", "branch.approve"],
+    view: PERM_TREE.flatMap(([, it]) => it.map(x => x[0]).filter(k => /^v\.|^inv\.|^branch\.view$/.test(k))), none: [] };
+  document.querySelectorAll("[data-wtpl]").forEach(b => b.onclick = () => { const L = TPL[b.dataset.wtpl]; document.querySelectorAll("[data-wp]").forEach(c => c.checked = L.includes(c.dataset.wp)); gsync(); });
+  gsync();
   $("wuRole").onchange = sync; sync();
   const invite = async email => send({ kind: "web.user.invite", payload: { email, redirect: location.origin + location.pathname } });
   $("wuOk").onclick = async () => {
     const email = cleanEmail(u ? u.email : $("wuEmail").value), name = $("wuName").value.trim();
     if (!name || !validEmail(email)) { toast("اكتب الاسم والبريد الإلكتروني بشكل صحيح (مثل name@gmail.com)"); return; }
     const row = { email, full_name: name, role: $("wuRole").value, is_active: $("wuActive").value === "1",
-      perms: $("wuRole").value === "staff" ? [...document.querySelectorAll("[data-wp]:checked")].map(c => c.dataset.wp) : [] };
-    if (row.role === "staff" && !row.perms.length) { toast("اختر شاشة واحدة على الأقل"); return; }
+      perms: $("wuRole").value === "staff" ? permsFromV2([...document.querySelectorAll("[data-wp]:checked")].map(c => c.dataset.wp)) : [] };
+    if (row.role === "staff" && row.perms.length < 2) { toast("اختر صلاحية واحدة على الأقل"); return; }
     const res = u ? await sb.from("managers").update(row).eq("email", u.email) : await sb.from("managers").insert(row);
     if (res.error) { toast("⚠ " + res.error.message, 6000); return; }
     if (!u && $("wuInvite").checked) await invite(email);
